@@ -1,0 +1,31 @@
+CandidateName,Source,Applied_Date,Role,Location,Experience_Level,Call_Screening,AI_Interview,Assessment,Assessment_Result,Hired
+Aakash Reddy,Company Website,10-07-2025,Designer,Pune,Senior,Yes,No,No,-,No
+Neha Sharma,LinkedIn,10-08-2025,Developer,Hyderabad,Junior,Yes,No,No,-,No
+Rohan Gupta,Naukri,04-08-2025,Analyst,Pune,Mid,Yes,No,No,-,No
+Sneha Rao,LinkedIn,27-07-2025,Manager,Bangalore,Junior,No,No,No,-,No
+Vikram Singh,Company Website,19-08-2025,Analyst,Hyderabad,Junior,Yes,Yes,Yes,Pass,No
+Kiran Patel,Company Website,17-07-2025,Developer,Hyderabad,Mid,No,No,No,-,No
+Anjali Menon,Company Website,13-08-2025,Tester,Bangalore,Junior,No,No,No,-,No
+Siddharth Nair,LinkedIn,29-07-2025,Designer,Chennai,Senior,Yes,Yes,Yes,Pass,Yes
+Pooja Verma,Company Website,07-08-2025,Designer,Pune,Senior,Yes,No,No,-,No
+Rahul Khanna,Naukri,12-07-2025,Designer,Hyderabad,Senior,No,No,No,-,No
+Meera Iyer,Company Website,10-08-2025,Tester,Hyderabad,Mid,Yes,Yes,Yes,Pass,Yes
+Arjun Desai,LinkedIn,11-07-2025,Manager,Bangalore,Senior,Yes,Yes,No,-,No
+Divya Kulkarni,Naukri,13-07-2025,Analyst,Hyderabad,Senior,No,No,No,-,No
+Manish Tiwari,LinkedIn,14-07-2025,Manager,Mumbai,Senior,Yes,Yes,Yes,Pass,Yes
+Nisha Bhatia,LinkedIn,21-07-2025,Tester,Bangalore,Junior,Yes,No,No,-,No
+Gaurav Mishra,Naukri,30-07-2025,Manager,Hyderabad,Junior,Yes,Yes,Yes,Fail,No
+Shweta Joshi,Company Website,30-07-2025,Manager,Pune,Mid,No,No,No,-,No
+Karthik R,Company Website,29-07-2025,Manager,Pune,Mid,Yes,Yes,No,-,No
+Tanvi Kapoor,LinkedIn,07-08-2025,Developer,Pune,Mid,No,No,No,-,No
+Varun Mehta,LinkedIn,28-07-2025,Designer,Pune,Junior,Yes,Yes,Yes,Pass,Yes
+Ishita Roy,Company Website,20-07-2025,Manager,Hyderabad,Junior,Yes,Yes,Yes,Pass,Yes
+Ravi Shankar,Naukri,03-08-2025,Manager,Hyderabad,Junior,No,No,No,-,No
+Priya Nair,Naukri,03-09-2025,Developer,Hyderabad,Junior,No,No,No,-,No
+Suresh Reddy,LinkedIn,06-09-2025,Manager,Bangalore,Senior,No,No,No,-,No
+Alok Sharma,LinkedIn,23-08-2025,Manager,Chennai,Mid,No,No,No,-,No
+Deepa Menon,LinkedIn,14-08-2025,Developer,Chennai,Mid,Yes,No,No,-,No
+Harsh Gupta,Company Website,06-08-2025,Designer,Hyderabad,Junior,Yes,Yes,Yes,Fail,No
+Kavya Rao,Company Website,05-08-2025,Developer,Bangalore,Mid,No,No,No,-,No
+Nitin Kumar,Company Website,16-07-2025,Developer,Chennai,Senior,No,No,No,-,No
+Pallavi Singh,Naukri,17-07-2025,Developer,Mumbai,Junior,Yes,Yes,No,-,No
