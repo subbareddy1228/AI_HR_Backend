@@ -20,5 +20,6 @@ aiofiles
 fastapi-mail
 email-validator
 sqlmodel
+
 sqladmin
 Jinja2
