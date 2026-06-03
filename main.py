@@ -100,6 +100,10 @@ from routers.HR_Operations.Asset_Management import assets, asset_allocation, ass
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile
 
 
+from routers.Employee_Management.org_hierarchy import router as org_hierarchy_router
+from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
+ 
+
 
 
 # CORS
@@ -112,7 +116,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
  
- 
+
 
 # STARTUP — CREATE TABLES & DEFAULT SUPERADMIN
 
@@ -242,7 +246,9 @@ app.include_router(asset_return.router)
 app.include_router(asset_maintenance.router)
 app.include_router(asset_insurance.router)
 
- 
+#org hierarchy
+app.include_router(org_hierarchy_router)
+app.include_router(employee_lifecycle_router)
 
 # STATIC FILES
 
