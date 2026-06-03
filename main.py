@@ -101,7 +101,7 @@ from routers.Company_Settings import currency, financial_year, localization, pol
 
 
 from routers.Employee_Management.org_hierarchy import router as org_hierarchy_router
-from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
+# from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
  
 
 
@@ -248,7 +248,7 @@ app.include_router(asset_insurance.router)
 
 #org hierarchy
 app.include_router(org_hierarchy_router)
-app.include_router(employee_lifecycle_router)
+# app.include_router(employee_lifecycle_router)
 
 # STATIC FILES
 
