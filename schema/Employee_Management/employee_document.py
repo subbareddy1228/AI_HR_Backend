@@ -34,3 +34,6 @@ class EmployeeDocumentResponse(EmployeeDocumentBase):
     uploaded_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class VerifyRequest(BaseModel):
+    verified_by: str

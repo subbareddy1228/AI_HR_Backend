@@ -10,7 +10,7 @@ from core.database import get_db
 from model.onboarding.employee import Employee
 from model.Employee_Management.employee_master import EmployeeMaster
 from model.Employee_Management.employee_document import EmployeeDocument
-from routers.Employee_Management.employee_lifecycle import EmployeeLifecycleEvent
+from model.Employee_Management.employee_lifecycle import EmployeeLifecycleEvent
 
 router = APIRouter(prefix="/self-service", tags=["Employee Management"])
 
