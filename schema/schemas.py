@@ -24,6 +24,7 @@ class UserRead(BaseModel):
     email: str
     role: str
 
+
 # Jobs
 class JobBase(BaseModel):
     title: str
