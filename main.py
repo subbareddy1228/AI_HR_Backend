@@ -98,8 +98,8 @@ from routers.onboarding.admin_candidates import router as admin_candidates_route
 from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile
-
-
+from routers.HR_Operations.letter_generation import router as hr_letters_router
+from routers.HR_Operations.exit_management import router as exit_router
 
 
 # CORS
@@ -241,6 +241,9 @@ app.include_router(asset_allocation.router)
 app.include_router(asset_return.router)
 app.include_router(asset_maintenance.router)
 app.include_router(asset_insurance.router)
+# HR Operations - Letters & Exit Management
+app.include_router(hr_letters_router)
+app.include_router(exit_router)
 
  
 
@@ -255,4 +258,3 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.get("/api/test")
 def test_api():
     return {"message": "Backend is working correctly!"}
- 
