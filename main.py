@@ -1,3 +1,4 @@
+
 # main.py
 import os
 import base64
@@ -98,7 +99,7 @@ from routers.onboarding.admin_candidates import router as admin_candidates_route
 from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile
-
+from routers.Payroll.salary_slip import router as salary_slip_router
 
 from routers.Employee_Management.org_hierarchy import router as org_hierarchy_router
 # from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
@@ -179,6 +180,7 @@ app.include_router(admin_router, prefix="/api/admin")
 app.include_router(admin_compat_router)
 app.include_router(candidates_router)
 app.include_router(pipeline_router)
+app.include_router(salary_slip_router)
 app.include_router(recruiter_dashboard_router, prefix="/api/recruiter_dashboard")
 app.include_router(analytics_router)
 app.include_router(assessments_router)
