@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # Must match Backend/.env SCORE_THRESHOLD; resume screening logic uses
     # routers.Resume_parsing.routers.config.SCORE_THRESHOLD (required at import).
     SCORE_THRESHOLD: float = Field(default=25.0, description="From .env; restart server after changes")
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: str = ""
 
     class Config:
         env_file = ".env"
