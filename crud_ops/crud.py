@@ -1,10 +1,13 @@
 # app/crud.py
 from datetime import datetime
 from typing import Optional, List
-
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from model import schemas
+import model
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-
+from model.models import AttendanceRecord
 import model
 
 
@@ -260,3 +263,21 @@ def get_leave_by_id(db: Session, leave_id: int):
         .filter(LeaveRequest.id == leave_id)
         .first()
     )
+
+
+#Attendance CRUD
+
+def get_attendance(db: Session):
+    return db.execute(select(AttendanceRecord)).scalars().all()
+
+def create_attendance(db: Session, data: schemas.AttendanceCreate):
+    record = AttendanceRecord(**data.dict())
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
+
+def get_attendance_by_date(db: Session, date):
+    return db.execute(
+        select(AttendanceRecord).where(AttendanceRecord.date == date)
+    ).scalars().all()

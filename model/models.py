@@ -202,12 +202,16 @@ class LegacyCandidate(Base):
 
 # ATTENDANCE & LEAVE
 
-class Attendance(Base):
-    __tablename__ = "attendance"
+class AttendanceRecord(Base):
+    __tablename__ = "attendance_records"
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False, index=True)
     date = Column(Date, nullable=False)
-    status = Column(String, default="Present")
+    status = Column(String, default="Present")  # Present / Absent / Late / Half Day
+    check_in = Column(String, nullable=True)
+    check_out = Column(String, nullable=True)
+    remarks = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 class LeaveRequest(Base):
     __tablename__ = "leave_requests"

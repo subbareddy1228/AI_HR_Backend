@@ -20,7 +20,7 @@ except ImportError:
     Promotion = None
 
 try:
-    from model.models import Attendance as AttendanceRecord
+    from model.models import AttendanceRecord
 except ImportError:
     AttendanceRecord = None
 

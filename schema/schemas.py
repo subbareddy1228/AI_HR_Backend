@@ -275,15 +275,22 @@ class LeaveStatus(str, Enum):
     rejected = "Rejected"
 
 class AttendanceCreate(BaseModel):
-    employee_id: int  
+    employee_id: int
     date: date
     status: str
+    check_in: Optional[str] = None
+    check_out: Optional[str] = None
+    remarks: Optional[str] = None
 
 class AttendanceOut(BaseModel):
     id: int
-    employee_id: int  
+    employee_id: int
     date: date
     status: str
+    check_in: Optional[str] = None
+    check_out: Optional[str] = None
+    remarks: Optional[str] = None
+
 
     class Config:
         orm_mode = True
