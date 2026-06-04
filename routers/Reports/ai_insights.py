@@ -15,12 +15,12 @@ except ImportError:
     ExitManagement = None
 
 try:
-    from model.HR_Operations.promotion import EmployeePromotion
+    from model.HR_Operations.promotion import Promotion
 except ImportError:
-    EmployeePromotion = None
+    Promotion = None
 
 try:
-    from model.models import AttendanceRecord
+    from model.models import Attendance as AttendanceRecord
 except ImportError:
     AttendanceRecord = None
 
@@ -50,9 +50,9 @@ def attrition_risk(db: Session = Depends(get_db)):
 
     # Collect promoted employee IDs if available
     promoted_ids: set = set()
-    if EmployeePromotion is not None:
+    if Promotion is not None:
         try:
-            promotions = db.execute(select(EmployeePromotion.employee_id)).scalars().all()
+            promotions = db.execute(select(Promotion.employee_id)).scalars().all()
             promoted_ids = set(promotions)
         except Exception:
             promoted_ids = set()

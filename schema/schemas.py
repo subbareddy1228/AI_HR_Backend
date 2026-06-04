@@ -275,11 +275,13 @@ class LeaveStatus(str, Enum):
     rejected = "Rejected"
 
 class AttendanceCreate(BaseModel):
+    employee_id: int  
     date: date
     status: str
 
 class AttendanceOut(BaseModel):
     id: int
+    employee_id: int  
     date: date
     status: str
 

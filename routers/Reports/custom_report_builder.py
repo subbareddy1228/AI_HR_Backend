@@ -1,44 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String, JSON, DateTime, Boolean, select
-from core.database import Base, get_db
-from pydantic import BaseModel, ConfigDict
-from typing import Optional, Any
-from datetime import datetime
+from sqlalchemy import select
+from core.database import get_db
 
-# ── Model ──────────────────────────────────────────────────────────────────────
-
-class SavedReport(Base):
-    __tablename__ = "saved_reports"
-
-    id = Column(Integer, primary_key=True)
-    report_name = Column(String(255), unique=True)
-    report_type = Column(String(100))  # Employee/Attendance/Payroll/Leave
-    filters = Column(JSON, nullable=True)
-    columns_selected = Column(JSON, nullable=True)
-    created_by = Column(String(100), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-
-# ── Schemas ────────────────────────────────────────────────────────────────────
-
-class SavedReportCreate(BaseModel):
-    report_name: str
-    report_type: str
-    filters: Optional[Any] = None
-    columns_selected: Optional[Any] = None
-    created_by: Optional[str] = None
-
-
-class SavedReportResponse(SavedReportCreate):
-    id: int
-    is_active: bool
-    created_at: datetime
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ── Router ─────────────────────────────────────────────────────────────────────
+from model.Reports.saved_report import SavedReport
+from schema.Reports.saved_report import SavedReportCreate, SavedReportResponse
 
 router = APIRouter(prefix="/custom", tags=["Reports"])
 
@@ -118,7 +84,6 @@ def run_report(report_id: int, db: Session = Depends(get_db)):
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
-    # Route to appropriate data source based on report_type
     report_type = (report.report_type or "").lower()
     filters = report.filters or {}
 

@@ -205,6 +205,7 @@ class LegacyCandidate(Base):
 class Attendance(Base):
     __tablename__ = "attendance"
     id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
     date = Column(Date, nullable=False)
     status = Column(String, default="Present")
 
