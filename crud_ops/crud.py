@@ -3,8 +3,7 @@ from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from model import schemas
-import model
+from schema import schemas
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from model.models import AttendanceRecord
