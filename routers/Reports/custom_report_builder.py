@@ -1,16 +1,248 @@
-from fastapi import APIRouter, Depends, HTTPException
+# routers/Reports/custom_report_builder.py
+# Custom Report Builder — Full Router
+# Matches screenshot: feature list, KPI counts, CRUD, status updates, run
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, func
+from typing import Optional
+from datetime import datetime
+
 from core.database import get_db
+from model.Reports.saved_report import (
+    ReportFeature, SavedReport,
+    FeatureStatus, FeatureCategory,
+)
+from schema.Reports.saved_report import (
+    ReportFeatureCreate, ReportFeatureUpdate, ReportFeatureResponse,
+    SavedReportCreate,   SavedReportUpdate,   SavedReportResponse,
+)
 
-from model.Reports.saved_report import SavedReport
-from schema.Reports.saved_report import SavedReportCreate, SavedReportResponse
-
-router = APIRouter(prefix="/custom", tags=["Reports"])
+router = APIRouter(prefix="/custom", tags=["Custom Report Builder"])
 
 
-@router.post("/", response_model=SavedReportResponse, status_code=201)
-def create_report(payload: SavedReportCreate, db: Session = Depends(get_db)):
+# ══════════════════════════════════════════════════════════════════════════════
+# SECTION 1 — REPORT FEATURES
+# Drives the main table in the screenshot
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── KPI summary cards (Total / Published / In Progress / Scheduled) ───────────
+@router.get("/features/kpi")
+def get_feature_kpi(db: Session = Depends(get_db)):
+    """
+    Returns the 4 KPI cards shown at the top of the screenshot:
+    Total Features | Published | In Progress | Scheduled
+    """
+    total = (
+        db.execute(select(func.count(ReportFeature.id))
+                   .where(ReportFeature.is_active == True))
+        .scalar() or 0
+    )
+    published = (
+        db.execute(select(func.count(ReportFeature.id))
+                   .where(ReportFeature.is_active == True,
+                          ReportFeature.status == FeatureStatus.published))
+        .scalar() or 0
+    )
+    in_progress = (
+        db.execute(select(func.count(ReportFeature.id))
+                   .where(ReportFeature.is_active == True,
+                          ReportFeature.status == FeatureStatus.in_progress))
+        .scalar() or 0
+    )
+    scheduled = (
+        db.execute(select(func.count(ReportFeature.id))
+                   .where(ReportFeature.is_active == True,
+                          ReportFeature.status == FeatureStatus.scheduled))
+        .scalar() or 0
+    )
+    return {
+        "totalFeatures": total,
+        "published":     published,
+        "inProgress":    in_progress,
+        "scheduled":     scheduled,
+    }
+
+
+# ── LIST features (with search / category / status filter + pagination) ────────
+@router.get("/features")
+def list_features(
+    db:       Session = Depends(get_db),
+    search:   Optional[str]            = Query(None),
+    category: Optional[FeatureCategory]= Query(None),
+    status:   Optional[FeatureStatus]  = Query(None),
+    page:     int = Query(1, ge=1),
+    per_page: int = Query(8, ge=1, le=100),
+):
+    """
+    Paginated feature list shown in the table.
+    Supports: search by name, filter by category, filter by status.
+    """
+    q = select(ReportFeature).where(ReportFeature.is_active == True)
+
+    if search:
+        q = q.where(ReportFeature.feature_name.ilike(f"%{search}%"))
+    if category:
+        q = q.where(ReportFeature.category == category)
+    if status:
+        q = q.where(ReportFeature.status == status)
+
+    q = q.order_by(ReportFeature.updated_at.desc())
+
+    total   = db.execute(select(func.count()).select_from(q.subquery())).scalar() or 0
+    offset  = (page - 1) * per_page
+    records = db.execute(q.offset(offset).limit(per_page)).scalars().all()
+
+    return {
+        "total":    total,
+        "page":     page,
+        "perPage":  per_page,
+        "totalPages": (total + per_page - 1) // per_page,
+        "showing":  f"{offset + 1}-{min(offset + per_page, total)} of {total}",
+        "data": [
+            {
+                "id":          r.id,
+                "featureName": r.feature_name,
+                "description": r.description,
+                "icon":        r.icon,
+                "category":    r.category.value,
+                "status":      r.status.value,
+                "lastUpdated": r.updated_at.strftime("%Y-%m-%d") if r.updated_at else None,
+                "createdBy":   r.created_by,
+            }
+            for r in records
+        ],
+    }
+
+
+# ── GET single feature ────────────────────────────────────────────────────────
+@router.get("/features/{feature_id}", response_model=ReportFeatureResponse)
+def get_feature(feature_id: int, db: Session = Depends(get_db)):
+    feature = db.execute(
+        select(ReportFeature).where(ReportFeature.id == feature_id)
+    ).scalars().first()
+    if not feature:
+        raise HTTPException(status_code=404, detail="Feature not found")
+    return feature
+
+
+# ── CREATE feature (+ Add New Report button) ──────────────────────────────────
+@router.post("/features", response_model=ReportFeatureResponse, status_code=201)
+def create_feature(payload: ReportFeatureCreate, db: Session = Depends(get_db)):
+    feature = ReportFeature(**payload.model_dump())
+    db.add(feature)
+    db.commit()
+    db.refresh(feature)
+    return feature
+
+
+# ── UPDATE feature (edit pencil icon) ────────────────────────────────────────
+@router.put("/features/{feature_id}", response_model=ReportFeatureResponse)
+def update_feature(
+    feature_id: int,
+    payload:    ReportFeatureUpdate,
+    db:         Session = Depends(get_db),
+):
+    feature = db.execute(
+        select(ReportFeature).where(ReportFeature.id == feature_id,
+                                    ReportFeature.is_active == True)
+    ).scalars().first()
+    if not feature:
+        raise HTTPException(status_code=404, detail="Feature not found")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(feature, field, value)
+    feature.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(feature)
+    return feature
+
+
+# ── UPDATE status only (tick / clock / X icon actions in the row) ─────────────
+@router.patch("/features/{feature_id}/status")
+def update_feature_status(
+    feature_id: int,
+    status:     FeatureStatus,
+    db:         Session = Depends(get_db),
+):
+    feature = db.execute(
+        select(ReportFeature).where(ReportFeature.id == feature_id,
+                                    ReportFeature.is_active == True)
+    ).scalars().first()
+    if not feature:
+        raise HTTPException(status_code=404, detail="Feature not found")
+
+    feature.status     = status
+    feature.updated_at = datetime.utcnow()
+    db.commit()
+    return {
+        "id":     feature_id,
+        "status": status.value,
+        "message": f"Status updated to '{status.value}'",
+    }
+
+
+# ── DELETE feature (X icon) ───────────────────────────────────────────────────
+@router.delete("/features/{feature_id}")
+def delete_feature(feature_id: int, db: Session = Depends(get_db)):
+    feature = db.execute(
+        select(ReportFeature).where(ReportFeature.id == feature_id)
+    ).scalars().first()
+    if not feature:
+        raise HTTPException(status_code=404, detail="Feature not found")
+
+    feature.is_active  = False
+    feature.updated_at = datetime.utcnow()
+    db.commit()
+    return {
+        "message": f"Feature '{feature.feature_name}' deleted",
+        "id":      feature_id,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECTION 2 — SAVED REPORTS
+# Stores user-built report configs (Report Builder tab)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── LIST saved reports ────────────────────────────────────────────────────────
+@router.get("/saved")
+def list_saved_reports(db: Session = Depends(get_db)):
+    reports = db.execute(
+        select(SavedReport).where(SavedReport.is_active == True)
+                           .order_by(SavedReport.updated_at.desc())
+    ).scalars().all()
+    return {
+        "count": len(reports),
+        "data": [
+            {
+                "id":          r.id,
+                "reportName":  r.report_name,
+                "reportType":  r.report_type,
+                "createdBy":   r.created_by,
+                "createdAt":   str(r.created_at),
+                "updatedAt":   str(r.updated_at),
+            }
+            for r in reports
+        ],
+    }
+
+
+# ── GET one saved report ──────────────────────────────────────────────────────
+@router.get("/saved/{report_id}", response_model=SavedReportResponse)
+def get_saved_report(report_id: int, db: Session = Depends(get_db)):
+    report = db.execute(
+        select(SavedReport).where(SavedReport.id == report_id)
+    ).scalars().first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return report
+
+
+# ── CREATE saved report ───────────────────────────────────────────────────────
+@router.post("/saved", response_model=SavedReportResponse, status_code=201)
+def create_saved_report(payload: SavedReportCreate, db: Session = Depends(get_db)):
     existing = db.execute(
         select(SavedReport).where(SavedReport.report_name == payload.report_name)
     ).scalars().first()
@@ -24,86 +256,68 @@ def create_report(payload: SavedReportCreate, db: Session = Depends(get_db)):
     return report
 
 
-@router.get("/")
-def list_reports(db: Session = Depends(get_db)):
-    reports = db.execute(
-        select(SavedReport).where(SavedReport.is_active == True)
-    ).scalars().all()
-    return {
-        "count": len(reports),
-        "data": [
-            {
-                "id": r.id,
-                "report_name": r.report_name,
-                "report_type": r.report_type,
-                "created_by": r.created_by,
-                "created_at": str(r.created_at),
-            }
-            for r in reports
-        ],
-    }
-
-
-@router.get("/{report_id}")
-def get_report(report_id: int, db: Session = Depends(get_db)):
+# ── UPDATE saved report ───────────────────────────────────────────────────────
+@router.put("/saved/{report_id}", response_model=SavedReportResponse)
+def update_saved_report(
+    report_id: int,
+    payload:   SavedReportUpdate,
+    db:        Session = Depends(get_db),
+):
     report = db.execute(
-        select(SavedReport).where(SavedReport.id == report_id)
-    ).scalars().first()
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
-    return {
-        "id": report.id,
-        "report_name": report.report_name,
-        "report_type": report.report_type,
-        "filters": report.filters,
-        "columns_selected": report.columns_selected,
-        "created_by": report.created_by,
-        "is_active": report.is_active,
-        "created_at": str(report.created_at),
-    }
-
-
-@router.delete("/{report_id}")
-def delete_report(report_id: int, db: Session = Depends(get_db)):
-    report = db.execute(
-        select(SavedReport).where(SavedReport.id == report_id)
+        select(SavedReport).where(SavedReport.id == report_id,
+                                  SavedReport.is_active == True)
     ).scalars().first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
-    report.is_active = False
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(report, field, value)
+    report.updated_at = datetime.utcnow()
+
     db.commit()
-    return {"message": f"Report '{report.report_name}' deleted successfully", "id": report_id}
+    db.refresh(report)
+    return report
 
 
-@router.post("/{report_id}/run")
-def run_report(report_id: int, db: Session = Depends(get_db)):
+# ── DELETE saved report ───────────────────────────────────────────────────────
+@router.delete("/saved/{report_id}")
+def delete_saved_report(report_id: int, db: Session = Depends(get_db)):
     report = db.execute(
-        select(SavedReport).where(SavedReport.id == report_id, SavedReport.is_active == True)
+        select(SavedReport).where(SavedReport.id == report_id)
     ).scalars().first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
-    report_type = (report.report_type or "").lower()
-    filters = report.filters or {}
+    report.is_active  = False
+    report.updated_at = datetime.utcnow()
+    db.commit()
+    return {"message": f"Report '{report.report_name}' deleted", "id": report_id}
 
-    if report_type == "employee":
-        message = "Employee report queued — query employees table with applied filters."
-    elif report_type == "attendance":
-        message = "Attendance report queued — query attendance_records with applied filters."
-    elif report_type == "payroll":
-        message = "Payroll report queued — query payroll_runs / payroll_run_details with applied filters."
-    elif report_type == "leave":
-        message = "Leave report queued — query leave_requests with applied filters."
-    else:
-        message = f"Report of type '{report.report_type}' queued with applied filters."
+
+# ── RUN a saved report ────────────────────────────────────────────────────────
+@router.post("/saved/{report_id}/run")
+def run_saved_report(report_id: int, db: Session = Depends(get_db)):
+    report = db.execute(
+        select(SavedReport).where(SavedReport.id == report_id,
+                                  SavedReport.is_active == True)
+    ).scalars().first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    route_map = {
+        "employee":   "/api/reports/employee/list",
+        "attendance": "/api/reports/attendance/monthly-summary",
+        "payroll":    "/api/reports/payroll/register",
+        "leave":      "/api/reports/leave/monthly-trend",
+    }
+    rt = (report.report_type or "").lower()
 
     return {
-        "report_id": report_id,
-        "report_name": report.report_name,
-        "report_type": report.report_type,
-        "status": "queued",
-        "message": message,
-        "filters": filters,
-        "columns_selected": report.columns_selected,
+        "reportId":       report_id,
+        "reportName":     report.report_name,
+        "reportType":     report.report_type,
+        "status":         "queued",
+        "dataEndpoint":   route_map.get(rt, "/api/reports/employee/list"),
+        "filters":        report.filters          or {},
+        "columnsSelected":report.columns_selected or [],
     }

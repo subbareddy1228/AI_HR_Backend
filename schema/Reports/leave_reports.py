@@ -1,0 +1,104 @@
+# schema/Reports/leave_reports.py
+ 
+from pydantic import BaseModel, ConfigDict
+from typing import List, Optional
+from datetime import date
+ 
+ 
+# ── Top stat cards ────────────────────────────────────────────────────────────
+ 
+class LeaveReportStats(BaseModel):
+    total_employees: int
+    avg_age: float
+    total_leaves: int
+    pending: int
+    approved: int
+    rejected: int
+ 
+ 
+# ── Employee-wise Leave Balance ───────────────────────────────────────────────
+ 
+class LeaveBalanceItem(BaseModel):
+    employee_name: str
+    employee_id: str
+    department: Optional[str]
+    grade: Optional[str]
+    designation: Optional[str]
+    casual_leave_used: int
+    casual_leave_balance: int
+    casual_leave_total: int
+    sick_leave_used: int
+    sick_leave_balance: int
+    sick_leave_total: int
+    earned_leave_used: int
+    earned_leave_balance: int
+    earned_leave_total: int
+    total_balance: int
+ 
+ 
+# ── Department-wise Leave Liability ──────────────────────────────────────────
+ 
+class DeptLeaveLiabilityItem(BaseModel):
+    department: str
+    employees: int
+    total_balance_days: int
+    encashment_liability: float
+ 
+ 
+# ── Leave Type Utilization ────────────────────────────────────────────────────
+ 
+class LeaveTypeUtilizationItem(BaseModel):
+    department: str
+    total_leaves_taken: int
+ 
+ 
+# ── Leave Accrual Register ────────────────────────────────────────────────────
+ 
+class LeaveAccrualItem(BaseModel):
+    employee_name: str
+    employee_id: str
+    department: Optional[str]
+    grade: Optional[str]
+    accrual_date: date
+    leave_type: str
+    days_accrued: float
+    balance_before: float
+    balance_after: float
+ 
+ 
+# ── Carry-forward Leave Tracking ─────────────────────────────────────────────
+ 
+class CarryForwardItem(BaseModel):
+    employee_name: str
+    employee_id: str
+    department: Optional[str]
+    grade: Optional[str]
+    leave_type: str
+    previous_year_balance: int
+    carried_forward: int
+    current_year_allocated: int
+    total_available: int
+ 
+ 
+# ── Leave Encashment Liability ────────────────────────────────────────────────
+ 
+class LeaveEncashmentItem(BaseModel):
+    department: str
+    employees: int
+    total_balance_days: int
+    encashment_liability: float
+ 
+ 
+# ── Employee Leave Records ────────────────────────────────────────────────────
+ 
+class EmployeeLeaveRecordItem(BaseModel):
+    employee_code: str
+    employee_name: str
+    department: Optional[str]
+    grade: Optional[str]
+    designation: Optional[str]
+    location: Optional[str]
+    gender: Optional[str]
+    mobile: Optional[str]
+    leave_type: str
+    status: str
