@@ -74,7 +74,7 @@ class JobRead(JobBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Candidates
 class CandidateCreate(BaseModel):
@@ -92,7 +92,7 @@ class CandidateRead(CandidateCreate):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 
@@ -246,12 +246,12 @@ class AnswerSchema(BaseModel):
     ai_score: Optional[float]
     ai_feedback: Optional[str]
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class NoteSchema(BaseModel):
     notes: Optional[str]
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class CandidateSchema(BaseModel):
     id: int
@@ -266,7 +266,7 @@ class CandidateSchema(BaseModel):
     answers: List[AnswerSchema] = []
     notes: List[NoteSchema] = []
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Attendance & Leave
 
@@ -302,7 +302,7 @@ class LeaveRequestOut(BaseModel):
     status: LeaveStatus
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 
@@ -319,7 +319,7 @@ class Document(DocumentBase):
     file_path: str
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 
 
 
 
@@ -336,7 +336,7 @@ class Signature(SignatureBase):
     file_path: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Candidate schemas
 class CandidateCreate(BaseModel):
@@ -349,7 +349,7 @@ class CandidateCreate(BaseModel):
 class CandidateOut(CandidateCreate):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Document schemas
 class DocumentCreate(BaseModel):
@@ -358,7 +358,7 @@ class DocumentCreate(BaseModel):
 class DocumentOut(DocumentCreate):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Upload schemas
 class UploadCreate(BaseModel):
@@ -369,7 +369,7 @@ class UploadCreate(BaseModel):
 class UploadOut(UploadCreate):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Task schemas
 
