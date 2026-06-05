@@ -1,113 +1,370 @@
+# routers/Reports/leave_reports.py
+ 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
-from core.database import get_db
-from typing import Optional
+from sqlalchemy import select, func, extract
+from typing import List, Optional
 from datetime import date
-
-try:
-    from model.models import LeaveRequest
-except ImportError:
-    LeaveRequest = None
-
-router = APIRouter(prefix="/leave", tags=["Reports"])
-
-
-@router.get("/summary")
-def leave_summary(
-    start_date: Optional[date] = Query(None),
-    end_date: Optional[date] = Query(None),
-    employee_id: Optional[int] = Query(None),
+ 
+from core.database import get_db
+from core.dependencies import get_current_user
+from model.models import User, LeaveRequest
+from model.onboarding.employee import Employee
+ 
+from schema.Reports.leave_reports import (
+    LeaveReportStats,
+    LeaveBalanceItem,
+    DeptLeaveLiabilityItem,
+    LeaveTypeUtilizationItem,
+    LeaveAccrualItem,
+    CarryForwardItem,
+    LeaveEncashmentItem,
+    EmployeeLeaveRecordItem,
+)
+ 
+router = APIRouter(prefix="/api/reports/leave", tags=["Leave Reports"])
+ 
+# ── Constants ─────────────────────────────────────────────────────────────────
+CASUAL_TOTAL  = 12
+SICK_TOTAL    = 10
+EARNED_TOTAL  = 15
+ACCRUAL_RATE  = 1.25     # days per month for Earned Leave
+DAILY_RATE    = 2000     # ₹ per day for encashment calculation
+ 
+ 
+# ══════════════════════════════════════════════════════════════════════════════
+# STAT CARDS
+# ══════════════════════════════════════════════════════════════════════════════
+ 
+@router.get("/stats", response_model=LeaveReportStats)
+def get_leave_stats(
+    department: Optional[str] = Query(None),
+    location: Optional[str] = Query(None),
+    grade: Optional[str] = Query(None),
+    gender: Optional[str] = Query(None),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    if LeaveRequest is None:
-        return {
-            "total_leaves": 0,
-            "by_leave_type": {},
-            "by_status": {},
-            "message": "LeaveRequest model not available",
-        }
-
-    query = select(LeaveRequest)
-    if start_date:
-        query = query.where(LeaveRequest.start_date >= start_date)
-    if end_date:
-        query = query.where(LeaveRequest.end_date <= end_date)
-    if employee_id:
-        query = query.where(LeaveRequest.employee_id == employee_id)
-
-    leaves = db.execute(query).scalars().all()
-
-    by_type: dict = {}
-    by_status: dict = {}
-    for leave in leaves:
-        lt = leave.leave_type or "Unknown"
-        by_type[lt] = by_type.get(lt, 0) + 1
-
-        st = leave.status or "Unknown"
-        by_status[st] = by_status.get(st, 0) + 1
-
-    return {
-        "total_leaves": len(leaves),
-        "by_leave_type": by_type,
-        "by_status": by_status,
-    }
-
-
-@router.get("/pending-approvals")
-def pending_approvals(db: Session = Depends(get_db)):
-    if LeaveRequest is None:
-        return {"count": 0, "data": [], "message": "LeaveRequest model not available"}
-
-    leaves = db.execute(
-        select(LeaveRequest).where(LeaveRequest.status == "Pending")
-    ).scalars().all()
-
-    data = [
-        {
-            "id": leave.id,
-            "leave_type": leave.leave_type,
-            "start_date": str(leave.start_date) if leave.start_date else None,
-            "end_date": str(leave.end_date) if leave.end_date else None,
-            "status": leave.status,
-        }
-        for leave in leaves
-    ]
-    return {"count": len(data), "data": data}
-
-
-@router.get("/utilization")
-def leave_utilization(
-    year: int = Query(...),
+    """
+    Top stat cards:
+    Total Employees | Avg Age | Total Leaves | Pending | Approved | Rejected
+    """
+    emp_stmt = select(Employee).where(Employee.is_active == True)
+    if department:
+        emp_stmt = emp_stmt.where(Employee.department == department)
+    if location:
+        emp_stmt = emp_stmt.where(Employee.location == location)
+    if grade:
+        emp_stmt = emp_stmt.where(Employee.grade == grade)
+    if gender:
+        emp_stmt = emp_stmt.where(Employee.gender == gender)
+ 
+    employees = db.execute(emp_stmt).scalars().all()
+    total_employees = len(employees)
+ 
+    from datetime import datetime
+    avg_age = 0.0
+    if employees:
+        ages = [
+            (datetime.today().date() - emp.date_of_birth).days // 365
+            for emp in employees if emp.date_of_birth
+        ]
+        avg_age = round(sum(ages) / len(ages), 1) if ages else 0.0
+ 
+    total_leaves = db.execute(select(func.count()).select_from(LeaveRequest)).scalar_one()
+    pending  = db.execute(select(func.count()).select_from(LeaveRequest).where(LeaveRequest.status == "pending")).scalar_one()
+    approved = db.execute(select(func.count()).select_from(LeaveRequest).where(LeaveRequest.status == "approved")).scalar_one()
+    rejected = db.execute(select(func.count()).select_from(LeaveRequest).where(LeaveRequest.status == "rejected")).scalar_one()
+ 
+    return LeaveReportStats(
+        total_employees=total_employees,
+        avg_age=avg_age,
+        total_leaves=total_leaves,
+        pending=pending,
+        approved=approved,
+        rejected=rejected,
+    )
+ 
+ 
+# ══════════════════════════════════════════════════════════════════════════════
+# EMPLOYEE-WISE LEAVE BALANCE
+# ══════════════════════════════════════════════════════════════════════════════
+ 
+@router.get("/balance", response_model=List[LeaveBalanceItem])
+def get_employee_leave_balance(
+    department: Optional[str] = Query(None),
+    location: Optional[str] = Query(None),
+    grade: Optional[str] = Query(None),
+    gender: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    if LeaveRequest is None:
-        return {
-            "year": year,
-            "monthly_utilization": [],
-            "message": "LeaveRequest model not available",
-        }
-
-    rows = db.execute(
+    """Employee-wise Leave Balance table."""
+    stmt = select(Employee).where(Employee.is_active == True)
+    if department:
+        stmt = stmt.where(Employee.department == department)
+    if location:
+        stmt = stmt.where(Employee.location == location)
+    if grade:
+        stmt = stmt.where(Employee.grade == grade)
+    if gender:
+        stmt = stmt.where(Employee.gender == gender)
+    if search:
+        stmt = stmt.where(
+            (Employee.first_name.ilike(f"%{search}%")) |
+            (Employee.last_name.ilike(f"%{search}%")) |
+            (Employee.employee_code.ilike(f"%{search}%"))
+        )
+ 
+    employees = db.execute(stmt).scalars().all()
+    result = []
+ 
+    for emp in employees:
+        # Count approved leaves per type from LeaveRequest
+        def used(leave_type):
+            return db.execute(
+                select(func.count()).select_from(LeaveRequest).where(
+                    LeaveRequest.leave_type == leave_type,
+                    LeaveRequest.status == "approved",
+                )
+            ).scalar_one()
+ 
+        casual_used = used("CASUAL")
+        sick_used   = used("SICK")
+        earned_used = used("EARNED")
+ 
+        result.append(LeaveBalanceItem(
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip(),
+            employee_id=emp.employee_code,
+            department=emp.department,
+            grade=emp.grade,
+            designation=emp.designation,
+            casual_leave_used=casual_used,
+            casual_leave_balance=max(CASUAL_TOTAL - casual_used, 0),
+            casual_leave_total=CASUAL_TOTAL,
+            sick_leave_used=sick_used,
+            sick_leave_balance=max(SICK_TOTAL - sick_used, 0),
+            sick_leave_total=SICK_TOTAL,
+            earned_leave_used=earned_used,
+            earned_leave_balance=max(EARNED_TOTAL - earned_used, 0),
+            earned_leave_total=EARNED_TOTAL,
+            total_balance=max(CASUAL_TOTAL - casual_used, 0) + max(SICK_TOTAL - sick_used, 0) + max(EARNED_TOTAL - earned_used, 0),
+        ))
+ 
+    return result
+ 
+ 
+# ══════════════════════════════════════════════════════════════════════════════
+# DEPARTMENT-WISE LEAVE LIABILITY
+# ══════════════════════════════════════════════════════════════════════════════
+ 
+@router.get("/dept-liability", response_model=List[DeptLeaveLiabilityItem])
+def get_dept_leave_liability(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Department-wise Leave Liability table."""
+    results = db.execute(
         select(
-            func.extract("month", LeaveRequest.start_date).label("month"),
-            func.count(LeaveRequest.id).label("leave_count"),
+            Employee.department,
+            func.count(Employee.id).label("emp_count"),
         )
-        .where(
-            func.extract("year", LeaveRequest.start_date) == year,
-            LeaveRequest.status == "Approved",
-        )
-        .group_by(func.extract("month", LeaveRequest.start_date))
-        .order_by(func.extract("month", LeaveRequest.start_date))
+        .where(Employee.is_active == True)
+        .group_by(Employee.department)
     ).all()
-
-    monthly: dict = {m: 0 for m in range(1, 13)}
-    for row in rows:
-        monthly[int(row.month)] = row.leave_count
-
-    return {
-        "year": year,
-        "monthly_utilization": [
-            {"month": m, "leave_count": count} for m, count in monthly.items()
-        ],
-    }
+ 
+    items = []
+    for r in results:
+        total_balance = r.emp_count * (CASUAL_TOTAL + SICK_TOTAL + EARNED_TOTAL)
+        encashment = total_balance * DAILY_RATE
+        items.append(DeptLeaveLiabilityItem(
+            department=r.department or "Unknown",
+            employees=r.emp_count,
+            total_balance_days=total_balance,
+            encashment_liability=encashment,
+        ))
+    return items
+ 
+ 
+# ══════════════════════════════════════════════════════════════════════════════
+# LEAVE TYPE UTILIZATION  (bar chart data)
+# ══════════════════════════════════════════════════════════════════════════════
+ 
+@router.get("/utilization", response_model=List[LeaveTypeUtilizationItem])
+def get_leave_utilization(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Leave Type Utilization — department-wise total leaves taken (bar chart)."""
+    results = db.execute(
+        select(
+            Employee.department,
+            func.count(LeaveRequest.id).label("total_leaves"),
+        )
+        .join(LeaveRequest, LeaveRequest.leave_type != None, isouter=True)
+        .where(Employee.is_active == True)
+        .group_by(Employee.department)
+    ).all()
+ 
+    return [
+        LeaveTypeUtilizationItem(
+            department=r.department or "Unknown",
+            total_leaves_taken=r.total_leaves or 0,
+        )
+        for r in results
+    ]
+ 
+ 
+# ══════════════════════════════════════════════════════════════════════════════
+# LEAVE ACCRUAL REGISTER
+# ══════════════════════════════════════════════════════════════════════════════
+ 
+@router.get("/accrual", response_model=List[LeaveAccrualItem])
+def get_leave_accrual_register(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Leave Accrual Register — shows monthly accrual entries per employee."""
+    employees = db.execute(
+        select(Employee).where(Employee.is_active == True)
+    ).scalars().all()
+ 
+    result = []
+    accrual_date = date(2024, 1, 1)
+ 
+    for emp in employees:
+        # Calculate months worked from joining date
+        joining = emp.joining_date
+        months = max(
+            (accrual_date.year - joining.year) * 12 + (accrual_date.month - joining.month),
+            0
+        )
+        balance_before = round(months * ACCRUAL_RATE, 2)
+        balance_after  = round(balance_before + ACCRUAL_RATE, 2)
+ 
+        result.append(LeaveAccrualItem(
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip(),
+            employee_id=emp.employee_code,
+            department=emp.department,
+            grade=emp.grade,
+            accrual_date=accrual_date,
+            leave_type="Earned Leave",
+            days_accrued=ACCRUAL_RATE,
+            balance_before=balance_before,
+            balance_after=balance_after,
+        ))
+ 
+    return result
+ 
+ 
+# ══════════════════════════════════════════════════════════════════════════════
+# CARRY-FORWARD LEAVE TRACKING
+# ══════════════════════════════════════════════════════════════════════════════
+ 
+@router.get("/carry-forward", response_model=List[CarryForwardItem])
+def get_carry_forward_tracking(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Carry-forward Leave Tracking table."""
+    employees = db.execute(
+        select(Employee).where(Employee.is_active == True)
+    ).scalars().all()
+ 
+    result = []
+    for emp in employees:
+        for leave_type, prev_bal, cf, allocated in [
+            ("Casual Leave", 2,  2,  12),
+            ("Earned Leave", 5,  5,  15),
+        ]:
+            result.append(CarryForwardItem(
+                employee_name=f"{emp.first_name} {emp.last_name or ''}".strip(),
+                employee_id=emp.employee_code,
+                department=emp.department,
+                grade=emp.grade,
+                leave_type=leave_type,
+                previous_year_balance=prev_bal,
+                carried_forward=cf,
+                current_year_allocated=allocated,
+                total_available=cf + allocated,
+            ))
+ 
+    return result
+ 
+ 
+# ══════════════════════════════════════════════════════════════════════════════
+# LEAVE ENCASHMENT LIABILITY BY DEPARTMENT
+# ══════════════════════════════════════════════════════════════════════════════
+ 
+@router.get("/encashment", response_model=List[LeaveEncashmentItem])
+def get_leave_encashment_liability(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Leave Encashment Liability by Department — department cards."""
+    results = db.execute(
+        select(
+            Employee.department,
+            func.count(Employee.id).label("emp_count"),
+        )
+        .where(Employee.is_active == True)
+        .group_by(Employee.department)
+    ).all()
+ 
+    return [
+        LeaveEncashmentItem(
+            department=r.department or "Unknown",
+            employees=r.emp_count,
+            total_balance_days=r.emp_count * EARNED_TOTAL,
+            encashment_liability=r.emp_count * EARNED_TOTAL * DAILY_RATE,
+        )
+        for r in results
+    ]
+ 
+ 
+# ══════════════════════════════════════════════════════════════════════════════
+# EMPLOYEE LEAVE RECORDS
+# ══════════════════════════════════════════════════════════════════════════════
+ 
+@router.get("/records", response_model=List[EmployeeLeaveRecordItem])
+def get_employee_leave_records(
+    department: Optional[str] = Query(None),
+    status: Optional[str] = Query(None, description="pending | approved | rejected"),
+    leave_type: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Employee Leave Records table — bottom of the page."""
+    emp_stmt = select(Employee).where(Employee.is_active == True)
+    if department:
+        emp_stmt = emp_stmt.where(Employee.department == department)
+    employees = db.execute(emp_stmt).scalars().all()
+    emp_map = {emp.id: emp for emp in employees}
+ 
+    leave_stmt = select(LeaveRequest)
+    if status:
+        leave_stmt = leave_stmt.where(LeaveRequest.status == status)
+    if leave_type:
+        leave_stmt = leave_stmt.where(LeaveRequest.leave_type == leave_type)
+    leaves = db.execute(leave_stmt).scalars().all()
+ 
+    result = []
+    for leave in leaves:
+        emp = emp_map.get(leave.employee_id)
+        if not emp:
+            continue
+        result.append(EmployeeLeaveRecordItem(
+            employee_code=emp.employee_code,
+            employee_name=f"{emp.first_name} {emp.last_name or ''}".strip(),
+            department=emp.department,
+            grade=emp.grade,
+            designation=emp.designation,
+            location=emp.location,
+            gender=emp.gender.value if emp.gender else None,
+            mobile=emp.mobile_number,
+            leave_type=leave.leave_type,
+            status=leave.status.value if hasattr(leave.status, 'value') else str(leave.status),
+        ))
+ 
+    return result
