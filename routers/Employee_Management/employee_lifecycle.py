@@ -1,7 +1,4 @@
 # routers/Employee_Management/employee_lifecycle.py
-# D5 - Employee Org & Lifecycle
-# Prefix: /api/employees/lifecycle
-# Tags: Employee Management
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
