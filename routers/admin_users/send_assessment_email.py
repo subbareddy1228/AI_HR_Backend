@@ -5,6 +5,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
 from dotenv import load_dotenv
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional
 
 load_dotenv()
 
@@ -138,4 +140,54 @@ async def send_assessment_email(request: AssessmentEmailRequest):
             status_code=500,
             detail=f"An error occurred: {str(e)}"
         )
+
+
+class GeneralEmailRequest(BaseModel):
+    to_email: List[EmailStr]
+    subject: str
+    body: str
+    is_html: bool = False
+    cc_email: Optional[List[EmailStr]] = None
+    bcc_email: Optional[List[EmailStr]] = None
+
+@router.post("/api/send-email")
+async def send_general_email(request: GeneralEmailRequest):
+    """
+    General-purpose email endpoint used by emailService.js
+    """
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = request.subject
+        msg['From'] = EMAIL_USER
+        msg['To'] = ", ".join(request.to_email)
+
+        if request.cc_email:
+            msg['Cc'] = ", ".join(request.cc_email)
+
+        if request.is_html:
+            msg.attach(MIMEText(request.body, 'html'))
+        else:
+            msg.attach(MIMEText(request.body, 'plain'))
+
+        all_recipients = request.to_email[:]
+        if request.cc_email:
+            all_recipients += request.cc_email
+        if request.bcc_email:
+            all_recipients += request.bcc_email
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.sendmail(EMAIL_USER, all_recipients, msg.as_string())
+
+        return {
+            "success": True,
+            "message": f"Email sent successfully to {', '.join(request.to_email)}"
+        }
+
+    except smtplib.SMTPAuthenticationError:
+        raise HTTPException(status_code=500, detail="Email authentication failed.")
+    except smtplib.SMTPException as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 

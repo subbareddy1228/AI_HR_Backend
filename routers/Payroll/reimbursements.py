@@ -20,6 +20,9 @@ from core.database import get_db
 from model.Payroll.reimbursement import Reimbursement
 from schema.Payroll.reimbursement import ReimbursementCreate, ReimbursementUpdate, ReimbursementResponse
 
+from fastapi.responses import FileResponse
+import os
+
 router = APIRouter(prefix="/reimbursements", tags=["Payroll"])
 
 
@@ -122,3 +125,29 @@ def delete_reimbursement(reimbursement_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Reimbursement not found")
     db.delete(obj)
     db.commit()
+
+
+@router.get("/receipts/{reimbursement_id}/download")
+def download_receipt(reimbursement_id: int, db: Session = Depends(get_db)):
+    """
+    Download the receipt file attached to a reimbursement claim.
+    """
+    result = db.execute(
+        select(Reimbursement).where(Reimbursement.id == reimbursement_id)
+    )
+    reimbursement = result.scalars().first()
+
+    if not reimbursement:
+        raise HTTPException(status_code=404, detail="Reimbursement not found")
+
+    if not reimbursement.receipt_path:
+        raise HTTPException(status_code=404, detail="No receipt file found for this claim")
+
+    if not os.path.exists(reimbursement.receipt_path):
+        raise HTTPException(status_code=404, detail="Receipt file not found on disk")
+
+    return FileResponse(
+        path=reimbursement.receipt_path,
+        filename=os.path.basename(reimbursement.receipt_path),
+        media_type="application/octet-stream"
+    )

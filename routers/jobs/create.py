@@ -8,7 +8,7 @@ from core.database import get_db
 import shutil, os
 from datetime import datetime
 
-router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
+router = APIRouter(tags=["Jobs"])
 
 UPLOAD_DIR = "uploads/jd_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)

@@ -52,3 +52,11 @@ def get_candidates(
     
     return {"id": candidate.id, "name": candidate.name, "email": candidate.email}
 
+@router.get("/list")
+def list_all_candidates(db: Session = Depends(get_db)):
+    """
+    Returns all candidates. Used by recruiter dashboard and candidate lists.
+    """
+    candidates = db.query(Candidate).all()
+    return [{"id": c.id, "name": c.name, "email": c.email} for c in candidates]
+

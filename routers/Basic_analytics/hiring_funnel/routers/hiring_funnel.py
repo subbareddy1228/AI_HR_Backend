@@ -86,3 +86,70 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         "added_candidates": added_candidates,
         "failed_rows": failed_rows
     })
+
+
+@router.get("/")
+def get_hiring_funnel(db: Session = Depends(get_db)):
+    """
+    Returns hiring funnel stats: counts per stage across all candidates.
+    """
+    from sqlalchemy import func
+
+    candidates = db.query(Candidate).all()
+
+    total = len(candidates)
+    call_screened = sum(1 for c in candidates if c.call_screening and c.call_screening > 0)
+    ai_interviewed = sum(1 for c in candidates if c.ai_interview and c.ai_interview > 0)
+    assessed = sum(1 for c in candidates if c.assessment and c.assessment > 0)
+    hired = sum(1 for c in candidates if c.hired and str(c.hired).lower() in ["yes", "1", "true"])
+
+    return {
+        "total_applicants": total,
+        "call_screening": call_screened,
+        "ai_interview": ai_interviewed,
+        "assessment": assessed,
+        "hired": hired,
+        "funnel": [
+            {"stage": "Applied", "count": total},
+            {"stage": "Call Screening", "count": call_screened},
+            {"stage": "AI Interview", "count": ai_interviewed},
+            {"stage": "Assessment", "count": assessed},
+            {"stage": "Hired", "count": hired},
+        ]
+    }
+
+
+@router.get("/time-to-hire")
+def get_time_to_hire(db: Session = Depends(get_db)):
+    """
+    Returns average time-to-hire metrics based on candidate applied_date.
+    """
+    from datetime import datetime
+
+    candidates = db.query(Candidate).all()
+
+    if not candidates:
+        return {"average_days": 0, "total_hired": 0, "data": []}
+
+    hired_candidates = [
+        c for c in candidates
+        if c.hired and str(c.hired).lower() in ["yes", "1", "true"] and c.applied_date
+    ]
+
+    if not hired_candidates:
+        return {"average_days": 0, "total_hired": 0, "data": []}
+
+    today = datetime.utcnow()
+    days_list = []
+    for c in hired_candidates:
+        applied = c.applied_date if isinstance(c.applied_date, datetime) else datetime.combine(c.applied_date, datetime.min.time())
+        delta = (today - applied).days
+        days_list.append({"name": c.candidate_name, "days": delta, "role": c.role})
+
+    avg_days = sum(d["days"] for d in days_list) / len(days_list) if days_list else 0
+
+    return {
+        "average_days": round(avg_days, 1),
+        "total_hired": len(hired_candidates),
+        "data": days_list
+    }

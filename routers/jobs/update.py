@@ -8,7 +8,7 @@ from model.models import Job, User
 from core.database import get_db
 from .dependencies import require_roles
 
-router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
+router = APIRouter(tags=["Jobs"])
 @router.put("/update/{job_id}", response_model=Job)
 def update_job(
     job_id: int,

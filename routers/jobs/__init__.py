@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from . import create, update, delete, search, list
 
-router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
+router = APIRouter(tags=["Jobs"])
 
 # include routers from each file
 router.include_router(create.router)
