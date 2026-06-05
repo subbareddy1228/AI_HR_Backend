@@ -4,162 +4,169 @@ from typing import List
 from datetime import datetime
 
 from core.database import get_db
-from model.HR_Operations.hr_helpdesk import HRHelpdesk
-from schema.HR_Operations.hr_helpdesk import (
-    HRHelpdeskCreate,
-    HRHelpdeskUpdate,
-    HRHelpdeskResponse,
+from model.HR_Operations.employee_confirmation import EmployeeConfirmation
+from schema.HR_Operations.employee_confirmation import (
+    EmployeeConfirmationCreate,
+    EmployeeConfirmationUpdate,
+    EmployeeConfirmationResponse,
 )
 
 router = APIRouter(
-    prefix="/api/hr-operations/helpdesk",
-    tags=["HR Operations - HR Helpdesk"],
+    prefix="/api/hr-operations/employee-confirmations",
+    tags=["HR Operations - Employee Confirmation"],
 )
 
 
 # ──────────────────────────────────────────────
-# CREATE Ticket
+# CREATE Employee Confirmation (start probation)
 # ──────────────────────────────────────────────
-@router.post("/", response_model=HRHelpdeskResponse, status_code=status.HTTP_201_CREATED)
-def create_ticket(payload: HRHelpdeskCreate, db: Session = Depends(get_db)):
-    """Raise a helpdesk ticket for an employee."""
-    valid_categories = {"PAYROLL", "LEAVE", "POLICY", "ONBOARDING", "OTHER"}
-    if payload.category.upper() not in valid_categories:
+@router.post("/", response_model=EmployeeConfirmationResponse, status_code=status.HTTP_201_CREATED)
+def create_confirmation(payload: EmployeeConfirmationCreate, db: Session = Depends(get_db)):
+    """Create a probation / confirmation record for an employee."""
+    if payload.probation_end_date <= payload.probation_start_date:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid category. Allowed: {valid_categories}",
+            detail="probation_end_date must be after probation_start_date",
         )
 
-    valid_priorities = {"LOW", "MEDIUM", "HIGH", "URGENT"}
-    if payload.priority and payload.priority.upper() not in valid_priorities:
+    # Prevent duplicate active confirmation for same employee
+    existing = (
+        db.query(EmployeeConfirmation)
+        .filter(
+            EmployeeConfirmation.employee_id == payload.employee_id,
+            EmployeeConfirmation.status == "PENDING",
+        )
+        .first()
+    )
+    if existing:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid priority. Allowed: {valid_priorities}",
+            detail="An active probation record already exists for this employee",
         )
 
-    ticket = HRHelpdesk(**payload.model_dump())
-    db.add(ticket)
+    confirmation = EmployeeConfirmation(**payload.model_dump())
+    db.add(confirmation)
     db.commit()
-    db.refresh(ticket)
-    return ticket
+    db.refresh(confirmation)
+    return confirmation
 
 
 # ──────────────────────────────────────────────
-# LIST ALL Tickets
+# LIST ALL Confirmations
 # ──────────────────────────────────────────────
-@router.get("/", response_model=List[HRHelpdeskResponse])
-def list_tickets(
+@router.get("/", response_model=List[EmployeeConfirmationResponse])
+def list_confirmations(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
 ):
-    """Retrieve all helpdesk tickets, newest first."""
-    tickets = (
-        db.query(HRHelpdesk)
-        .order_by(HRHelpdesk.created_at.desc())
+    """Retrieve all employee confirmation records, newest first."""
+    records = (
+        db.query(EmployeeConfirmation)
+        .order_by(EmployeeConfirmation.created_at.desc())
         .offset(skip)
         .limit(limit)
         .all()
     )
-    return tickets
+    return records
 
 
 # ──────────────────────────────────────────────
-# GET Tickets by Employee ID
+# GET Confirmation by Employee ID
 # ──────────────────────────────────────────────
-@router.get("/employee/{employee_id}", response_model=List[HRHelpdeskResponse])
-def get_tickets_by_employee(employee_id: int, db: Session = Depends(get_db)):
-    """Retrieve all tickets raised by a specific employee."""
-    tickets = (
-        db.query(HRHelpdesk)
-        .filter(HRHelpdesk.employee_id == employee_id)
-        .order_by(HRHelpdesk.created_at.desc())
+@router.get("/employee/{employee_id}", response_model=List[EmployeeConfirmationResponse])
+def get_by_employee(employee_id: int, db: Session = Depends(get_db)):
+    """Retrieve all confirmation records for a specific employee."""
+    records = (
+        db.query(EmployeeConfirmation)
+        .filter(EmployeeConfirmation.employee_id == employee_id)
+        .order_by(EmployeeConfirmation.created_at.desc())
         .all()
     )
-    return tickets
+    return records
 
 
 # ──────────────────────────────────────────────
-# GET Open / Pending Tickets (for HR dashboard)
+# GET Confirmation by ID
 # ──────────────────────────────────────────────
-@router.get("/open", response_model=List[HRHelpdeskResponse])
-def get_open_tickets(db: Session = Depends(get_db)):
-    """Retrieve all tickets with OPEN or IN_PROGRESS status."""
-    tickets = (
-        db.query(HRHelpdesk)
-        .filter(HRHelpdesk.status.in_(["OPEN", "IN_PROGRESS"]))
-        .order_by(HRHelpdesk.created_at.asc())
-        .all()
+@router.get("/{confirmation_id}", response_model=EmployeeConfirmationResponse)
+def get_confirmation(confirmation_id: int, db: Session = Depends(get_db)):
+    """Retrieve a single confirmation record by ID."""
+    record = (
+        db.query(EmployeeConfirmation)
+        .filter(EmployeeConfirmation.id == confirmation_id)
+        .first()
     )
-    return tickets
+    if not record:
+        raise HTTPException(status_code=404, detail="Confirmation record not found")
+    return record
 
 
 # ──────────────────────────────────────────────
-# GET Ticket by ID
+# UPDATE Confirmation (confirm / extend / terminate)
 # ──────────────────────────────────────────────
-@router.get("/{ticket_id}", response_model=HRHelpdeskResponse)
-def get_ticket(ticket_id: int, db: Session = Depends(get_db)):
-    """Retrieve a single helpdesk ticket by ID."""
-    ticket = db.query(HRHelpdesk).filter(HRHelpdesk.id == ticket_id).first()
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-    return ticket
-
-
-# ──────────────────────────────────────────────
-# UPDATE Ticket (assign / resolve / close)
-# ──────────────────────────────────────────────
-@router.patch("/{ticket_id}", response_model=HRHelpdeskResponse)
-def update_ticket(
-    ticket_id: int,
-    payload: HRHelpdeskUpdate,
+@router.patch("/{confirmation_id}", response_model=EmployeeConfirmationResponse)
+def update_confirmation(
+    confirmation_id: int,
+    payload: EmployeeConfirmationUpdate,
     db: Session = Depends(get_db),
 ):
-    """Update ticket status, assignee, priority or resolution."""
-    ticket = db.query(HRHelpdesk).filter(HRHelpdesk.id == ticket_id).first()
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Ticket not found")
+    """Update confirmation status, rating, extended date or remarks."""
+    record = (
+        db.query(EmployeeConfirmation)
+        .filter(EmployeeConfirmation.id == confirmation_id)
+        .first()
+    )
+    if not record:
+        raise HTTPException(status_code=404, detail="Confirmation record not found")
 
-    valid_statuses = {"OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"}
+    valid_statuses = {"PENDING", "CONFIRMED", "EXTENDED", "TERMINATED"}
     if payload.status and payload.status.upper() not in valid_statuses:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid status. Allowed: {valid_statuses}",
         )
 
-    valid_priorities = {"LOW", "MEDIUM", "HIGH", "URGENT"}
-    if payload.priority and payload.priority.upper() not in valid_priorities:
+    valid_ratings = {"EXCELLENT", "GOOD", "SATISFACTORY", "POOR"}
+    if payload.performance_rating and payload.performance_rating.upper() not in valid_ratings:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid priority. Allowed: {valid_priorities}",
+            detail=f"Invalid performance_rating. Allowed: {valid_ratings}",
+        )
+
+    # If status is EXTENDED, extended_till is required
+    if payload.status == "EXTENDED" and not payload.extended_till:
+        raise HTTPException(
+            status_code=400,
+            detail="extended_till date is required when status is EXTENDED",
         )
 
     for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(ticket, field, value)
+        setattr(record, field, value)
 
-    # Auto-set resolved_at when status changes to RESOLVED
-    if payload.status and payload.status.upper() == "RESOLVED" and not ticket.resolved_at:
-        ticket.resolved_at = datetime.utcnow()
-
-    ticket.updated_at = datetime.utcnow()
+    record.updated_at = datetime.utcnow()
     db.commit()
-    db.refresh(ticket)
-    return ticket
+    db.refresh(record)
+    return record
 
 
 # ──────────────────────────────────────────────
-# DELETE Ticket
+# DELETE Confirmation
 # ──────────────────────────────────────────────
-@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_ticket(ticket_id: int, db: Session = Depends(get_db)):
-    """Delete a helpdesk ticket (only if OPEN)."""
-    ticket = db.query(HRHelpdesk).filter(HRHelpdesk.id == ticket_id).first()
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-    if ticket.status != "OPEN":
+@router.delete("/{confirmation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_confirmation(confirmation_id: int, db: Session = Depends(get_db)):
+    """Delete a confirmation record (only if still PENDING)."""
+    record = (
+        db.query(EmployeeConfirmation)
+        .filter(EmployeeConfirmation.id == confirmation_id)
+        .first()
+    )
+    if not record:
+        raise HTTPException(status_code=404, detail="Confirmation record not found")
+    if record.status != "PENDING":
         raise HTTPException(
             status_code=400,
-            detail="Only OPEN tickets can be deleted",
+            detail="Only PENDING confirmation records can be deleted",
         )
-    db.delete(ticket)
+    db.delete(record)
     db.commit()

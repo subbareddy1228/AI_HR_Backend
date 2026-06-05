@@ -358,10 +358,17 @@ from routers.Company_Settings import currency, financial_year, localization, pol
 from routers.Payroll.salary_slip import router as salary_slip_router
 from routers.Forms_Workflows.approvals import router as approvals_router
 from routers.Employee_Management.org_hierarchy import router as org_hierarchy_router
+<<<<<<< HEAD
 
 # HR Operations - Letters & Exit Management
 from routers.HR_Operations.letter_generation import router as letter_generation
 from routers.HR_Operations.exit_management import router as exit_management
+=======
+# from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
+ 
+from routers.Payroll.reimbursements import router as reimbursements_router
+from routers.Payroll.loans_advances import router as loans_advances_router
+>>>>>>> 14a8774a80525f4e35580fc630b2b26a29fd8c9f
 
 
 # CORS
@@ -515,6 +522,10 @@ app.include_router(approvals_router)
 # Org Hierarchy
 app.include_router(org_hierarchy_router)
 
+
+#payroll managemet
+app.include_router(reimbursements_router)
+app.include_router(loans_advances_router)
 
 # STATIC FILES
 if not os.path.exists("uploads"):
