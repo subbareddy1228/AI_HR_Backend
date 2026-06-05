@@ -105,6 +105,10 @@ from routers.HR_Operations import exit_management, letter_generation, notice_per
 from routers.HR_Automation.attendance.routers import shift_management, holiday_calendar, work_hour_rules, attendance_reports as att_rpt
 from routers.Reports import employee_reports, attendance_reports as rep_att, leave_reports, payroll_reports as rep_pay, compliance_reports, custom_report_builder, executive_dashboard, ai_insights
 from routers.Forms_Workflows import custom_form_builder, workflow_engine, request_management, surveys, approvals
+from routers.Productivity.okr_router import router as okr_router
+from routers.Productivity.task_router import router as prod_task_router
+from routers.Productivity.time_log_router import router as time_log_router
+from routers.Productivity.employee_score_router import router as employee_score_router
 from routers.candidates.auth import router as candidate_auth_router
 from super_admin import roles_permissions, multi_tenant, company_settings_admin
 
@@ -304,6 +308,12 @@ app.include_router(compliance_reports.router, prefix="/api/reports", tags=["Repo
 app.include_router(custom_report_builder.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(executive_dashboard.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(ai_insights.router, prefix="/api/reports", tags=["Reports"])
+
+# Productivity
+app.include_router(okr_router,           prefix="/api/productivity", tags=["Productivity"])
+app.include_router(prod_task_router,     prefix="/api/productivity", tags=["Productivity"])
+app.include_router(time_log_router,      prefix="/api/productivity", tags=["Productivity"])
+app.include_router(employee_score_router, prefix="/api/productivity", tags=["Productivity"])
 
 # Forms & Workflows
 app.include_router(custom_form_builder.router, prefix="/api/forms", tags=["Forms & Workflows"])
