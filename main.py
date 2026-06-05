@@ -359,6 +359,17 @@ from routers.Payroll.salary_slip import router as salary_slip_router
 from routers.Forms_Workflows.approvals import router as approvals_router
 from routers.Employee_Management.org_hierarchy import router as org_hierarchy_router
 
+
+# HR Operations - Letters & Exit Management
+from routers.HR_Operations.letter_generation import router as letter_generation
+from routers.HR_Operations.exit_management import router as exit_management
+# from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
+ 
+from routers.Payroll.reimbursements import router as reimbursements_router
+from routers.Payroll.loans_advances import router as loans_advances_router
+
+
+
 # CORS
 app.add_middleware(
     CORSMiddleware,

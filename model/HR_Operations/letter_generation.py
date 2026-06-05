@@ -63,7 +63,7 @@ class HRLetterTemplate(SQLModel, table=True):
     body_html: str
     variables: Optional[str] = None        # JSON list of variable names
     is_active: bool = Field(default=True)
-    created_by: int = Field(foreign_key="users.id")
+    created_by: int = Field()
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     is_deleted: bool = Field(default=False)
@@ -77,14 +77,14 @@ class HRLetter(SQLModel, table=True):
     __tablename__ = "hr_letters"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    employee_id: int = Field(foreign_key="users.id", index=True)
+    employee_id: int = Field(index=True)
     template_id: Optional[int] = Field(default=None, foreign_key="hr_letter_templates.id")
     letter_type: LetterType
     subject: str
     body_html: str
     pdf_path: Optional[str] = None
     status: LetterStatus = Field(default=LetterStatus.DRAFT)
-    issued_by: int = Field(foreign_key="users.id")
+    issued_by: int = Field()
     issued_on: Optional[date] = None
     sent_at: Optional[datetime] = None
     revoked_at: Optional[datetime] = None
