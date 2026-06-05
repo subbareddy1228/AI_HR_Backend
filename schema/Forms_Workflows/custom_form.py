@@ -1,53 +1,35 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional, Any
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, JSON
+from core.database import Base
 from datetime import datetime
 
 
-# ── CustomForm schemas ─────────────────────────────────────────────────────────
+class CustomForm(Base):
+    __tablename__ = "custom_forms"
 
-class CustomFormBase(BaseModel):
-    form_name: str
-    form_category: str
-    description: Optional[str] = None
-    fields_schema: Optional[Any] = None
-    is_active: bool = True
-    created_by: Optional[str] = None
-
-
-class CustomFormCreate(CustomFormBase):
-    pass
-
-
-class CustomFormUpdate(BaseModel):
-    form_name: Optional[str] = None
-    form_category: Optional[str] = None
-    description: Optional[str] = None
-    fields_schema: Optional[Any] = None
-    is_active: Optional[bool] = None
+    id              = Column(Integer, primary_key=True, index=True)
+    form_name       = Column(String(255), nullable=False)
+    form_category   = Column(String(50), nullable=False)   # Onboarding/Leave/Expense/Survey/Exit/Other
+    description     = Column(Text, nullable=True)
+    fields_schema   = Column(JSON, nullable=True)          # list of field definitions
+    is_active       = Column(Boolean, default=True)
+    is_published    = Column(Boolean, default=False)
+    version         = Column(Integer, default=1)
+    created_by      = Column(String(100), nullable=True)
+    created_at      = Column(DateTime, default=datetime.utcnow)
+    updated_at      = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class CustomFormResponse(CustomFormBase):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-    model_config = ConfigDict(from_attributes=True)
+class FormSubmission(Base):
+    __tablename__ = "form_submissions"
 
-
-# ── FormSubmission schemas ─────────────────────────────────────────────────────
-
-class FormSubmissionBase(BaseModel):
-    form_id: int
-    employee_id: Optional[int] = None
-    submitted_by: Optional[str] = None
-    form_data: Optional[Any] = None
-    status: str = "Submitted"
-
-
-class FormSubmissionCreate(FormSubmissionBase):
-    pass
-
-
-class FormSubmissionResponse(FormSubmissionBase):
-    id: int
-    submitted_at: datetime
-    model_config = ConfigDict(from_attributes=True)
+    id              = Column(Integer, primary_key=True, index=True)
+    form_id         = Column(Integer, ForeignKey("custom_forms.id"), nullable=False)
+    employee_id     = Column(Integer, nullable=True)
+    employee_name   = Column(String(255), nullable=True)
+    submitted_by    = Column(String(100), nullable=True)
+    form_data       = Column(JSON, nullable=True)          # field key → value
+    status          = Column(String(50), default="Submitted")  # Draft/Submitted/Reviewed/Approved/Rejected
+    reviewed_by     = Column(String(100), nullable=True)
+    review_notes    = Column(Text, nullable=True)
+    submitted_at    = Column(DateTime, default=datetime.utcnow)
+    reviewed_at     = Column(DateTime, nullable=True)

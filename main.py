@@ -101,6 +101,7 @@ from routers.HR_Operations.Asset_Management import assets, asset_allocation, ass
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile
 from routers.Payroll.salary_slip import router as salary_slip_router
 from routers.Forms_Workflows.approvals import router as approvals_router
+from routers.Forms_Workflows.custom_form_builder import router as custom_form_router
 
 from routers.Employee_Management.org_hierarchy import router as org_hierarchy_router
 # from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
@@ -250,8 +251,10 @@ app.include_router(asset_return.router)
 app.include_router(asset_maintenance.router)
 app.include_router(asset_insurance.router)
 
-#forms_workflows 
+#forms_workflows
 app.include_router(approvals_router)
+app.include_router(custom_form_router)
+
 
 #org hierarchy
 app.include_router(org_hierarchy_router)
