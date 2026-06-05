@@ -1,130 +1,140 @@
 # schema/Employee_Management/employee_lifecycle.py
-# Pydantic schemas for Employee Lifecycle
-# This file does NOT exist yet — create it here
+# D5 - Employee Org & Lifecycle
+# Pydantic schemas: Create / Update / Response / Analytics
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from datetime import date, datetime
 
+# ─── Allowed event types (for validation) ────────────────────────────────────
+ALLOWED_EVENT_TYPES = {
+    "Joining", "Probation_Start", "Probation_Extension", "Confirmation",
+    "Promotion", "Demotion", "Department_Change", "Location_Change",
+    "Manager_Change", "Designation_Change", "Grade_Change", "Salary_Revision",
+    "Contract_Renewal", "Resignation", "Termination", "Retirement",
+    "Rehire", "Transfer", "Suspension", "Reinstatement",
+    "Work_Anniversary", "Background_Verification", "Training_Completion",
+}
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Generic (used by admin / migration endpoints)
-# ──────────────────────────────────────────────────────────────────────────────
 
-class LifecycleEventBase(BaseModel):
+# ─── Create ───────────────────────────────────────────────────────────────────
+class LifecycleEventCreate(BaseModel):
     employee_id: int
-    stage: str
-    status: Optional[str] = "PENDING"
-    effective_date: date
-    end_date: Optional[date] = None
+    event_type: str
+    event_date: date
+    effective_date: Optional[date] = None
+
     from_value: Optional[str] = None
     to_value: Optional[str] = None
-    sub_type: Optional[str] = None
-    remarks: Optional[str] = None
+
+    from_department: Optional[str] = None
+    to_department: Optional[str] = None
+    from_designation: Optional[str] = None
+    to_designation: Optional[str] = None
+    from_grade: Optional[str] = None
+    to_grade: Optional[str] = None
+    from_location: Optional[str] = None
+    to_location: Optional[str] = None
+    from_manager_id: Optional[int] = None
+    to_manager_id: Optional[int] = None
+    from_salary: Optional[str] = None
+    to_salary: Optional[str] = None
+
     initiated_by: Optional[int] = None
     approved_by: Optional[int] = None
+    approval_status: Optional[str] = "Approved"
+
+    remarks: Optional[str] = None
+    reference_document: Optional[str] = None
+
+    @field_validator("event_type")
+    @classmethod
+    def validate_event_type(cls, v):
+        if v not in ALLOWED_EVENT_TYPES:
+            raise ValueError(f"event_type must be one of {sorted(ALLOWED_EVENT_TYPES)}")
+        return v
+
+    @field_validator("approval_status")
+    @classmethod
+    def validate_approval_status(cls, v):
+        if v and v not in ("Pending", "Approved", "Rejected"):
+            raise ValueError("approval_status must be Pending, Approved, or Rejected")
+        return v
 
 
-class LifecycleEventCreate(LifecycleEventBase):
-    pass
-
-
+# ─── Update ───────────────────────────────────────────────────────────────────
 class LifecycleEventUpdate(BaseModel):
-    status: Optional[str] = None
-    end_date: Optional[date] = None
+    event_type: Optional[str] = None
+    event_date: Optional[date] = None
+    effective_date: Optional[date] = None
     from_value: Optional[str] = None
     to_value: Optional[str] = None
-    remarks: Optional[str] = None
+    from_department: Optional[str] = None
+    to_department: Optional[str] = None
+    from_designation: Optional[str] = None
+    to_designation: Optional[str] = None
+    from_grade: Optional[str] = None
+    to_grade: Optional[str] = None
+    from_location: Optional[str] = None
+    to_location: Optional[str] = None
+    from_manager_id: Optional[int] = None
+    to_manager_id: Optional[int] = None
+    from_salary: Optional[str] = None
+    to_salary: Optional[str] = None
+    initiated_by: Optional[int] = None
     approved_by: Optional[int] = None
+    approval_status: Optional[str] = None
+    remarks: Optional[str] = None
+    reference_document: Optional[str] = None
 
 
-class LifecycleEventResponse(LifecycleEventBase):
+# ─── Response ─────────────────────────────────────────────────────────────────
+class LifecycleEventResponse(BaseModel):
     id: int
+    employee_id: int
+    event_type: str
+    event_date: Optional[date] = None
+    effective_date: Optional[date] = None
+    from_value: Optional[str] = None
+    to_value: Optional[str] = None
+    from_department: Optional[str] = None
+    to_department: Optional[str] = None
+    from_designation: Optional[str] = None
+    to_designation: Optional[str] = None
+    from_grade: Optional[str] = None
+    to_grade: Optional[str] = None
+    from_location: Optional[str] = None
+    to_location: Optional[str] = None
+    from_manager_id: Optional[int] = None
+    to_manager_id: Optional[int] = None
+    from_salary: Optional[str] = None
+    to_salary: Optional[str] = None
+    initiated_by: Optional[int] = None
+    approved_by: Optional[int] = None
+    approval_status: Optional[str] = None
+    remarks: Optional[str] = None
+    reference_document: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Stage-specific request schemas
-# ──────────────────────────────────────────────────────────────────────────────
+# ─── Analytics response schemas ───────────────────────────────────────────────
+class LifecycleEventCount(BaseModel):
+    event_type: str
+    count: int
 
-class JoiningCreate(BaseModel):
-    """Called when a candidate is converted to an employee."""
+
+class LifecycleAnalyticsResponse(BaseModel):
     employee_id: int
-    effective_date: date
-    remarks: Optional[str] = None
-    initiated_by: Optional[int] = None
-
-
-class ProbationCreate(BaseModel):
-    """Start a probation period for a new joiner."""
-    employee_id: int
-    effective_date: date       # probation start date
-    end_date: date             # probation end date
-    remarks: Optional[str] = None
-    initiated_by: Optional[int] = None
-
-
-class ProbationReview(BaseModel):
-    """
-    HR / Manager submits the probation review outcome.
-    status must be: CONFIRMED | EXTENDED | TERMINATED
-    """
-    status: str
-    end_date: Optional[date] = None    # new end date if extended
-    remarks: Optional[str] = None
-    approved_by: Optional[int] = None
-
-
-class TransferCreate(BaseModel):
-    """Raise a transfer request."""
-    employee_id: int
-    from_value: str            # current department or location
-    to_value: str              # target department or location
-    sub_type: str              # INTER_DEPARTMENT | INTER_LOCATION | INTER_COMPANY
-    effective_date: date
-    remarks: Optional[str] = None
-    initiated_by: Optional[int] = None
-
-
-class PromotionCreate(BaseModel):
-    """Raise a promotion request."""
-    employee_id: int
-    from_value: str            # current designation
-    to_value: str              # new designation
-    effective_date: date
-    remarks: Optional[str] = None
-    initiated_by: Optional[int] = None
-
-
-class ExitCreate(BaseModel):
-    """Start the exit process for an employee."""
-    employee_id: int
-    sub_type: str              # RESIGNATION | TERMINATION | RETIREMENT | ABSCONDING
-    effective_date: date       # resignation submission / notice start date
-    end_date: Optional[date] = None    # last working day
-    remarks: Optional[str] = None
-    initiated_by: Optional[int] = None
-
-
-class StatusUpdate(BaseModel):
-    """
-    Generic approve / reject / complete action for any PENDING event.
-    Used by the /action endpoint.
-    status: APPROVED | REJECTED | COMPLETED | CANCELLED
-    """
-    status: str
-    remarks: Optional[str] = None
-    approved_by: Optional[int] = None
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Timeline response
-# ──────────────────────────────────────────────────────────────────────────────
-
-class EmployeeTimeline(BaseModel):
-    """Full lifecycle timeline for one employee."""
-    employee_id: int
-    events: List[LifecycleEventResponse]
+    total_events: int
+    events_by_type: List[LifecycleEventCount]
+    tenure_days: Optional[int] = None
+    joining_date: Optional[date] = None
+    current_designation: Optional[str] = None
+    current_department: Optional[str] = None
+    promotions_count: int = 0
+    transfers_count: int = 0
+    is_confirmed: bool = False
+    current_status: Optional[str] = None  # Active / Resigned / Terminated etc.
