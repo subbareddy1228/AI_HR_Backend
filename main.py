@@ -92,7 +92,7 @@ from routers.admin_users.send_assessment_email import router as email_router
 from routers.offers.offer_template_router import router as offer_template_router
 from routers.offers.offer_tracking_router import router as offer_tracking_router
 from routers.HR_Automation.Onboarding.routers import candidates as onboard_candidates, uploads
-from routers.HR_Automation.attendance import daily, punches, shift
+from routers.HR_Automation.attendance import attendance_capture, daily_punches, daily_attendance, monthly_attendance, shift
 from routers.AI_Interview_Bot.routes import interviews
 from routers.CRM import contacts, company, deals, leads, pipelines, activities, analytics,projects, clients, tasks
 from routers.onboarding.admin_candidates import router as admin_candidates_router
@@ -193,9 +193,13 @@ app.include_router(exam.router, prefix="/api/assessment/aptitude")
 app.include_router(aptitude_results.router, prefix="/api/assessment/aptitude")
 app.include_router(hiring_funnel_router, prefix="/api/hiring_funnel")
 app.include_router(time_hire_router, prefix="/api/time_to_hire")
-app.include_router(daily.router, prefix="/attendance",tags=["Attendance Daily"])
-app.include_router(punches.router, prefix="/attendance/punches", tags=["Attendance Punches"])
+app.include_router(attendance_capture.router, prefix="/attendance",tags=["Attendance Capture"])
+app.include_router(daily_punches.router,prefix="/api/attendance/daily-punches", tags=["Daily Punches"])
+app.include_router(daily_attendance.router,  prefix="/api/attendance/daily", tags=["Daily Attendance"])
+app.include_router(monthly_attendance.router, prefix="/monthly", tags=["Monthly Attendance"])
 app.include_router(shift.router, prefix="/attendance/shifts", tags=["Shift Management"])
+
+
 app.include_router(documents_router, prefix="/api/documents")
 app.include_router(signatures_router, prefix="/api/signatures")
 app.include_router(onboard_candidates.router, prefix="/api/candidates")
