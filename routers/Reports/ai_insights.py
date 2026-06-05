@@ -7,10 +7,10 @@ from typing import Optional, List
 from datetime import date, timedelta
 
 from core.database import get_db
-from model.onboarding.employee           import Employee
-from model.models                        import Attendance, LeaveRequest, LeaveStatus
-from model.Payroll.payroll_run           import PayrollRun, PayrollRunDetail
-from model.HR_Operations.promotion       import Promotion
+from model.onboarding.employee import Employee
+from model.models import AttendanceRecord as Attendance, LeaveRequest, LeaveStatus
+from model.Payroll.payroll_run import PayrollRun, PayrollRunDetail
+from model.HR_Operations.promotion import Promotion
 from model.HR_Operations.exit_management import ExitManagement
 
 from schema.Reports.ai_insights import (
