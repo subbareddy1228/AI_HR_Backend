@@ -105,7 +105,8 @@ from routers.Forms_Workflows.approvals import router as approvals_router
 from routers.Employee_Management.org_hierarchy import router as org_hierarchy_router
 # from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
  
-
+from routers.Payroll.reimbursements import router as reimbursements_router
+from routers.Payroll.loans_advances import router as loans_advances_router
 
 
 # CORS
@@ -256,6 +257,10 @@ app.include_router(approvals_router)
 #org hierarchy
 app.include_router(org_hierarchy_router)
 # app.include_router(employee_lifecycle_router)
+
+#payroll managemet
+app.include_router(reimbursements_router)
+app.include_router(loans_advances_router)
 
 # STATIC FILES
 
