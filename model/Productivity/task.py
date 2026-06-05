@@ -1,18 +1,30 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
-from core.database import Base
+from sqlalchemy import Column, Integer, String, Text, Date, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from datetime import datetime
+from app.core.database import Base
 
+class Task(Base):
+    __tablename__ = "tasks"
 
-class ProductivityTask(Base):
-    __tablename__ = "productivity_tasks"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text)
 
-    id          = Column(Integer, primary_key=True, index=True)
-    title       = Column(String(500), nullable=False)
-    assignee    = Column(String(255), nullable=True)
-    department  = Column(String(100), nullable=True)
-    priority    = Column(String(20), default="Medium")    # Low / Medium / High / Critical
-    status      = Column(String(50), default="To Do")     # To Do / In Progress / In Review / Done
-    due_date    = Column(String(20), nullable=True)        # stored as ISO date string
-    tags        = Column(Text, nullable=True)              # comma-separated
-    created_at  = Column(DateTime, default=datetime.utcnow)
-    updated_at  = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    assigned_to = Column(Integer, ForeignKey("employee.id"), nullable=True)
+
+    status = Column(String, default="Pending", index=True)
+    due_date = Column(Date, nullable=True)
+
+    #  COMPLETION TRACKING
+    completed_at = Column(DateTime, nullable=True)
+
+    project = relationship("Project", back_populates="tasks")
+    team = relationship("Team", back_populates="tasks")
+
+    assignee = relationship(
+        "Employee",
+        back_populates="tasks",
+        foreign_keys=[assigned_to]
+    )

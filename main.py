@@ -105,10 +105,26 @@ from routers.HR_Operations import exit_management, letter_generation, notice_per
 from routers.HR_Automation.attendance.routers import shift_management, holiday_calendar, work_hour_rules, attendance_reports as att_rpt
 from routers.Reports import employee_reports, attendance_reports as rep_att, leave_reports, payroll_reports as rep_pay, compliance_reports, custom_report_builder, executive_dashboard, ai_insights
 from routers.Forms_Workflows import custom_form_builder, workflow_engine, request_management, surveys, approvals
-from routers.Productivity.okr_router import router as okr_router
-from routers.Productivity.task_router import router as prod_task_router
-from routers.Productivity.time_log_router import router as time_log_router
-from routers.Productivity.employee_score_router import router as employee_score_router
+
+
+
+from routers.Productivity.productivity_router import router as productivity_router
+from routers.Productivity.activity_router import router as activity_router
+from routers.Productivity.projects_router import router as projects_router
+from routers.Productivity.tasks_router import router as prod_tasks_router
+from routers.Productivity.screenshot_router import router as screenshot_router
+from routers.Productivity.analytics_router import router as prod_analytics_router
+from routers.Productivity.insights_router import router as insights_router
+from routers.Productivity.alerts_router import router as alerts_router
+from routers.Productivity.admin_productivity_router import router as admin_productivity_router
+from routers.Productivity.admin_reports_router import router as admin_reports_router
+from routers.Productivity.admin_config_router import router as admin_config_router
+from routers.Productivity.dashboard_router import router as prod_dashboard_router
+from routers.Productivity.realtime_router import router as realtime_router
+from routers.Productivity.time_tracking_router import router as time_tracking_router
+from routers.Productivity.download_router import router as download_router
+from routers.Productivity.settings_router import router as prod_settings_router
+from routers.Productivity.notifications_router import router as prod_notifications_router
 from routers.candidates.auth import router as candidate_auth_router
 from super_admin import roles_permissions, multi_tenant, company_settings_admin
 
@@ -310,10 +326,26 @@ app.include_router(executive_dashboard.router, prefix="/api/reports", tags=["Rep
 app.include_router(ai_insights.router, prefix="/api/reports", tags=["Reports"])
 
 # Productivity
-app.include_router(okr_router,           prefix="/api/productivity", tags=["Productivity"])
-app.include_router(prod_task_router,     prefix="/api/productivity", tags=["Productivity"])
-app.include_router(time_log_router,      prefix="/api/productivity", tags=["Productivity"])
-app.include_router(employee_score_router, prefix="/api/productivity", tags=["Productivity"])
+
+
+
+app.include_router(productivity_router,       prefix="/api/productivity", tags=["Productivity"])
+app.include_router(activity_router,           prefix="/api/productivity", tags=["Productivity"])
+app.include_router(projects_router,           prefix="/api/productivity", tags=["Productivity"])
+app.include_router(prod_tasks_router,         prefix="/api/productivity", tags=["Productivity"])
+app.include_router(screenshot_router,         prefix="/api/productivity", tags=["Productivity"])
+app.include_router(prod_analytics_router,     prefix="/api/productivity", tags=["Productivity"])
+app.include_router(insights_router,           prefix="/api/productivity", tags=["Productivity"])
+app.include_router(alerts_router,             prefix="/api/productivity", tags=["Productivity"])
+app.include_router(admin_productivity_router, prefix="/api/productivity", tags=["Productivity"])
+app.include_router(admin_reports_router,      prefix="/api/productivity", tags=["Productivity"])
+app.include_router(admin_config_router,       prefix="/api/productivity", tags=["Productivity"])
+app.include_router(prod_dashboard_router,     prefix="/api/productivity", tags=["Productivity"])
+app.include_router(realtime_router,           prefix="/api/productivity", tags=["Productivity"])
+app.include_router(time_tracking_router,      prefix="/api/productivity", tags=["Productivity"])
+app.include_router(download_router,           prefix="/api/productivity", tags=["Productivity"])
+app.include_router(prod_settings_router,      prefix="/api/productivity", tags=["Productivity"])
+app.include_router(prod_notifications_router, prefix="/api/productivity", tags=["Productivity"])
 
 # Forms & Workflows
 app.include_router(custom_form_builder.router, prefix="/api/forms", tags=["Forms & Workflows"])
