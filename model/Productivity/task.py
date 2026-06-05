@@ -1,10 +1,10 @@
 from sqlalchemy import Column, Integer, String, Text, Date, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.core.database import Base
+from core.database import Base
 
-class Task(Base):
-    __tablename__ = "tasks"
+class ProductivityTask(Base):
+    __tablename__ = "productivity_tasks"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)

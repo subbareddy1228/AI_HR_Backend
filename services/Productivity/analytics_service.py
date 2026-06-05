@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from model.Productivity.activity import Activity
+from model.Productivity.ProductivityActivity import ProductivityActivity
 from model.Productivity.employee import Employee
 from model.Productivity.team import Team
 from model.Productivity.department import Department
@@ -7,7 +7,7 @@ from datetime import datetime
 from collections import defaultdict
 
 def calculate_employee_productivity(db: Session, employee_id: int):
-    activities = db.query(Activity).filter(Activity.employee_id == employee_id).all()
+    activities = db.query(ProductivityActivity).filter(ProductivityActivity.employee_id == employee_id).all()
     total = len(activities)
     productive_count = sum(1 for a in activities if a.productive == "Yes")
     score = round((productive_count / total) * 100, 2) if total else 0

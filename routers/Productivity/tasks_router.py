@@ -4,7 +4,7 @@ from typing import List
 from datetime import datetime
 
 from core.database import get_db
-from model.Productivity.task import Task as TaskModel
+from model.Productivity.task import ProductivityTask as TaskModel
 from schema.Productivity.task import Task as TaskSchema, TaskCreate, TaskUpdate
 
 router = APIRouter(prefix="/taskmanagement", tags=["Task Management"])

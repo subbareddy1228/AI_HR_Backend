@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from core.database import Base
 
 class OnboardingProfile(Base):
-    __tablename__ = "onboarding_profiles"
+    __tablename__ = "onboarding_profiles_v2"
 
     id = Column(Integer, primary_key=True)
     candidate_id = Column(Integer, ForeignKey("onboarding_candidates.id"))

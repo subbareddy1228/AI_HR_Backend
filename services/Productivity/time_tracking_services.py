@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from model.Productivity.attendance import Attendance
 from model.Productivity.employee import Employee
 from model.Productivity.productivity import Productivity
-from model.Productivity.task import Task
+from model.Productivity.ProductivityTask import ProductivityTask
 
 logger = get_logger(__name__)
 
@@ -35,7 +35,7 @@ def get_time_tracking_overview(db: Session, user, period: str):
             current_session = {
                 "employee": f"{user.first_name} {user.last_name or ''}",
                 "project": "N/A",
-                "task": "Working",
+                "ProductivityTask": "Working",
                 "startTime": active.login_time.strftime("%I:%M %p"),
                 "duration": str(duration).split(".")[0],
                 "status": "active",
@@ -125,7 +125,7 @@ def get_time_entries(db: Session, period: str, project_id: int | None):
                 "id": a.id,
                 "employee": f"{a.employee.first_name} {a.employee.last_name or ''}",
                 "project": "N/A",
-                "task": "Working",
+                "ProductivityTask": "Working",
                 "date": a.date.isoformat(),
                 "startTime": a.login_time.strftime("%I:%M %p"),
                 "endTime": (

@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, Date
-from app.core.database import Base
+from core.database import Base
 # Notification Model
-class Notification(Base):
-    __tablename__ = "notifications"
+class ProductivityNotification(Base):
+    __tablename__ = "productivity_notifications"
     id = Column(Integer, primary_key=True, index=True)
     message = Column(String, nullable=False)
     is_read = Column(Boolean, default=False)

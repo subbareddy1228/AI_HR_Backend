@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relationship
-from app.core.database import Base
+from core.database import Base
 # NotificationSetting Model
 class NotificationSetting(Base):
     __tablename__ = "notification_settings"

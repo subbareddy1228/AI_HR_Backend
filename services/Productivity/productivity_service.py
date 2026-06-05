@@ -8,9 +8,9 @@ from sqlalchemy import select, func
 from utils.productivity.logger import get_logger
 logger = get_logger(__name__)
 
-from model.Productivity.employee import Employee
+from model.onboarding.employee import Employee
 from model.Productivity.productivity import Productivity
-from model.Productivity.activity import Activity
+from model.Productivity.activity import ProductivityActivity
 from schema.Productivity.productivity import SummaryMetrics
 
 
@@ -90,8 +90,8 @@ def calculate_employee_productivity(
 ) -> Productivity:
     logger.info(f"Calculating productivity for employee_id={employee_id}")
     activities = (
-        db.query(Activity)
-        .filter(Activity.employee_id == employee_id)
+        db.query(ProductivityActivity)
+        .filter(ProductivityActivity.employee_id == employee_id)
         .all()
     )
 

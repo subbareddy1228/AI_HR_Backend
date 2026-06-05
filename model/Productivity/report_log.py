@@ -2,7 +2,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey,func
 from sqlalchemy.orm import relationship
-from app.core.database import Base
+from core.database import Base
 # ReportLog Model
 class ReportLog(Base):
     __tablename__ = "report_logs"

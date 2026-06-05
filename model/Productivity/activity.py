@@ -11,7 +11,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime, timezone
 
-from app.core.database import Base
+from core.database import Base
 
 
 
@@ -60,8 +60,8 @@ class AppSession(Base):
 # ACTIVITY MODEL (UNCHANGED)
 
 
-class Activity(Base):
-    __tablename__ = "activities"
+class ProductivityActivity(Base):
+    __tablename__ = "productivity_activities"
 
     id = Column(Integer, primary_key=True, index=True)
 

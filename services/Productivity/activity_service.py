@@ -13,15 +13,15 @@ from sqlalchemy.orm import Session
 from utils.productivity.logger import get_logger
 logger = get_logger(__name__)
 
-from model.Productivity.activity import Activity
-from schema.Productivity.activity import ActivityCreate
+from model.Productivity.ProductivityActivity import ProductivityActivity
+from schema.Productivity.ProductivityActivity import ActivityCreate
 
 
 
-async def create_activity(db: AsyncSession, act_in: ActivityCreate) -> Activity:
-    """Create a new activity record (async)."""
-    logger.info(f"Creating activity for employee_id={act_in.employee_id}, type={act_in.activity_type}, duration={act_in.duration_seconds}")
-    act = Activity(
+async def create_activity(db: AsyncSession, act_in: ActivityCreate) -> ProductivityActivity:
+    """Create a new ProductivityActivity record (async)."""
+    logger.info(f"Creating ProductivityActivity for employee_id={act_in.employee_id}, type={act_in.activity_type}, duration={act_in.duration_seconds}")
+    act = ProductivityActivity(
         employee_id=act_in.employee_id,
         activity_type=act_in.activity_type,
         name=act_in.name,
@@ -32,12 +32,12 @@ async def create_activity(db: AsyncSession, act_in: ActivityCreate) -> Activity:
     )
     db.add(act)
     await db.flush()
-    logger.info(f"Created activity id={act.id} successfully")
+    logger.info(f"Created ProductivityActivity id={act.id} successfully")
     return act
 
-async def list_activities(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Activity]:
+async def list_activities(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[ProductivityActivity]:
     """List all activities with pagination (async)."""
-    q = await db.execute(select(Activity).offset(skip).limit(limit))
+    q = await db.execute(select(ProductivityActivity).offset(skip).limit(limit))
     return q.scalars().all()
 
 async def list_activities_by_employee(
@@ -45,30 +45,30 @@ async def list_activities_by_employee(
     employee_id: int,
     start: Optional[str] = None,
     end: Optional[str] = None
-) -> List[Activity]:
+) -> List[ProductivityActivity]:
     """Get activities for a specific employee within an optional date range (async)."""
     logger.info(f"Fetching activities for employee_id={employee_id}, start={start}, end={end}")
-    stmt = select(Activity).where(Activity.employee_id == employee_id)
+    stmt = select(ProductivityActivity).where(ProductivityActivity.employee_id == employee_id)
 
     if start:
         start_dt = datetime.fromisoformat(start)
-        stmt = stmt.where(Activity.start_at >= start_dt)
+        stmt = stmt.where(ProductivityActivity.start_at >= start_dt)
     if end:
         end_dt = datetime.fromisoformat(end)
-        stmt = stmt.where(Activity.end_at <= end_dt)
+        stmt = stmt.where(ProductivityActivity.end_at <= end_dt)
 
-    q = await db.execute(stmt.order_by(Activity.start_at.desc()))
+    q = await db.execute(stmt.order_by(ProductivityActivity.start_at.desc()))
     activities = q.scalars().all()
     logger.info(f"Retrieved {len(activities)} activities for employee_id={employee_id}")
     return activities
 
 
-def log_activity(db: Session, activity: ActivityCreate) -> Activity:
-    """Record employee activity (sync)."""
-    logger.info(f"Logging activity type={activity.activity_type} for employee_id={activity.employee_id}")
-    db_activity = Activity(**activity.dict())
+def log_activity(db: Session, ProductivityActivity: ActivityCreate) -> ProductivityActivity:
+    """Record employee ProductivityActivity (sync)."""
+    logger.info(f"Logging ProductivityActivity type={ProductivityActivity.activity_type} for employee_id={ProductivityActivity.employee_id}")
+    db_activity = ProductivityActivity(**ProductivityActivity.dict())
     db.add(db_activity)
     db.commit()
     db.refresh(db_activity)
-    logger.info(f"Logged activity id={db_activity.id}")
+    logger.info(f"Logged ProductivityActivity id={db_activity.id}")
     return db_activity

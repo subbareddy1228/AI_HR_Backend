@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from app.core.database import Base
+from core.database import Base
 # Screenshot Model
 class Screenshot(Base):
     __tablename__ = "screenshots"

@@ -2,21 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from model.Productivity.project import Project as ProjectModel
-from schema.Productivity.projects import Project as ProjectSchema, ProjectCreate,ProjectUpdate
+from model.Productivity.ProductivityProject import ProductivityProject as ProjectModel
+from schema.Productivity.projects import ProductivityProject as ProjectSchema, ProjectCreate,ProjectUpdate
 from core.database import get_db
 
 router = APIRouter(
     prefix="/projectmanagement",
-    tags=["Project Management"]
+    tags=["ProductivityProject Management"]
 )
 
 @router.post("/", response_model=ProjectSchema)
 def create_project(
-    project: ProjectCreate,
+    ProductivityProject: ProjectCreate,
     db: Session = Depends(get_db)
 ):
-    new_project = ProjectModel(**project.dict())
+    new_project = ProjectModel(**ProductivityProject.dict())
     db.add(new_project)
     db.commit()
     db.refresh(new_project)
@@ -34,21 +34,21 @@ def update_project(
     db: Session = Depends(get_db)
 ):
     print(request)
-    project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+    ProductivityProject = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
 
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    if not ProductivityProject:
+        raise HTTPException(status_code=404, detail="ProductivityProject not found")
 
     #  What client actually sent
     payload = request.dict(exclude_unset=True)
     print("PATCH payload from client:", payload)
 
     for key, value in payload.items():
-        setattr(project, key, value)
+        setattr(ProductivityProject, key, value)
 
     db.commit()
-    db.refresh(project)
-    return project
+    db.refresh(ProductivityProject)
+    return ProductivityProject
 
 
 @router.delete("/{project_id}")
@@ -56,10 +56,10 @@ def delete_project(
     project_id: int,
     db: Session = Depends(get_db)
 ):
-    project = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    ProductivityProject = db.query(ProjectModel).filter(ProjectModel.id == project_id).first()
+    if not ProductivityProject:
+        raise HTTPException(status_code=404, detail="ProductivityProject not found")
 
-    db.delete(project)
+    db.delete(ProductivityProject)
     db.commit()
-    return {"message": "Project deleted successfully"}
+    return {"message": "ProductivityProject deleted successfully"}

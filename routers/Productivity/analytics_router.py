@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional, Dict
 
 from core.database import get_db
-from model.Productivity.activity import Activity
+from model.Productivity.ProductivityActivity import ProductivityActivity
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
@@ -19,14 +19,14 @@ def employee_analytics(
     end: Optional[str] = None,
     db: Session = Depends(get_db)
 ) -> Dict:
-    query = db.query(Activity).filter(Activity.employee_id == employee_id)
+    query = db.query(ProductivityActivity).filter(ProductivityActivity.employee_id == employee_id)
     
     if start:
         start_dt = datetime.fromisoformat(start)
-        query = query.filter(Activity.timestamp >= start_dt)
+        query = query.filter(ProductivityActivity.timestamp >= start_dt)
     if end:
         end_dt = datetime.fromisoformat(end)
-        query = query.filter(Activity.timestamp <= end_dt)
+        query = query.filter(ProductivityActivity.timestamp <= end_dt)
     
     activities = query.all()
     
@@ -50,14 +50,14 @@ def team_analytics(
     end: Optional[str] = None,
     db: Session = Depends(get_db)
 ) -> Dict:
-    query = db.query(Activity).filter(Activity.team_id == team_id)
+    query = db.query(ProductivityActivity).filter(ProductivityActivity.team_id == team_id)
     
     if start:
         start_dt = datetime.fromisoformat(start)
-        query = query.filter(Activity.timestamp >= start_dt)
+        query = query.filter(ProductivityActivity.timestamp >= start_dt)
     if end:
         end_dt = datetime.fromisoformat(end)
-        query = query.filter(Activity.timestamp <= end_dt)
+        query = query.filter(ProductivityActivity.timestamp <= end_dt)
     
     activities = query.all()
     
@@ -81,14 +81,14 @@ def department_analytics(
     end: Optional[str] = None,
     db: Session = Depends(get_db)
 ) -> Dict:
-    query = db.query(Activity).filter(Activity.department_id == department_id)
+    query = db.query(ProductivityActivity).filter(ProductivityActivity.department_id == department_id)
     
     if start:
         start_dt = datetime.fromisoformat(start)
-        query = query.filter(Activity.timestamp >= start_dt)
+        query = query.filter(ProductivityActivity.timestamp >= start_dt)
     if end:
         end_dt = datetime.fromisoformat(end)
-        query = query.filter(Activity.timestamp <= end_dt)
+        query = query.filter(ProductivityActivity.timestamp <= end_dt)
     
     activities = query.all()
     

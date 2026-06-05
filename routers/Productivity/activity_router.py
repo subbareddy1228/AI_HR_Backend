@@ -4,8 +4,8 @@ from typing import List, Optional
 from datetime import date, datetime, time
 from sqlalchemy.orm import Session, joinedload
 from core.database import get_db
-from model.Productivity.activity import Activity, AppSession
-from model.Productivity.employee import Employee
+from model.Productivity.activity import ProductivityActivity, AppSession
+from model.onboarding.employee import Employee
 from schema.Productivity.activity import (
     AppOpen,
     AppClose,
@@ -16,7 +16,7 @@ from schema.Productivity.activity import (
 )
 from core.dependencies import get_current_user, require_roles
 
-router = APIRouter(tags=["Activity & App Sessions"])
+router = APIRouter(tags=["ProductivityActivity & App Sessions"])
 
 
 
@@ -197,7 +197,7 @@ def open_activity(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    activity = Activity(
+    ProductivityActivity = ProductivityActivity(
         employee_id=current_user.id,
         department_id=current_user.department_id,
         team_id=current_user.team_id,
@@ -208,10 +208,10 @@ def open_activity(
         start_at=datetime.now(timezone.utc),
     )
 
-    db.add(activity)
+    db.add(ProductivityActivity)
     db.commit()
-    db.refresh(activity)
-    return activity
+    db.refresh(ProductivityActivity)
+    return ProductivityActivity
 
 
 @router.post("/activities/close", response_model=ActivityResponse)
@@ -220,27 +220,27 @@ def close_activity(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    activity = (
-        db.query(Activity)
+    ProductivityActivity = (
+        db.query(ProductivityActivity)
         .filter(
-            Activity.id == data.activity_id,
-            Activity.employee_id == current_user.id,
-            Activity.end_at.is_(None)
+            ProductivityActivity.id == data.activity_id,
+            ProductivityActivity.employee_id == current_user.id,
+            ProductivityActivity.end_at.is_(None)
         )
         .first()
     )
 
-    if not activity:
-        raise HTTPException(status_code=404, detail="Open activity not found")
+    if not ProductivityActivity:
+        raise HTTPException(status_code=404, detail="Open ProductivityActivity not found")
 
-    activity.end_at = datetime.now(timezone.utc)
-    activity.duration_seconds = int(
-        (activity.end_at - activity.start_at).total_seconds()
+    ProductivityActivity.end_at = datetime.now(timezone.utc)
+    ProductivityActivity.duration_seconds = int(
+        (ProductivityActivity.end_at - ProductivityActivity.start_at).total_seconds()
     )
 
     db.commit()
-    db.refresh(activity)
-    return activity
+    db.refresh(ProductivityActivity)
+    return ProductivityActivity
 
 
 @router.put("/activities/{activity_id}", response_model=ActivityResponse)
@@ -250,33 +250,33 @@ def update_activity(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    activity = (
-        db.query(Activity)
+    ProductivityActivity = (
+        db.query(ProductivityActivity)
         .filter(
-            Activity.id == activity_id,
-            Activity.employee_id == current_user.id
+            ProductivityActivity.id == activity_id,
+            ProductivityActivity.employee_id == current_user.id
         )
         .first()
     )
 
-    if not activity:
-        raise HTTPException(status_code=404, detail="Activity not found")
+    if not ProductivityActivity:
+        raise HTTPException(status_code=404, detail="ProductivityActivity not found")
 
-    if activity.end_at is None:
+    if ProductivityActivity.end_at is None:
         raise HTTPException(
             status_code=400,
-            detail="Cannot update an active activity"
+            detail="Cannot update an active ProductivityActivity"
         )
 
     if data.activity_type is not None:
-        activity.activity_type = data.activity_type
+        ProductivityActivity.activity_type = data.activity_type
     if data.description is not None:
-        activity.description = data.description
+        ProductivityActivity.description = data.description
     if data.productive is not None:
-        activity.productive = data.productive
+        ProductivityActivity.productive = data.productive
 
-    activity.updated_at = datetime.now(timezone.utc)
+    ProductivityActivity.updated_at = datetime.now(timezone.utc)
 
     db.commit()
-    db.refresh(activity)
-    return activity
+    db.refresh(ProductivityActivity)
+    return ProductivityActivity
