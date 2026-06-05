@@ -19,7 +19,7 @@
 #     created_at = Column(DateTime, default=datetime.utcnow)
 #     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 """
-model/exit_models.py
+model/exit_management.py
 SQLModel table definitions for Employee Separation & Exit Management
 Tables: Resignation, ClearanceChecklist, ClearanceItem, ExitInterview, FnFSettlement
 """
