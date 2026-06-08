@@ -99,6 +99,49 @@ def list_attendance(
     )
     return DailyAttendanceService.list_cards(db, f)
 
+# ─────────────────────────────────────────────────────────
+# EXPORT CSV  (Options → Download)
+# GET /api/attendance/daily/export
+# ─────────────────────────────────────────────────────────
+
+@router.get("/export")
+def export_csv(
+    attendance_date: date           = Query(default_factory=date.today),
+    business_unit:   Optional[str]  = Query(None),
+    location:        Optional[str]  = Query(None),
+    cost_center:     Optional[str]  = Query(None),
+    department:      Optional[str]  = Query(None),
+    status_filter:   Optional[str]  = Query(None),
+    search:          Optional[str]  = Query(None),
+    db:              Session        = Depends(get_db),
+    current_user                    = Depends(get_current_user),
+):
+    """
+    Options → Download button.
+    Exports the currently filtered attendance cards as CSV.
+    Filename: daily_attendance_YYYY_MM_DD.csv
+    Columns: code · name · date · status · location · designation
+             department · punch_in · punch_out · punch_type · in_time
+    """
+    f = DailyAttendanceFilter(
+        attendance_date=attendance_date,
+        business_unit=business_unit,
+        location=location,
+        cost_center=cost_center,
+        department=department,
+        status_filter=status_filter,
+        search=search,
+    )
+    result    = DailyAttendanceService.list_cards(db, f)
+    csv_bytes = ImportExportService.export_csv(result["items"], attendance_date)
+    filename  = f"daily_attendance_{attendance_date.strftime('%Y_%m_%d')}.csv"
+
+    return StreamingResponse(
+        io.BytesIO(csv_bytes),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
 
 # ─────────────────────────────────────────────────────────
 # SINGLE EMPLOYEE CARD
@@ -219,48 +262,7 @@ def delete_punch(
     }
 
 
-# ─────────────────────────────────────────────────────────
-# EXPORT CSV  (Options → Download)
-# GET /api/attendance/daily/export
-# ─────────────────────────────────────────────────────────
 
-@router.get("/export")
-def export_csv(
-    attendance_date: date           = Query(default_factory=date.today),
-    business_unit:   Optional[str]  = Query(None),
-    location:        Optional[str]  = Query(None),
-    cost_center:     Optional[str]  = Query(None),
-    department:      Optional[str]  = Query(None),
-    status_filter:   Optional[str]  = Query(None),
-    search:          Optional[str]  = Query(None),
-    db:              Session        = Depends(get_db),
-    current_user                    = Depends(get_current_user),
-):
-    """
-    Options → Download button.
-    Exports the currently filtered attendance cards as CSV.
-    Filename: daily_attendance_YYYY_MM_DD.csv
-    Columns: code · name · date · status · location · designation
-             department · punch_in · punch_out · punch_type · in_time
-    """
-    f = DailyAttendanceFilter(
-        attendance_date=attendance_date,
-        business_unit=business_unit,
-        location=location,
-        cost_center=cost_center,
-        department=department,
-        status_filter=status_filter,
-        search=search,
-    )
-    result    = DailyAttendanceService.list_cards(db, f)
-    csv_bytes = ImportExportService.export_csv(result["items"], attendance_date)
-    filename  = f"daily_attendance_{attendance_date.strftime('%Y_%m_%d')}.csv"
-
-    return StreamingResponse(
-        io.BytesIO(csv_bytes),
-        media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
 
 
 # ─────────────────────────────────────────────────────────

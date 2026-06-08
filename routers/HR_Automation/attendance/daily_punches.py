@@ -335,31 +335,31 @@ def recalculate_summary(
 # GET /api/attendance/daily-punches/legend
 # ─────────────────────────────────────────────────────────
 
-@router.get("/legend")
-def get_punch_legend():
-    """
-    Returns the Punch Legend shown at the bottom of the page.
-    Remote · Selfie · Web/Chat · QR Scan · Biometric Fetch · Biometric Sync
-    Manual · Excel Import · Missed · Time Relax · Travel · API
-    + Processed / Pending status definitions.
-    """
-    return {
-        "sources": [
-            {"key": "remote",          "label": "Remote",          "icon": "fe-send",        "color": "info"},
-            {"key": "selfie",          "label": "Selfie",          "icon": "fe-camera",      "color": "danger"},
-            {"key": "web_chat",        "label": "Web/Chat",        "icon": "fe-globe",       "color": "success"},
-            {"key": "qr_scan",         "label": "QR Scan",         "icon": "fe-grid",        "color": "dark"},
-            {"key": "biometric_fetch", "label": "Biometric Fetch", "icon": "fe-fingerprint", "color": "dark"},
-            {"key": "biometric_sync",  "label": "Biometric Sync",  "icon": "fe-refresh-cw",  "color": "warning"},
-            {"key": "manual",          "label": "Manual",          "icon": "fe-edit",        "color": "muted"},
-            {"key": "excel_import",    "label": "Excel Import",    "icon": "fe-file-text",   "color": "success"},
-            {"key": "missed",          "label": "Missed",          "icon": "fe-clock",       "color": "danger"},
-            {"key": "time_relax",      "label": "Time Relax",      "icon": "fe-clock",       "color": "warning"},
-            {"key": "travel",          "label": "Travel",          "icon": "fe-truck",       "color": "primary"},
-            {"key": "api",             "label": "API",             "icon": "fe-power",       "color": "success"},
-        ],
-        "statuses": [
-            {"key": "processed", "label": "XX - Processed", "color": "success"},
-            {"key": "pending",   "label": "XX - Pending",   "color": "danger"},
-        ],
-    }
+# @router.get("/legend")
+# def get_punch_legend():
+#     """
+#     Returns the Punch Legend shown at the bottom of the page.
+#     Remote · Selfie · Web/Chat · QR Scan · Biometric Fetch · Biometric Sync
+#     Manual · Excel Import · Missed · Time Relax · Travel · API
+#     + Processed / Pending status definitions.
+#     """
+#     return {
+#         "sources": [
+#             {"key": "remote",          "label": "Remote",          "icon": "fe-send",        "color": "info"},
+#             {"key": "selfie",          "label": "Selfie",          "icon": "fe-camera",      "color": "danger"},
+#             {"key": "web_chat",        "label": "Web/Chat",        "icon": "fe-globe",       "color": "success"},
+#             {"key": "qr_scan",         "label": "QR Scan",         "icon": "fe-grid",        "color": "dark"},
+#             {"key": "biometric_fetch", "label": "Biometric Fetch", "icon": "fe-fingerprint", "color": "dark"},
+#             {"key": "biometric_sync",  "label": "Biometric Sync",  "icon": "fe-refresh-cw",  "color": "warning"},
+#             {"key": "manual",          "label": "Manual",          "icon": "fe-edit",        "color": "muted"},
+#             {"key": "excel_import",    "label": "Excel Import",    "icon": "fe-file-text",   "color": "success"},
+#             {"key": "missed",          "label": "Missed",          "icon": "fe-clock",       "color": "danger"},
+#             {"key": "time_relax",      "label": "Time Relax",      "icon": "fe-clock",       "color": "warning"},
+#             {"key": "travel",          "label": "Travel",          "icon": "fe-truck",       "color": "primary"},
+#             {"key": "api",             "label": "API",             "icon": "fe-power",       "color": "success"},
+#         ],
+#         "statuses": [
+#             {"key": "processed", "label": "XX - Processed", "color": "success"},
+#             {"key": "pending",   "label": "XX - Pending",   "color": "danger"},
+#         ],
+#     }

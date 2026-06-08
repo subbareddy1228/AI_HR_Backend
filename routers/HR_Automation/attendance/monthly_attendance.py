@@ -58,14 +58,14 @@ def get_filter_options(
 # GET /api/attendance/monthly/legend
 # ─────────────────────────────────────────────────────────
 
-@router.get("/legend")
-def get_legend():
-    """
-    Returns the full Icons & Legend list shown below the calendar:
-    P · A · H · W · CO · CL · LW · SL · HD
-    with leave codes (LV454 … LV2640), labels, bg and text colours.
-    """
-    return {"legend": LEGEND}
+# @router.get("/legend")
+# def get_legend():
+#     """
+#     Returns the full Icons & Legend list shown below the calendar:
+#     P · A · H · W · CO · CL · LW · SL · HD
+#     with leave codes (LV454 … LV2640), labels, bg and text colours.
+#     """
+#     return {"legend": LEGEND}
 
 
 # ─────────────────────────────────────────────────────────
@@ -238,42 +238,42 @@ def export_csv(
 # GET /api/attendance/monthly/{employee_id}/summary
 # ─────────────────────────────────────────────────────────
 
-@router.get("/{employee_id}/summary")
-def get_summary(
-    employee_id: str     = Path(...),
-    year:        int     = Query(..., ge=2000, le=2100),
-    month:       int     = Query(..., ge=1, le=12),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
-):
-    """
-    Returns the MonthlyAttendanceSummary counts for a single employee+month.
-    Used to show totals below the calendar (present/absent/leave counts).
-    """
-    from models.monthly_attendance import MonthlyAttendanceSummary
-    row = db.query(MonthlyAttendanceSummary).filter_by(
-        employee_id=employee_id, year=year, month=month
-    ).first()
-    if not row:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            f"No summary found for {employee_id} — {year}-{month:02d}. "
-            f"Try hitting the Recalculate button first."
-        )
-    return {
-        "employee_id":       row.employee_id,
-        "year":              row.year,
-        "month":             row.month,
-        "present_days":      row.present_days,
-        "absent_days":       row.absent_days,
-        "holiday_days":      row.holiday_days,
-        "week_off_days":     row.week_off_days,
-        "comp_off_days":     row.comp_off_days,
-        "casual_leave":      row.casual_leave,
-        "leave_wo_pay":      row.leave_wo_pay,
-        "sick_leave":        row.sick_leave,
-        "half_days":         row.half_days,
-        "late_days":         row.late_days,
-        "total_worked_hours":round(row.total_worked_minutes / 60, 1),
-        "recalculated_at":   row.recalculated_at,
-    }
+# @router.get("/{employee_id}/summary")
+# def get_summary(
+#     employee_id: str     = Path(...),
+#     year:        int     = Query(..., ge=2000, le=2100),
+#     month:       int     = Query(..., ge=1, le=12),
+#     db:          Session = Depends(get_db),
+#     current_user         = Depends(get_current_user),
+# ):
+#     """
+#     Returns the MonthlyAttendanceSummary counts for a single employee+month.
+#     Used to show totals below the calendar (present/absent/leave counts).
+#     """
+#     from models.monthly_attendance import MonthlyAttendanceSummary
+#     row = db.query(MonthlyAttendanceSummary).filter_by(
+#         employee_id=employee_id, year=year, month=month
+#     ).first()
+#     if not row:
+#         raise HTTPException(
+#             status.HTTP_404_NOT_FOUND,
+#             f"No summary found for {employee_id} — {year}-{month:02d}. "
+#             f"Try hitting the Recalculate button first."
+#         )
+#     return {
+#         "employee_id":       row.employee_id,
+#         "year":              row.year,
+#         "month":             row.month,
+#         "present_days":      row.present_days,
+#         "absent_days":       row.absent_days,
+#         "holiday_days":      row.holiday_days,
+#         "week_off_days":     row.week_off_days,
+#         "comp_off_days":     row.comp_off_days,
+#         "casual_leave":      row.casual_leave,
+#         "leave_wo_pay":      row.leave_wo_pay,
+#         "sick_leave":        row.sick_leave,
+#         "half_days":         row.half_days,
+#         "late_days":         row.late_days,
+#         "total_worked_hours":round(row.total_worked_minutes / 60, 1),
+#         "recalculated_at":   row.recalculated_at,
+#     }
