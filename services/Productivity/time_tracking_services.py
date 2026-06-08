@@ -4,10 +4,10 @@ from utils.productivity.logger import get_logger
 from datetime import datetime, timedelta, timezone
 from datetime import date, timedelta
 
-from model.Productivity.attendance import Attendance
-from model.Productivity.employee import Employee
+from model.models import AttendanceRecord as Attendance
+from model.onboarding.employee import Employee
 from model.Productivity.productivity import Productivity
-from model.Productivity.ProductivityTask import ProductivityTask
+from model.Productivity.task import ProductivityTask
 
 logger = get_logger(__name__)
 

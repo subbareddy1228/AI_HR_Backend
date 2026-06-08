@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
 from model.Productivity.ProductivityActivity import ProductivityActivity
-from model.Productivity.employee import Employee
-from model.Productivity.team import Team
-from model.Productivity.department import Department
+from model.onboarding.employee import Employee
+from model.Employee_Management.org_hierarchy import Department
 from datetime import datetime
 from collections import defaultdict
 

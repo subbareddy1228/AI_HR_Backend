@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional, Dict
 
 from core.database import get_db
-from model.Productivity.ProductivityActivity import ProductivityActivity
+from model.Productivity.activity import ProductivityActivity
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 

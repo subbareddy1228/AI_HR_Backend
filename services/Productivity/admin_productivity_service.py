@@ -4,7 +4,7 @@ from sqlalchemy import func
 from typing import Dict
 
 from model.Productivity.productivity import Productivity
-from model.Productivity.employee import Employee
+from model.onboarding.employee import Employee
 
 def get_org_summary(db: Session) -> Dict:
     avg_score = db.query(func.avg(Productivity.score)).scalar() or 0.0

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from core.database import get_db
 from core.dependencies import get_current_user
-from model.Productivity.ProductivityActivity import ProductivityActivity
+from model.Productivity.activity import ProductivityActivity
 from services.Productivity.ai_service import identify_productivity_bottlenecks, workload_distribution
 
 router = APIRouter(prefix="/insights", tags=["insights"])

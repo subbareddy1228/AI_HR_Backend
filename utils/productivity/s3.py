@@ -1,7 +1,9 @@
 import boto3
+from core.config import settings as config
+import boto3
 from botocore.exceptions import ClientError
 from uuid import uuid4
-from app.core import config
+
 
 
 
@@ -21,7 +23,7 @@ CLOUDFRONT_URL = config.CLOUDFRONT_URL
 
 # Upload Function
 
-from app.utils.logger import get_logger
+from utils.productivity.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -78,3 +80,4 @@ def delete_from_s3(key: str) -> bool:
     except ClientError as e:
         logger.error(f"S3 delete error for key={key}: {e}", exc_info=True)
         return False
+

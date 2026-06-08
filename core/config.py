@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
     SMTP_FROM: str
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "us-east-1"
+    AWS_BUCKET_NAME: str = ""
+    CLOUDFRONT_URL: str = ""
+    ALGORITHM: str = "HS256"
+    REDIS_URL: str = "redis://localhost:6379"
 
     ADMIN_USERNAME: str
     ADMIN_PASSWORD: str

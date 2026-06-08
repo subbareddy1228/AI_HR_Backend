@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from datetime import date
 
 from core.database import get_db
-from model.Productivity.ProductivityNotification import ProductivityNotification  # Model
-from schema.Productivity.projects import NotificationCreate, ProductivityNotification as NotificationSchema  # Schema
+from model.Productivity.notification import ProductivityNotification  # Model
+from schema.Productivity.projects import NotificationCreate, Notification as NotificationSchema  # Schema
 
 router = APIRouter(prefix="/notificationmanagement", tags=["ProductivityNotification Management"])
 

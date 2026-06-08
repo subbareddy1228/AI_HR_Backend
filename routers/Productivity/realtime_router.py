@@ -3,7 +3,7 @@ from typing import List
 import json, asyncio, os
 import redis.asyncio as aioredis
 from jose import jwt, JWTError
-from core.config import SECRET_KEY, ALGORITHM, REDIS_URL
+from core.config import settings
 
 router = APIRouter(prefix="/realtime", tags=["realtime"])
 
