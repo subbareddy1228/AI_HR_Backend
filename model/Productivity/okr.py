@@ -20,9 +20,9 @@ class Objective(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
 
-    employee_id = Column(Integer, ForeignKey("employee.id", ondelete="CASCADE"), nullable=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=True, index=True)
     department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
-    team_id = Column(Integer, ForeignKey("teams.id", ondelete="SET NULL"), nullable=True, index=True)
+    team_id = Column(Integer, nullable=True, index=True)
 
     start_date = Column(Date, nullable=True)
     end_date = Column(Date, nullable=True)
