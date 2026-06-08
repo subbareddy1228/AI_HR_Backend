@@ -381,7 +381,7 @@ router = APIRouter(prefix="/api/separation", tags=["Exit Management"])
 def submit_resignation(
     payload: ResignationCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_roles(["employee", "manager", "hr_admin"])),
+    current_user=Depends(require_roles(["employee", "manager", "hr_admin", "superadmin"])),
 ):
     """
     Logged-in employee submits a resignation.
@@ -433,7 +433,7 @@ def accept_resignation(
 def revoke_resignation(
     resignation_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(require_roles(["employee", "manager", "hr_admin"])),
+    current_user=Depends(require_roles(["employee", "manager", "hr_admin", "superadmin"])),
 ):
     """
     Can only be done before HR accepts the resignation.
@@ -532,7 +532,7 @@ def submit_exit_interview(
     payload: ExitInterviewSubmit,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user=Depends(require_roles(["employee", "manager", "hr_admin"])),
+    current_user=Depends(require_roles(["employee", "manager", "hr_admin", "superadmin"])),
 ):
     """
     Employee fills the exit interview form.
