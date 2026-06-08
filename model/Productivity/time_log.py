@@ -18,7 +18,7 @@ class TimeLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    employee_id = Column(Integer, ForeignKey("employee.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True, index=True)
 
@@ -36,5 +36,5 @@ class TimeLog(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     employee = relationship("Employee", back_populates="time_logs")
-    task = relationship("ProductivityTask", back_populates="time_logs")
+    # task = relationship("ProductivityTask", back_populates="time_logs")
     project = relationship("Project", back_populates="time_logs")
