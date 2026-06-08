@@ -9,7 +9,7 @@ class ReportLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     report_type = Column(String(100), nullable=False)
-    generated_by = Column(Integer, ForeignKey("employee.id", ondelete="SET NULL"), nullable=True)
+    generated_by = Column(Integer, ForeignKey("employees.id", ondelete="SET NULL"), nullable=True)
     file_path = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
