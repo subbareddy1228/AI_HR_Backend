@@ -7,7 +7,7 @@ from core.database import get_db
 from schema.Productivity.setting import SettingCreate, SettingRead
 from services.Productivity.setting_service import get_all_settings, create_or_update_setting
 
-router = APIRouter(prefix="/settings", tags=["settings"])
+router = APIRouter(prefix="/settings")
 
 @router.get("/", response_model=List[SettingRead])
 def list_settings(db: Session = Depends(get_db)):

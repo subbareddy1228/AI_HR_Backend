@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from pathlib import Path
 
-router = APIRouter(prefix="/downloads", tags=["Downloads"])
+router = APIRouter(prefix="/downloads")
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 print(BASE_DIR)

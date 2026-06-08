@@ -5,7 +5,7 @@ from core.dependencies import get_current_user
 from model.Productivity.activity import ProductivityActivity
 from services.Productivity.ai_service import identify_productivity_bottlenecks, workload_distribution
 
-router = APIRouter(prefix="/insights", tags=["insights"])
+router = APIRouter(prefix="/insights")
 
 @router.get("/employee/{employee_id}")
 def employee_insights(employee_id: int, db: Session = Depends(get_db)):

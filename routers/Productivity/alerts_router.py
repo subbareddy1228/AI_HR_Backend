@@ -12,7 +12,7 @@ from services.Productivity.alert_service import (
     dismiss_alert,
 )
 
-router = APIRouter(prefix="/alerts", tags=["alerts"])
+router = APIRouter(prefix="/alerts")
 
 
 @router.post("/", response_model=AlertRead, status_code=status.HTTP_201_CREATED)

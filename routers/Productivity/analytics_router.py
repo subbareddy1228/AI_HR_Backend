@@ -7,7 +7,7 @@ from typing import Optional, Dict
 from core.database import get_db
 from model.Productivity.activity import ProductivityActivity
 
-router = APIRouter(prefix="/analytics", tags=["analytics"])
+router = APIRouter(prefix="/analytics")
 
 
 # Employee Analytics

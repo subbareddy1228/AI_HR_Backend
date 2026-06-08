@@ -15,7 +15,7 @@ from services.Productivity.productivity_service import (
     get_productivity_by_employee,
 )
 
-router = APIRouter(prefix="/productivity", tags=["productivity"])
+router = APIRouter(prefix="/productivity")
 
 
 
