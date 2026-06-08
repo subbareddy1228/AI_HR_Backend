@@ -12,7 +12,7 @@ from services.Productivity.time_tracking_services import (
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/time-tracking", tags=["Time Tracking"])
+router = APIRouter(prefix="/time-tracking")
 
 
 @router.get("/overview")

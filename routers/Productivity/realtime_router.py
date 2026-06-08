@@ -5,7 +5,7 @@ import redis.asyncio as aioredis
 from jose import jwt, JWTError
 from core.config import settings
 
-router = APIRouter(prefix="/realtime", tags=["realtime"])
+router = APIRouter(prefix="/realtime")
 
 class ConnectionManager:
     def __init__(self):

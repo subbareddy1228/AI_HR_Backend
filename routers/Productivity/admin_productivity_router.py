@@ -8,7 +8,7 @@ from services.Productivity.admin_productivity_service import get_org_summary, ge
 from schema.Productivity.admin_schemas import OrgSummary
 from core.dependencies import require_roles
 
-router = APIRouter(prefix="/admin/productivity", tags=["Admin Productivity"])
+router = APIRouter(prefix="/admin/productivity")
 
 @router.get("/overview", response_model=OrgSummary)
 def overview(db: Session = Depends(get_db), _=Depends(require_roles("Admin"))):

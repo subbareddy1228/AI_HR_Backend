@@ -7,7 +7,7 @@ from schema.Productivity.admin_schemas import ProductiveEntityCreate, Productive
 from core.dependencies import require_roles
 from typing import List
 
-router = APIRouter(prefix="/admin/config", tags=["Admin Config"])
+router = APIRouter(prefix="/admin/config")
 
 @router.post("/entities", response_model=ProductiveEntityResponse, status_code=status.HTTP_201_CREATED)
 def create_entity(payload: ProductiveEntityCreate, db: Session = Depends(get_db), _=Depends(require_roles("Admin"))):

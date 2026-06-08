@@ -6,7 +6,7 @@ from core.database import get_db
 from model.Productivity.notification import ProductivityNotification  # Model
 from schema.Productivity.projects import NotificationCreate, Notification as NotificationSchema  # Schema
 
-router = APIRouter(prefix="/notificationmanagement", tags=["ProductivityNotification Management"])
+router = APIRouter(prefix="/notificationmanagement")
 
 
 # CREATE

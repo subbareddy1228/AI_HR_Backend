@@ -12,7 +12,7 @@ class ProductivityTask(Base):
 
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
-    assigned_to = Column(Integer, ForeignKey("employee.id"), nullable=True)
+    assigned_to = Column(Integer, ForeignKey("employees.id"), nullable=True)
 
     status = Column(String, default="Pending", index=True)
     due_date = Column(Date, nullable=True)

@@ -50,7 +50,7 @@ class KeyResult(Base):
     progress = Column(Float, default=0.0, nullable=False)
     status = Column(String(50), default="Not Started", nullable=False)
 
-    assigned_to = Column(Integer, ForeignKey("employee.id", ondelete="SET NULL"), nullable=True, index=True)
+    assigned_to = Column(Integer, ForeignKey("employees.id", ondelete="SET NULL"), nullable=True, index=True)
     due_date = Column(Date, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

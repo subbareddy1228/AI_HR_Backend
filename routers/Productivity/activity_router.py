@@ -16,7 +16,7 @@ from schema.Productivity.activity import (
 )
 from core.dependencies import get_current_user, require_roles
 
-router = APIRouter(tags=["ProductivityActivity & App Sessions"])
+router = APIRouter()
 
 
 

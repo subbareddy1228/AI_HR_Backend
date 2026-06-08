@@ -9,7 +9,7 @@ from services.Productivity.admin_reports_service import generate_productivity_re
 from core.dependencies import require_roles
 from schema.Productivity.admin_schemas import ReportRequest
 
-router = APIRouter(prefix="/admin/reports", tags=["Admin Reports"])
+router = APIRouter(prefix="/admin/reports")
 
 @router.post("/productivity/export")
 def export_productivity(req: ReportRequest, db: Session = Depends(get_db), _=Depends(require_roles("Admin"))):

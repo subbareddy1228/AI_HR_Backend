@@ -16,7 +16,7 @@ from utils.productivity.s3 import upload_to_s3
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/screenshots", tags=["screenshots"])
+router = APIRouter(prefix="/screenshots")
 
 
 @router.post("/", response_model=ScreenshotResponse)
