@@ -18,7 +18,7 @@ class TimeLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    employee_id = Column(Integer, ForeignKey("employee.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True, index=True)
 

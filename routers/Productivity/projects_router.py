@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from model.Productivity.project import ProductivityProject as ProjectModel
+from model.Productivity.productivity import Productivity as ProjectModel
 from schema.Productivity.projects import Project as ProjectSchema, ProjectCreate, ProjectUpdate
 from core.database import get_db
 

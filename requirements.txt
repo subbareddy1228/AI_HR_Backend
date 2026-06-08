@@ -24,3 +24,6 @@ sqlmodel
 sqladmin
 Jinja2
 python-dateutil
+boto3
+pandas
+redis
