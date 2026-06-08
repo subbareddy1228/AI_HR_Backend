@@ -11,7 +11,7 @@ class Screenshot(Base):
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
     # Foreign keys
-    employee_id = Column(Integer, ForeignKey("employee.id", ondelete="CASCADE"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
     department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True)
 
     # Relationships

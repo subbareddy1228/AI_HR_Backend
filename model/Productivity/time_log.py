@@ -36,5 +36,5 @@ class TimeLog(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     employee = relationship("Employee", back_populates="time_logs")
-    task = relationship("ProductivityTask", back_populates="time_logs")
+    # task = relationship("ProductivityTask", back_populates="time_logs")
     project = relationship("Project", back_populates="time_logs")

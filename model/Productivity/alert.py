@@ -20,7 +20,7 @@ class Alert(Base):
     __tablename__ = "alerts"
 
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("employee.id", ondelete="SET NULL"), nullable=True)
+    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="SET NULL"), nullable=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     priority = Column(Enum(AlertPriority), nullable=False, default=AlertPriority.info)

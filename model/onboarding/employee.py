@@ -2,7 +2,7 @@ from datetime import date
 import enum
 
 from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.database import Base
 
 
@@ -16,6 +16,11 @@ class Employee(Base):
     __tablename__ = "employees"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    time_logs = relationship(
+        "TimeLog",
+        back_populates="employee"
+    )
 
     onboarding_id: Mapped[int | None] = mapped_column(
         ForeignKey("onboarding_forms.id")

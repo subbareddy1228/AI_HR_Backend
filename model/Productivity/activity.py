@@ -26,7 +26,7 @@ class AppSession(Base):
     # s OWNER
     employee_id = Column(
         Integer,
-        ForeignKey("employee.id", ondelete="CASCADE"),
+        ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
@@ -67,7 +67,7 @@ class ProductivityActivity(Base):
 
     employee_id = Column(
         Integer,
-        ForeignKey("employee.id", ondelete="CASCADE"),
+        ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
