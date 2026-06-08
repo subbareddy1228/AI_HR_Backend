@@ -144,7 +144,7 @@ from routers.Reports import (
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[     "http://localhost:3000",     "http://127.0.0.1:3000",     "https://hr-ai-levitica.vercel.app", ],
+    allow_origins=[     "http://localhost:3000",     "http://127.0.0.1:3000",     "https://hr-ai-levitica.vercel.app",  "http://localhost:5173", "http://127.0.0.1:5173",],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -208,7 +208,7 @@ admin.add_view(UserAdmin)
 
 # ROUTE REGISTRATION
 app.include_router(auth_router)
-app.include_router(jobs_router)
+app.include_router(jobs_router, prefix="/api/jobs")
 app.include_router(admin_router, prefix="/api/admin")
 app.include_router(admin_compat_router)
 app.include_router(candidates_router)
