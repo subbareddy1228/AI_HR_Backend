@@ -601,6 +601,7 @@ from routers.Company_Settings import currency, financial_year, localization, pol
 from routers.Payroll.salary_slip import router as salary_slip_router
 from routers.Forms_Workflows.approvals import router as approvals_router
 from routers.Forms_Workflows.custom_form_builder import router as custom_form_router
+from routers.Forms_Workflows.request_management import router as hr_request_router
 from routers.Employee_Management.org_hierarchy import router as org_hierarchy_router
 from routers.HR_Operations.letter_generation import router as letter_generation
 from routers.HR_Operations.exit_management import router as exit_management
@@ -767,6 +768,7 @@ app.include_router(exit_management)
 # Forms & Workflows
 app.include_router(approvals_router)
 app.include_router(custom_form_router)
+app.include_router(hr_request_router)
 
 # Employee Management
 app.include_router(org_hierarchy_router)
