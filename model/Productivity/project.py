@@ -1,9 +1,10 @@
 from sqlalchemy import Column, Integer, String, Text, Date
 from sqlalchemy.orm import relationship
 from core.database import Base
-# Project Model
+
 class ProductivityProject(Base):
     __tablename__ = "productivity_projects"
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(Text)
@@ -11,5 +12,4 @@ class ProductivityProject(Base):
     end_date = Column(Date)
     status = Column(String, default="Active")
 
-    # relationship with Task
-    tasks = relationship("Task", back_populates="project")
+    tasks = relationship("ProductivityTask", back_populates="project")

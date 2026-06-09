@@ -16,4 +16,3 @@ class Project(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     client = relationship("Client", back_populates="projects")
-    time_logs = relationship("TimeLog",back_populates="project")
