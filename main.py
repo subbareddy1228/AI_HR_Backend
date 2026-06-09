@@ -269,3 +269,15 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 def test_api():
     return {"message": "Backend is working correctly!"}
  
+
+
+
+
+ # MAIN_PY_PATCH.py
+# Add these lines to your existing main.py
+
+# ── Import ──────────────────────────────────────────────────────────────────
+from routers.Payroll.statutory_compliance import router as compliance_router
+
+# ── Register ─────────────────────────────────────────────────────────────────
+app.include_router(compliance_router)
