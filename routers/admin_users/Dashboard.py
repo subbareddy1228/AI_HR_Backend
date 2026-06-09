@@ -5,7 +5,7 @@ from core.database import get_db
 import core.database as database
 from model.models import Job, Candidate, User, Application
 from schema.schemas import JobCreate, JobRead, CandidateRead
-from auth import get_current_user
+from routers.admin_users.auth import get_current_user
 from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
