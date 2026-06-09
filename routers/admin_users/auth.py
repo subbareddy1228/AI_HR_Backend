@@ -11,7 +11,14 @@ from jose import jwt, JWTError
 from core.database import get_db
 from model.models import User
 
+import secrets
+from fastapi_mail import FastMail, MessageSchema, MessageType
+from core.mail import mail_config
+
+
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
+
+_reset_tokens: dict = {}
 
 # ---------------- PASSWORD ----------------
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -56,6 +63,15 @@ class CurrentUserResponse(BaseModel):
     email: EmailStr
     role: str
     is_active: bool
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
 
 # ---------------- TOKEN ----------------
 def create_access_token(data: dict):
@@ -177,3 +193,53 @@ def get_me(current_user: User = Depends(get_current_user)):
         "role": current_user.role,
         "is_active": current_user.is_active,
     }
+
+
+
+@router.post("/forgot-password")
+async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.execute(
+        select(User).where(User.email == payload.email)
+    ).scalar_one_or_none()
+
+    # Always return success to prevent email enumeration
+    if not user:
+        return {"message": "If that email exists, a reset link has been sent."}
+
+    token = secrets.token_urlsafe(32)
+    _reset_tokens[token] = {"user_id": user.id, "email": user.email}
+
+    reset_link = f"https://hr-ai-levitica.vercel.app/reset-password?token={token}"
+
+    message = MessageSchema(
+        subject="Reset your password",
+        recipients=[user.email],
+        body=f"Click this link to reset your password: {reset_link}\n\nThis link expires in 1 hour.",
+        subtype=MessageType.plain,
+    )
+
+    try:
+        fm = FastMail(mail_config)
+        await fm.send_message(message)
+    except Exception:
+        pass  # Don't expose email errors
+
+    return {"message": "If that email exists, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    record = _reset_tokens.get(payload.token)
+    if not record:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    user = db.get(User, record["user_id"])
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.hashed_password = get_password_hash(payload.new_password)
+    db.add(user)
+    db.commit()
+
+    del _reset_tokens[payload.token]
+    return {"message": "Password reset successfully"}

@@ -72,6 +72,7 @@ from routers.jobs import router as jobs_router
 from routers.admin_users.admin import router as admin_router, compat_router as admin_compat_router
 from routers.candidates import router as candidates_router
 from routers.admin_users.recruiter_dashboard import router as recruiter_dashboard_router
+from routers.admin_users.Dashboard import router as admin_dashboard_router
 from routers.pipeline import router as pipeline_router
 from routers.Analytics_Dashboard.analytics import router as analytics_router
 from routers.HR_Automation.digital_signature.routers.documents import router as documents_router
@@ -127,17 +128,6 @@ from routers.Productivity.settings_router import router as prod_settings_router
 from routers.Productivity.notifications_router import router as prod_notifications_router
 from routers.candidates.auth import router as candidate_auth_router
 from super_admin import roles_permissions, multi_tenant, company_settings_admin
-
-from routers.Reports import (
-    employee_router,
-    attendance_router,
-    leave_router,
-    payroll_router,
-    compliance_router,
-    custom_router,
-    dashboard_router,
-    ai_insights_router,
-)
 
 
 # CORS
@@ -214,6 +204,7 @@ app.include_router(admin_compat_router)
 app.include_router(candidates_router)
 app.include_router(pipeline_router, prefix="/api/pipelines")
 app.include_router(recruiter_dashboard_router, prefix="/api/recruiter_dashboard")
+app.include_router(admin_dashboard_router, prefix="/api/dashboard")
 app.include_router(analytics_router)
 app.include_router(assessments_router)
 app.include_router(assignments_router)
@@ -361,17 +352,6 @@ app.include_router(candidate_auth_router, prefix="/api/candidate", tags=["Candid
 app.include_router(roles_permissions.router, prefix="/api/super-admin", tags=["Super Admin"])
 app.include_router(multi_tenant.router, prefix="/api/super-admin", tags=["Super Admin"])
 app.include_router(company_settings_admin.router, prefix="/api/super-admin", tags=["Super Admin"])
-
-
-app.include_router(employee_router,    prefix="/api/reports")
-app.include_router(attendance_router,  prefix="/api/reports")
-app.include_router(leave_router,       prefix="/api/reports")
-app.include_router(payroll_router,     prefix="/api/reports")
-app.include_router(compliance_router,  prefix="/api/reports")
-app.include_router(custom_router,      prefix="/api/reports")
-app.include_router(dashboard_router,   prefix="/api/reports")
-app.include_router(ai_insights_router, prefix="/api/reports")
-
  
 
 # STATIC FILES
