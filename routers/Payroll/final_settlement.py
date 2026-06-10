@@ -1,15 +1,3 @@
-# FILE 17 of 18 | routers/Payroll/final_settlement.py
-# Router: Final Settlement — prefix: /final-settlements  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   POST   /final-settlements/                         — create
-#   GET    /final-settlements/                         — list all
-#   GET    /final-settlements/employee/{employee_id}   — by employee
-#   GET    /final-settlements/{id}                     — get one
-#   PUT    /final-settlements/{id}                     — update
-#   DELETE /final-settlements/{id}                     — delete
-#   PATCH  /final-settlements/{id}/approve             — set status Approved
-#   PATCH  /final-settlements/{id}/mark-paid           — set status Paid
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select

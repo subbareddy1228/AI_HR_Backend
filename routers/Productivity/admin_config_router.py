@@ -1,4 +1,3 @@
-# app/routers/admin_config_router.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from core.database import get_db

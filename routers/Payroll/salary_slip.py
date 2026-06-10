@@ -1,13 +1,3 @@
-# FILE 12 of 18 | routers/Payroll/salary_slip.py
-# Router: Salary Slips — prefix: /salary-slips  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   POST   /salary-slips/                          — create slip
-#   GET    /salary-slips/                          — list all (filter: employee_id, slip_month, slip_year)
-#   GET    /salary-slips/employee/{employee_id}    — all slips for employee
-#   GET    /salary-slips/{slip_id}                 — get one
-#   PATCH  /salary-slips/{slip_id}/publish         — set is_published=True
-#   DELETE /salary-slips/{slip_id}                 — delete
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select

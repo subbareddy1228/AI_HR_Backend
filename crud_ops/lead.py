@@ -1,4 +1,3 @@
-# crud_ops.py
 from sqlalchemy.orm import Session
 from model.lead import Lead, LeadStatus
 

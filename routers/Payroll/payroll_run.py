@@ -1,14 +1,3 @@
-# FILE 11 of 18 | routers/Payroll/payroll_run.py
-# Router: Payroll Runs — prefix: /runs  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   POST   /runs/                         — create payroll run (Draft status)
-#   GET    /runs/                         — list all (filter: year, status)
-#   GET    /runs/{run_id}                 — get run + all PayrollRunDetails
-#   PATCH  /runs/{run_id}/approve         — set status to Approved
-#   PATCH  /runs/{run_id}/mark-paid       — set status to Paid
-#   POST   /runs/{run_id}/add-employee    — add a PayrollRunDetail entry
-#   GET    /runs/{run_id}/details         — list all employee details for a run
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select

@@ -44,7 +44,7 @@ async def init_redis():
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    #  JWT validation on connect
+    
     token = websocket.query_params.get("token")
     if not token:
         await websocket.close(code=4001)
@@ -59,24 +59,24 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.close(code=4002)
         return
 
-    # Accept connection
+    
     await manager.connect(websocket)
     user_channel = f"stream:{email}"
 
     try:
-        # Loop to receive messages (compressed or limited)
+       
         while True:
             data = await websocket.receive_json()
             data["user"] = email
             data["timestamp"] = data.get("timestamp", None)
 
-            # Publish to Redis or broadcast directly
+            
             if redis_client:
                 await redis_client.publish(user_channel, json.dumps(data))
             else:
                 await manager.broadcast(data)
 
-            #  Throttle frame rate (1 frame/second)
+            
             await asyncio.sleep(1)
 
     except WebSocketDisconnect:

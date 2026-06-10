@@ -1,5 +1,3 @@
-# app/api/v1/asset_allocation.py
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -15,8 +13,6 @@ from model.HR_Operations.Asset_Management.asset_allocation import AssetAllocatio
 
 router = APIRouter(prefix="/asset-allocations", tags=["Asset Allocation"])
 
-
-# ✅ CREATE Allocation
 @router.post("/", response_model=AssetAllocationResponse)
 def create_allocation(
     payload: AssetAllocationCreate,
@@ -24,8 +20,6 @@ def create_allocation(
 ):
     return allocate_asset(db, payload)
 
-
-# ✅ LIST ALL Allocations
 @router.get("/", response_model=List[AssetAllocationResponse])
 def list_allocations(db: Session = Depends(get_db)):
     allocations = (
@@ -35,8 +29,6 @@ def list_allocations(db: Session = Depends(get_db)):
     )
     return allocations
 
-
-# ✅ GET Allocation By ID
 @router.get("/{allocation_id}", response_model=AssetAllocationResponse)
 def get_allocation(allocation_id: UUID, db: Session = Depends(get_db)):
     allocation = (

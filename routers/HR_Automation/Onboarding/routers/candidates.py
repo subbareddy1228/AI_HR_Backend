@@ -24,7 +24,6 @@ def create_candidate(name: str, email: str, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(candidate)
 
-    # Seed required documents
     for doc_name in ["ID", "Tax", "Certificate"]:
         db.add(Document(name=doc_name, candidate_id=candidate.id))
     db.commit()
@@ -39,8 +38,6 @@ def get_candidates(
     if choice.lower() == "all":
         candidates = db.query(Candidate).all()
         return [{"id": c.id, "name": c.name, "email": c.email} for c in candidates]
-    
-    # If not "all", treat it as candidate ID
     try:
         candidate_id = int(choice)
     except ValueError:
@@ -54,9 +51,6 @@ def get_candidates(
 
 @router.get("/list")
 def list_all_candidates(db: Session = Depends(get_db)):
-    """
-    Returns all candidates. Used by recruiter dashboard and candidate lists.
-    """
     candidates = db.query(Candidate).all()
     return [{"id": c.id, "name": c.name, "email": c.email} for c in candidates]
 

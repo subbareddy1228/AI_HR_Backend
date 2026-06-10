@@ -11,7 +11,7 @@ import model
 
 
 
-# CONTACT CRUD
+
 
 
 def create_contact(db: Session, contact):
@@ -86,7 +86,7 @@ def delete_contact(db: Session, contact_id: int) -> bool:
 
 
 
-# LEAD CRUD
+
 
 
 def create_lead(db: Session, lead):
@@ -139,7 +139,7 @@ def delete_lead(db: Session, lead_id: int) -> bool:
 
 
 
-# PIPELINE CRUD
+
 
 
 def create_pipeline(db: Session, pipeline):
@@ -186,7 +186,7 @@ def delete_pipeline(db: Session, pipeline_id: int) -> bool:
 
 
 
-# ACTIVITY CRUD
+
 
 
 def create_activity(db: Session, activity):
@@ -264,7 +264,7 @@ def get_leave_by_id(db: Session, leave_id: int):
     )
 
 
-#Attendance CRUD
+
 
 def get_attendance(db: Session):
     return db.execute(select(AttendanceRecord)).scalars().all()

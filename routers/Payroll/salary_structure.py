@@ -1,14 +1,3 @@
-# FILE 10 of 18 | routers/Payroll/salary_structure.py
-# Router: Salary Structures — prefix: /salary-structures  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   POST   /salary-structures/                         — create structure
-#   GET    /salary-structures/                         — list all
-#   GET    /salary-structures/{id}                     — get one
-#   PUT    /salary-structures/{id}                     — update
-#   DELETE /salary-structures/{id}                     — delete
-#   POST   /salary-structures/assign                   — assign employee to structure
-#   GET    /salary-structures/employee/{employee_id}   — get mapping for employee
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select

@@ -9,7 +9,6 @@ router = APIRouter(prefix="/signatures")
 SIG_DIR = "uploaded_signatures"
 os.makedirs(SIG_DIR, exist_ok=True)
 
-# Upload signature
 @router.post("/upload")
 async def upload_signature(name: str = Form(...), file: UploadFile = ..., db: Session = Depends(get_db)):
     try:
@@ -25,7 +24,6 @@ async def upload_signature(name: str = Form(...), file: UploadFile = ..., db: Se
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# List all signatures
 @router.get("/all")
 def get_signatures(db: Session = Depends(get_db)):
     sigs = db.query(Signature).all()

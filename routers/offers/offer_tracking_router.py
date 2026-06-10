@@ -32,7 +32,6 @@ load_dotenv()
 
 router = APIRouter(prefix="/offer-tracking", tags=["Offer Tracking"])
 
-# Email configuration
 EMAIL_USER = os.getenv("EMAIL_USER", "your-email@gmail.com")
 EMAIL_PASS = os.getenv("EMAIL_PASS", "your-app-password")
 
@@ -51,7 +50,6 @@ class SendOfferRequest(BaseModel):
 
 @router.post("/", response_model=OfferTrackingOut)
 def create_offer_endpoint(data: OfferTrackingCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Create a new offer"""
     data_dict = data.dict()
     if not data_dict.get('created_by'):
         data_dict['created_by'] = user.id
@@ -66,17 +64,14 @@ def list_offers(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Get all offers with optional filters, filtered by recruiter"""
     return get_offers(db, status, candidate_id, position, user)
 
 @router.get("/stats")
 def get_stats(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Get offer statistics filtered by recruiter"""
     return get_offer_stats(db, user)
 
 @router.get("/{offer_id}", response_model=OfferTrackingOut)
 def get_offer_endpoint(offer_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Get a specific offer"""
     offer = get_offer(db, offer_id)
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
@@ -93,7 +88,6 @@ def update_offer_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Update an offer"""
     offer = get_offer(db, offer_id)
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
@@ -113,7 +107,6 @@ def update_status_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Update offer status"""
     offer = get_offer(db, offer_id)
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
@@ -127,7 +120,6 @@ def update_status_endpoint(
 
 @router.delete("/{offer_id}")
 def delete_offer_endpoint(offer_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Delete an offer"""
     offer = get_offer(db, offer_id)
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
@@ -141,9 +133,6 @@ def delete_offer_endpoint(offer_id: int, db: Session = Depends(get_db), user: Us
 
 @router.post("/send-offer")
 def send_offer_endpoint(request: SendOfferRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """
-    Create an offer, send it via email, and update candidate stage to 'Offered'
-    """
     try:
         from model.models import Candidate
         from sqlalchemy import func
@@ -164,12 +153,10 @@ def send_offer_endpoint(request: SendOfferRequest, db: Session = Depends(get_db)
                 # Set candidate_id to None - the offer will still be created with candidate_name and candidate_email
                 actual_candidate_id = None
         
-        # Calculate expiry date
         expiry_date = None
         if request.expiry_days:
             expiry_date = (datetime.utcnow() + timedelta(days=request.expiry_days)).date()
         
-        # Create offer tracking record
         offer_data = OfferTrackingCreate(
             candidate_id=actual_candidate_id,  
             template_id=request.template_id,
@@ -187,10 +174,8 @@ def send_offer_endpoint(request: SendOfferRequest, db: Session = Depends(get_db)
         
         offer = create_offer(db, offer_data)
         
-        # Update offer status to "sent" and set sent_date
         update_offer_status(db, offer.id, OfferStatus.sent)
         
-        # Update candidate stage to 'Offered' if we found the candidate
         if actual_candidate_id:
             try:
                 from routers.Candidate_assessments.Assessment.utils.stage_sync import update_candidate_stage_all_tables
@@ -199,10 +184,8 @@ def send_offer_endpoint(request: SendOfferRequest, db: Session = Depends(get_db)
             except Exception as e:
                 print(f" Could not update candidate stage: {e}")
         
-        # Send email
         subject = f"Job Offer - {request.position}"
         
-        # Create HTML email body
         html_body = f"""
         <html>
             <head>
@@ -269,27 +252,23 @@ def send_offer_endpoint(request: SendOfferRequest, db: Session = Depends(get_db)
             </body>
         </html>
         """
-        
-        # Create email message
+      
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
         msg['From'] = EMAIL_USER
         msg['To'] = request.candidate_email
-        
-        # Attach both plain text and HTML versions
+      
         text_part = MIMEText(request.offer_content, 'plain')
         html_part = MIMEText(html_body, 'html')
         
         msg.attach(text_part)
         msg.attach(html_part)
-        
-        # Send email via SMTP
+
         try:
             with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
                 server.login(EMAIL_USER, EMAIL_PASS)
                 server.send_message(msg)
             
-            # Update candidate stage to "Offered"
             from routers.Candidate_assessments.Assessment.utils.stage_sync import update_candidate_stage_all_tables
             update_candidate_stage_all_tables(db, request.candidate_email, "Offered")
             

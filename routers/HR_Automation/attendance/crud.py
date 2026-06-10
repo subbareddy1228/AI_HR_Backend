@@ -2,8 +2,6 @@ from sqlalchemy.orm import Session
 import model.models
 from schema import schemas
 
-
-# Attendance CRUD
 def create_attendance(db: Session, attendance: schemas.AttendanceCreate):
     db_att = model.models.Attendance(**attendance.dict())
     db.add(db_att)
@@ -14,7 +12,6 @@ def create_attendance(db: Session, attendance: schemas.AttendanceCreate):
 def get_attendance(db: Session):
     return db.query(model.models.Attendance).all()
 
-# Leave CRUD
 def create_leave_request(db: Session, leave: schemas.LeaveRequestCreate):
     db_leave = model.models.LeaveRequest(**leave.dict())
     db.add(db_leave)

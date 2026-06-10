@@ -8,7 +8,7 @@ from datetime import datetime
 from core.database import Base, get_db
 
 
-# ── Model ──────────────────────────────────────────────────────────────────────
+
 class CompanySettingsAdmin(Base):
     __tablename__ = "company_settings_admin"
 
@@ -29,7 +29,7 @@ class CompanySettingsAdmin(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-# ── Schemas ────────────────────────────────────────────────────────────────────
+
 class CompanySettingsCreate(BaseModel):
     company_name: str
     logo_url: Optional[str] = None
@@ -79,7 +79,7 @@ class CompanySettingsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ── Router ─────────────────────────────────────────────────────────────────────
+
 router = APIRouter(prefix="/company-settings", tags=["Super Admin"])
 
 
