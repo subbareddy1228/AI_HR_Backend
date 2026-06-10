@@ -1,5 +1,3 @@
-# routers/Reports/payroll_reports.py
- 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
@@ -32,27 +30,18 @@ from schema.Reports.payroll_reports import (
 router = APIRouter(prefix="/api/reports/payroll", tags=["Payroll Reports"])
  
  
-# ══════════════════════════════════════════════════════════════════════════════
-# STATS
-# ══════════════════════════════════════════════════════════════════════════════
- 
 @router.get("/stats", response_model=PayrollReportStats)
 def get_payroll_report_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Top 4 stat cards: Total Reports | Filtered | Selected | Active Filters"""
     return PayrollReportStats(
         total_reports=25,
         filtered=25,
         selected=0,
         active_filters=0,
     )
- 
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# REPORT LIST
-# ══════════════════════════════════════════════════════════════════════════════
+
  
 @router.get("/list", response_model=List[PayrollReportItem])
 def get_payroll_report_list(
@@ -62,7 +51,6 @@ def get_payroll_report_list(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Full payroll report list — 25 reports as shown in screenshot."""
     reports = [
         {"name": "Monthly Payroll Summary",           "desc": "Comprehensive summary of all payroll transactions",          "category": "Salary",        "type": "Summary",   "frequency": "Monthly"},
         {"name": "Department-wise Payroll Cost",       "desc": "Breakdown of payroll expenses by department with cost alloc","category": "Salary",        "type": "Analysis",  "frequency": "Monthly"},
@@ -111,16 +99,11 @@ def get_payroll_report_list(
     return result
  
  
-# ══════════════════════════════════════════════════════════════════════════════
-# CATEGORY SUMMARY + RECENT ACTIVITY
-# ══════════════════════════════════════════════════════════════════════════════
- 
 @router.get("/category-summary", response_model=List[CategorySummary])
 def get_category_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Bottom 4 category boxes."""
     return [
         CategorySummary(category="Salary Reports",    description="Monthly payroll, cost analysis, salary breakdowns",   count=9),
         CategorySummary(category="Statutory Reports", description="PF, ESI, PT, IT returns and compliance forms",        count=7),
@@ -134,7 +117,6 @@ def get_recent_activity(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Recent activity list."""
     return [
         RecentActivityItem(report_name="Monthly Payroll Summary",  action="Generated",  time="10:30 AM"),
         RecentActivityItem(report_name="TDS Deduction Report",     action="Generated",  time="09:15 AM"),
@@ -143,10 +125,6 @@ def get_recent_activity(
     ]
  
  
-# ══════════════════════════════════════════════════════════════════════════════
-# ACTUAL DATA ENDPOINTS
-# ══════════════════════════════════════════════════════════════════════════════
- 
 @router.get("/monthly-payroll-summary", response_model=List[MonthlyPayrollSummaryItem])
 def monthly_payroll_summary(
     month: Optional[int] = Query(None),
@@ -154,7 +132,6 @@ def monthly_payroll_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Monthly Payroll Summary."""
     stmt = select(PayrollRun)
     if month:
         stmt = stmt.where(PayrollRun.run_month == month)
@@ -182,7 +159,6 @@ def department_wise_payroll(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Department-wise Payroll Cost."""
     results = db.execute(
         select(
             PayrollRunDetail.department,
@@ -209,7 +185,6 @@ def grade_wise_salary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Grade-wise Salary Analysis."""
     results = db.execute(
         select(
             Employee.grade,
@@ -233,7 +208,6 @@ def bank_transfer_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Bank-wise Payment Summary."""
     results = db.execute(
         select(
             BankTransfer.bank_name,
@@ -258,7 +232,6 @@ def loan_outstanding_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Loan Outstanding Report."""
     loans = db.execute(
         select(LoanAdvance).where(LoanAdvance.status == "Active")
     ).scalars().all()
@@ -284,7 +257,6 @@ def pf_remittance_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """PF Remittance Report."""
     stmt = select(PayrollRunDetail)
     if month or year:
         stmt = stmt.join(PayrollRun, PayrollRun.id == PayrollRunDetail.payroll_run_id)
@@ -314,7 +286,6 @@ def tds_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """TDS Deduction Report."""
     stmt = select(PayrollRunDetail)
     if month or year:
         stmt = stmt.join(PayrollRun, PayrollRun.id == PayrollRunDetail.payroll_run_id)
@@ -339,7 +310,6 @@ def payroll_variance_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Month-over-month Payroll Variance."""
     runs = db.execute(
         select(PayrollRun).order_by(PayrollRun.run_year, PayrollRun.run_month)
     ).scalars().all()

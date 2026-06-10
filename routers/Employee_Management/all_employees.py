@@ -1,3 +1,6 @@
+# FILE 8 of 12 | routers/Employee_Management/all_employees.py
+# Router: All Employees — prefix: (empty, mounted at /api/employees)
+# Endpoints: GET /  GET /{employee_id}  PATCH /{employee_id}/deactivate  PATCH /{employee_id}/activate
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session

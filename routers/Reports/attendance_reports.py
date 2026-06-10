@@ -1,5 +1,3 @@
-# routers/Reports/attendance_reports.py
-
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, extract
@@ -34,26 +32,18 @@ from schema.Reports.attendance_reports import (
 
 router = APIRouter(prefix="/api/reports/attendance", tags=["Attendance Reports"])
 
-# ── Constants ─────────────────────────────────────────────────────────────────
-SHIFT_START     = 9        # 9:00 AM
-SHIFT_END       = 18       # 6:00 PM
-LATE_THRESHOLD  = 15       # minutes grace
-DAILY_WAGE      = 1500     # ₹ per day for LOP
+SHIFT_START     = 9     
+SHIFT_END       = 18       
+LATE_THRESHOLD  = 15       
+DAILY_WAGE      = 1500     
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# STAT CARDS
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/stats", response_model=AttendanceReportStats)
 def get_attendance_report_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Top 4 stat cards:
-    Generated Reports | Pending Reports | Today's Reports | Compliance Ready
-    """
     total_attendance = db.execute(
         select(func.count()).select_from(Attendance)
     ).scalar_one()
@@ -71,16 +61,11 @@ def get_attendance_report_stats(
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# REPORT TYPE SUMMARY (right side bar chart)
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/type-summary", response_model=ReportTypeSummary)
 def get_report_type_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Report Type Summary — Daily 6 | Monthly 7 | Exception 8 | Compliance 4"""
     return ReportTypeSummary(
         daily_reports_total=6,
         daily_reports_generated=6,
@@ -93,10 +78,6 @@ def get_report_type_summary(
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# ALL ATTENDANCE REPORTS LIST
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/list", response_model=List[AttendanceReportItem])
 def get_all_attendance_reports(
     category: Optional[str] = Query(None, description="Daily | Monthly | Exception | Compliance"),
@@ -105,10 +86,6 @@ def get_all_attendance_reports(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    All Attendance Reports table — as shown in screenshot.
-    Daily | Monthly | Exception | Compliance categories.
-    """
     reports = [
         # DAILY
         {"name": "Daily Attendance Summary",               "category": "Daily",      "dept": "All",         "details": None},
@@ -159,16 +136,11 @@ def get_all_attendance_reports(
     return result
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# REPORT GENERATION HISTORY
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/history", response_model=List[ReportGenerationHistoryItem])
 def get_report_generation_history(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Report Generation History — bottom of page."""
     return [
         ReportGenerationHistoryItem(
             report_type="Daily Attendance Summary",
@@ -197,9 +169,6 @@ def get_report_generation_history(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# DAILY REPORTS
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/daily-summary", response_model=List[DailyAttendanceSummaryItem])
 def get_daily_attendance_summary(
@@ -208,7 +177,6 @@ def get_daily_attendance_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Daily Attendance Summary."""
     target_date = attendance_date or date.today()
 
     records = db.execute(
@@ -246,7 +214,6 @@ def get_late_arrivals(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Late Arrivals List."""
     target_date = attendance_date or date.today()
 
     emp_stmt = select(Employee).where(Employee.is_active == True)
@@ -285,7 +252,6 @@ def get_early_departures(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Early Departures List."""
     target_date = attendance_date or date.today()
 
     emp_stmt = select(Employee).where(Employee.is_active == True)
@@ -321,7 +287,6 @@ def get_missing_punch(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Missing Punch Report."""
     target_date = attendance_date or date.today()
 
     emp_stmt = select(Employee).where(Employee.is_active == True)
@@ -349,9 +314,6 @@ def get_missing_punch(
     return result
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# MONTHLY REPORTS
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/monthly-register", response_model=List[MonthlyAttendanceItem])
 def get_monthly_attendance_register(
@@ -361,7 +323,6 @@ def get_monthly_attendance_register(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Monthly Attendance Register."""
     emp_stmt = select(Employee).where(Employee.is_active == True)
     if department:
         emp_stmt = emp_stmt.where(Employee.department == department)
@@ -457,7 +418,6 @@ def get_loss_of_pay(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Loss of Pay Calculation."""
     employees = db.execute(
         select(Employee).where(Employee.is_active == True)
     ).scalars().all()
@@ -496,7 +456,6 @@ def get_overtime_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Overtime Summary."""
     employees = db.execute(
         select(Employee).where(Employee.is_active == True)
     ).scalars().all()
@@ -521,7 +480,6 @@ def get_wfh_tracking(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """WFH Tracking Report."""
     employees = db.execute(
         select(Employee).where(Employee.is_active == True)
     ).scalars().all()
@@ -551,9 +509,6 @@ def get_wfh_tracking(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# EXCEPTION REPORTS
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/exceptions", response_model=List[ExceptionReportItem])
 def get_exception_report(
@@ -563,7 +518,6 @@ def get_exception_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Exception Report — all attendance exceptions."""
     target_date = attendance_date or date.today()
 
     emp_stmt = select(Employee).where(Employee.is_active == True)
@@ -603,10 +557,6 @@ def get_exception_report(
     return result
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# COMPLIANCE REPORTS
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/muster-roll", response_model=List[ComplianceMusterRollItem])
 def get_muster_roll(
     month: int = Query(...),
@@ -615,7 +565,6 @@ def get_muster_roll(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Compliance Muster Roll — Factory Act format."""
     emp_stmt = select(Employee).where(Employee.is_active == True)
     if department:
         emp_stmt = emp_stmt.where(Employee.department == department)
@@ -653,7 +602,6 @@ def get_attendance_register(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Attendance Register for Labor Department."""
     emp_stmt = select(Employee).where(Employee.is_active == True)
     if department:
         emp_stmt = emp_stmt.where(Employee.department == department)
