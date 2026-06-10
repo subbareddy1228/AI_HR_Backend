@@ -67,3 +67,17 @@ class HierarchyHistory(Base):
     effective_to    = Column(DateTime, nullable=True)   # NULL means current record
     changed_by      = Column(Integer, ForeignKey("employees.id"), nullable=True)
     created_at      = Column(DateTime, default=datetime.utcnow)
+
+
+class Team(Base):
+    __tablename__ = "teams"
+
+    id                  = Column(Integer, primary_key=True, index=True)
+    name                = Column(String(255), nullable=False)
+    code                = Column(String(50), unique=True, nullable=True)
+    department_id       = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True)
+    lead_employee_id    = Column(Integer, ForeignKey("employees.id", ondelete="SET NULL"), nullable=True)
+    description         = Column(Text, nullable=True)
+    is_active           = Column(Boolean, default=True)
+    created_at          = Column(DateTime, default=datetime.utcnow)
+    updated_at          = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

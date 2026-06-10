@@ -23,19 +23,11 @@ def get_summary_metrics(db: Session):
         select(func.avg(Productivity.score))
     ).scalar() or 0
 
-    average_hours = db.execute(
-        select(func.avg(Productivity.hours_logged))
-    ).scalar() or 0
-
-    tasks_completed = db.execute(
-        select(func.sum(Productivity.tasks_completed))
-    ).scalar() or 0
-
-    logger.info(f"Summary computed: score={overall_score:.2f}, hours={average_hours:.2f}, tasks={tasks_completed}")
+    logger.info(f"Summary computed: score={overall_score:.2f}")
     return {
         "overall_score": float(overall_score),
-        "average_hours": float(average_hours),
-        "tasks_completed": int(tasks_completed),
+        "average_hours": 0.0,
+        "tasks_completed": 0,
     }
 
 
@@ -55,8 +47,8 @@ def compute_and_store_productivity(
     for e in employees:
         record = Productivity(
             employee_id=e.id,
-            department_id=e.department_id,
-            team_id=e.team_id,
+            department_id=None,
+            team_id=None,
             period=period,
             average_score=e.productivity_score or 0.0,
             tasks_completed=e.tasks_completed or 0,
@@ -106,10 +98,10 @@ def calculate_employee_productivity(
     emp = db.query(Employee).get(employee_id)
 
     record = Productivity(
-        employee_id=employee_id,
-        department_id=emp.department_id,
-        team_id=emp.team_id,
-        score=score,
+    employee_id=employee_id,
+    department_id=None, 
+    team_id=None,
+    score=score,
     )
 
     db.add(record)

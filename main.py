@@ -8,6 +8,13 @@ from fastapi.staticfiles import StaticFiles
 from sqlmodel import SQLModel, Session, select
 from core.database import engine, Base
 from model.models import User
+import model.Productivity
+import model.onboarding.employee
+import model.Employee_Management.org_hierarchy
+import model.Employee_Management.employee_lifecycle
+import model.Employee_Management.employee_master
+import model.Employee_Management.employee_document
+import model.Productivity
 from sqladmin import Admin, ModelView
  
 
