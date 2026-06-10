@@ -9,4 +9,4 @@ class BankDetailsCreate(BaseModel):
 class BankDetailsResponse(BankDetailsCreate):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True

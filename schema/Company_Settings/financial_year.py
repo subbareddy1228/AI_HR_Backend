@@ -16,4 +16,4 @@ class FinancialYearResponse(FinancialYearCreate):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
