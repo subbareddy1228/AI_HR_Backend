@@ -87,14 +87,14 @@ def get_all_attendance_reports(
     current_user: User = Depends(get_current_user),
 ):
     reports = [
-        # DAILY
+       
         {"name": "Daily Attendance Summary",               "category": "Daily",      "dept": "All",         "details": None},
         {"name": "Late Arrivals List",                     "category": "Daily",      "dept": "Engineering", "details": "12 late arrivals"},
         {"name": "Early Departures List",                  "category": "Daily",      "dept": "All",         "details": "8 early departures"},
         {"name": "Missing Punch Report",                   "category": "Daily",      "dept": "All",         "details": "15 missing punches"},
         {"name": "Shift-wise Attendance",                  "category": "Daily",      "dept": "All",         "details": None},
         {"name": "Location-wise Attendance",               "category": "Daily",      "dept": "All",         "details": None},
-        # MONTHLY
+       
         {"name": "Monthly Attendance Register",            "category": "Monthly",    "dept": "All",         "details": "1400 employees"},
         {"name": "Department-wise Attendance Summary",     "category": "Monthly",    "dept": "All",         "details": None},
         {"name": "Consolidated Monthly Report",            "category": "Monthly",    "dept": "All",         "details": None},
@@ -102,7 +102,7 @@ def get_all_attendance_reports(
         {"name": "Overtime Summary",                       "category": "Monthly",    "dept": "All",         "details": "1750.01 hours"},
         {"name": "WFH Tracking Report",                    "category": "Monthly",    "dept": "All",         "details": "420 WFH days"},
         {"name": "Attendance Percentage by Department/Location","category": "Monthly","dept": "All",        "details": None},
-        # EXCEPTION
+       
         {"name": "Exception Report",                       "category": "Exception",  "dept": "All",         "details": "15 exceptions"},
         {"name": "Continuous Absence Report",              "category": "Exception",  "dept": "All",         "details": None},
         {"name": "Frequent Late Arrivals",                 "category": "Exception",  "dept": "All",         "details": None},
@@ -111,7 +111,7 @@ def get_all_attendance_reports(
         {"name": "Pending Regularization Requests",        "category": "Exception",  "dept": "All",         "details": None},
         {"name": "Unapproved Overtime",                    "category": "Exception",  "dept": "All",         "details": None},
         {"name": "Weekend Working without Approval",       "category": "Exception",  "dept": "All",         "details": None},
-        # COMPLIANCE
+       
         {"name": "Compliance Muster Roll",                 "category": "Compliance", "dept": "All",         "details": "Factory Act format"},
         {"name": "Attendance Register for Labor Department","category": "Compliance","dept": "All",         "details": "Labor Department format"},
         {"name": "Factory Attendance Register",            "category": "Compliance", "dept": "Operations",  "details": "Factory Act format"},
@@ -371,7 +371,6 @@ def get_dept_attendance_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Department-wise Attendance Summary."""
     target_date = attendance_date or date.today()
 
     results = db.execute(
