@@ -33,7 +33,6 @@ def get_compliance_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Top 4 stat cards: Total Reports | Compliant | Non-Compliant | Pending"""
     pending_confirmations = db.execute(
         select(func.count()).select_from(EmployeeConfirmation)
         .where(EmployeeConfirmation.status == "PENDING")

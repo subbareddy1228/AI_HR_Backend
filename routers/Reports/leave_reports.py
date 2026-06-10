@@ -172,16 +172,12 @@ def get_dept_leave_liability(
     return items
  
  
-# ══════════════════════════════════════════════════════════════════════════════
-# LEAVE TYPE UTILIZATION  (bar chart data)
-# ══════════════════════════════════════════════════════════════════════════════
  
 @router.get("/utilization", response_model=List[LeaveTypeUtilizationItem])
 def get_leave_utilization(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Leave Type Utilization — department-wise total leaves taken (bar chart)."""
     results = db.execute(
         select(
             Employee.department,
@@ -201,9 +197,7 @@ def get_leave_utilization(
     ]
  
  
-# ══════════════════════════════════════════════════════════════════════════════
-# LEAVE ACCRUAL REGISTER
-# ══════════════════════════════════════════════════════════════════════════════
+
  
 @router.get("/accrual", response_model=List[LeaveAccrualItem])
 def get_leave_accrual_register(
@@ -219,7 +213,7 @@ def get_leave_accrual_register(
     accrual_date = date(2024, 1, 1)
  
     for emp in employees:
-        # Calculate months worked from joining date
+        
         joining = emp.joining_date
         months = max(
             (accrual_date.year - joining.year) * 12 + (accrual_date.month - joining.month),

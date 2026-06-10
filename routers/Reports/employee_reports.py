@@ -590,7 +590,7 @@ def get_employee_movement(
 ):
     result = []
 
-    # Promotions
+    
     if not movement_type or movement_type == "Promotion":
         promotions = db.execute(
             select(Promotion).where(Promotion.status == "APPROVED")
@@ -614,7 +614,7 @@ def get_employee_movement(
                 effective_date=p.effective_date,
             ))
 
-    # Transfers
+    
     if not movement_type or movement_type == "Transfer":
         transfers = db.execute(
             select(Transfer).where(Transfer.status == "COMPLETED")
