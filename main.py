@@ -157,9 +157,9 @@ def on_startup():
         # Try to create tables
         SQLModel.metadata.create_all(bind=engine)
         Base.metadata.create_all(bind=engine)
-        print("✓ Database tables initialized successfully")
+        print(" Database tables initialized successfully")
     except Exception as e:
-        print(f"⚠ Warning: Could not create database tables: {e}")
+        print(f" Warning: Could not create database tables: {e}")
         print("  The application will continue, but database operations may fail.")
         print("  Please ensure PostgreSQL is running and DATABASE_URL is correct.")
         return  # Exit early if database connection fails
@@ -183,11 +183,11 @@ def on_startup():
                 )
                 session.add(user)
                 session.commit()
-                print("✓ Default Super Admin created: superadmin / admin123")
+                print(" Default Super Admin created: superadmin / admin123")
             else:
-                print("✓ Super Admin already exists")
+                print(" Super Admin already exists")
     except Exception as e:
-        print(f"⚠ Warning: Could not create default superadmin: {e}")
+        print(f" Warning: Could not create default superadmin: {e}")
         print("  You may need to create it manually once the database is available.")
  
  
