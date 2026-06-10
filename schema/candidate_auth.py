@@ -1,18 +1,16 @@
-# schema/candidate_auth.py
-# Pydantic schemas for Candidate authentication and onboarding
- 
+
 from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Optional, Dict, Any
 from datetime import datetime
  
  
 class CandidateTokenVerify(BaseModel):
-    """Request body for verifying an invite token."""
+    
     invite_token: str
  
  
 class CandidateTokenResponse(BaseModel):
-    """Returned after a valid token verification."""
+  
     id: int
     full_name: str
     email: Optional[str] = None
@@ -24,18 +22,18 @@ class CandidateTokenResponse(BaseModel):
  
  
 class CandidateFormSubmit(BaseModel):
-    """Request body for submitting onboarding form data."""
+    
     invite_token: str
     form_data: Dict[str, Any]
  
  
 class CandidateStatusUpdate(BaseModel):
-    """Request body for HR to update candidate status."""
-    status: str  # SENT | IN_PROGRESS | SUBMITTED | APPROVED | REJECTED
+ 
+    status: str  
  
  
 class CandidateResponse(BaseModel):
-    """Full candidate record returned to HR."""
+
     id: int
     full_name: str
     email: Optional[str] = None

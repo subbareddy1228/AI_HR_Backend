@@ -1,14 +1,9 @@
-# FILE 9 (2/8) | schema/Payroll/payroll_run.py
-# Schemas: PayrollRunBase/Create/Update/Response
-#          PayrollRunDetailBase/Create/Response
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
 
-
-# ── PayrollRun ──────────────────────────────────────────────────────────────
 
 class PayrollRunBase(BaseModel):
     run_month: int
@@ -44,8 +39,6 @@ class PayrollRunResponse(PayrollRunBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ── PayrollRunDetail ────────────────────────────────────────────────────────
 
 class PayrollRunDetailBase(BaseModel):
     payroll_run_id: int

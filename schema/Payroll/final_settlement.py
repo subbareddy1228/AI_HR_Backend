@@ -1,5 +1,3 @@
-# FILE 9 (8/8) | schema/Payroll/final_settlement.py
-# Schemas: FinalSettlementBase/Create/Update/Response
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional

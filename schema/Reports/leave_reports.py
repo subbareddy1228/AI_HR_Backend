@@ -1,11 +1,8 @@
-# schema/Reports/leave_reports.py
- 
+
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import date
  
- 
-# ── Top stat cards ────────────────────────────────────────────────────────────
  
 class LeaveReportStats(BaseModel):
     total_employees: int
@@ -15,8 +12,6 @@ class LeaveReportStats(BaseModel):
     approved: int
     rejected: int
  
- 
-# ── Employee-wise Leave Balance ───────────────────────────────────────────────
  
 class LeaveBalanceItem(BaseModel):
     employee_name: str
@@ -36,8 +31,6 @@ class LeaveBalanceItem(BaseModel):
     total_balance: int
  
  
-# ── Department-wise Leave Liability ──────────────────────────────────────────
- 
 class DeptLeaveLiabilityItem(BaseModel):
     department: str
     employees: int
@@ -45,14 +38,10 @@ class DeptLeaveLiabilityItem(BaseModel):
     encashment_liability: float
  
  
-# ── Leave Type Utilization ────────────────────────────────────────────────────
- 
 class LeaveTypeUtilizationItem(BaseModel):
     department: str
     total_leaves_taken: int
  
- 
-# ── Leave Accrual Register ────────────────────────────────────────────────────
  
 class LeaveAccrualItem(BaseModel):
     employee_name: str
@@ -66,8 +55,6 @@ class LeaveAccrualItem(BaseModel):
     balance_after: float
  
  
-# ── Carry-forward Leave Tracking ─────────────────────────────────────────────
- 
 class CarryForwardItem(BaseModel):
     employee_name: str
     employee_id: str
@@ -80,16 +67,12 @@ class CarryForwardItem(BaseModel):
     total_available: int
  
  
-# ── Leave Encashment Liability ────────────────────────────────────────────────
- 
 class LeaveEncashmentItem(BaseModel):
     department: str
     employees: int
     total_balance_days: int
     encashment_liability: float
  
- 
-# ── Employee Leave Records ────────────────────────────────────────────────────
  
 class EmployeeLeaveRecordItem(BaseModel):
     employee_code: str

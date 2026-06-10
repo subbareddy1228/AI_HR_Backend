@@ -16,7 +16,7 @@ def get_dashboard_data(db: Session):
     today = date.today()
 
     
-    # METRICS
+
     
 
     total_employees = (
@@ -49,7 +49,7 @@ def get_dashboard_data(db: Session):
     )
 
     
-    # DEPARTMENT DISTRIBUTION
+ 
     
 
     dept_counts = (
@@ -73,7 +73,7 @@ def get_dashboard_data(db: Session):
     ]
 
     
-    # WEEKLY PRODUCTIVITY
+
     
 
     productivity_week = (
@@ -96,7 +96,7 @@ def get_dashboard_data(db: Session):
     ]
 
     
-    # RECENT ACTIVITY (ATTENDANCE)
+
     
 
     recent_attendance = (
@@ -122,7 +122,7 @@ def get_dashboard_data(db: Session):
         })
 
     
-    # TOP PERFORMERS
+ 
     
 
     top_performers = (
@@ -143,7 +143,7 @@ def get_dashboard_data(db: Session):
     ]
 
     
-    # FINAL RESPONSE
+ 
     
 
     return {

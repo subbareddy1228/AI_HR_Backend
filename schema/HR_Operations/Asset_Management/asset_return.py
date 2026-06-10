@@ -1,4 +1,3 @@
-# app/schemas/asset_return.py
 
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
@@ -14,7 +13,7 @@ class AssetReturnCreate(BaseModel):
 
 
 class AssetReturnResponse(BaseModel):
-    id: UUID                # ✅ MUST be UUID
+    id: UUID              
     allocation_id: UUID
     return_reason: str
     condition_at_return: str

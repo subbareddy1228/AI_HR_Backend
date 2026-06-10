@@ -3,8 +3,6 @@ from typing import Optional
 from datetime import date, datetime
 
 
-# BASE SCHEMA (shared fields)
-
 
 class TaskBase(BaseModel):
     title: str

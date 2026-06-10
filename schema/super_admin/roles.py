@@ -1,5 +1,3 @@
-# schema/super_admin/roles.py
-# Pydantic schemas for Role management
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, Dict, List, Any

@@ -1,4 +1,3 @@
-# services/Employee_Management/employee_master_service.py
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
@@ -15,18 +14,8 @@ from schema.Employee_Management.employee_master import (
 )
 
 
-# ════════════════════════════════════════════════════════════════════
-# STAT CARDS
-# ════════════════════════════════════════════════════════════════════
-
 def get_stats(db: Session) -> dict:
-    """
-    Powers the 4 stat cards at the top of the screenshot.
-      Total Employees  → count all employees
-      Active Employees → count where is_active=True
-      Departments      → count distinct department values
-      Avg. Salary      → average salary from employee_master
-    """
+ 
     total = db.execute(
         select(func.count(Employee.id))
     ).scalar_one() or 0
@@ -57,10 +46,6 @@ def get_stats(db: Session) -> dict:
     }
 
 
-# ════════════════════════════════════════════════════════════════════
-# EMPLOYEE TABLE — search + filter + paginate
-# ════════════════════════════════════════════════════════════════════
-
 def list_employees(
     db: Session,
     search: Optional[str] = None,
@@ -70,25 +55,12 @@ def list_employees(
     page: int = 1,
     page_size: int = 6,
 ) -> dict:
-    """
-    Powers the Employee Records table.
 
-    Screenshot columns mapped:
-      EMPLOYEE   → name, employee_code, designation
-      DEPARTMENT → department, location
-      CONTACT    → official_email, mobile_number
-      SALARY     → salary, currency, employment_type badge
-      STATUS     → employment_status badge
-      ACTIONS    → id returned for View/Delete buttons
-
-    Pagination → "Showing 1 to 6 of 8 employees" + page buttons
-    """
     stmt = (
         select(Employee, EmployeeMaster)
         .outerjoin(EmployeeMaster, EmployeeMaster.employee_id == Employee.id)
     )
 
-    # Search: name, email, employee_code
     if search:
         s = f"%{search.strip().lower()}%"
         stmt = stmt.where(
@@ -98,24 +70,24 @@ def list_employees(
             func.lower(Employee.employee_code).like(s)
         )
 
-    # Department filter (dropdown in screenshot)
+ 
     if department and department not in ("All Departments", "All", ""):
         stmt = stmt.where(Employee.department == department)
 
-    # Status filter (All dropdown in screenshot)
+  
     if employment_status and employment_status not in ("All", ""):
         stmt = stmt.where(EmployeeMaster.employment_status == employment_status)
 
-    # Employment type filter
+ 
     if employment_type and employment_type not in ("All", ""):
         stmt = stmt.where(EmployeeMaster.employment_type == employment_type)
 
-    # Total count before pagination
+ 
     total = db.execute(
         select(func.count()).select_from(stmt.subquery())
     ).scalar_one() or 0
 
-    # Pagination
+ 
     offset = (page - 1) * page_size
     rows = db.execute(
         stmt.order_by(Employee.first_name).offset(offset).limit(page_size)
@@ -125,24 +97,24 @@ def list_employees(
     for emp, master in rows:
         full_name = f"{emp.first_name or ''} {emp.last_name or ''}".strip()
         employees.append({
-            # EMPLOYEE column
+          
             "id": emp.id,
             "employee_code": emp.employee_code,
             "name": full_name,
             "designation": emp.designation or "",
-            # DEPARTMENT column
+            
             "department": emp.department or "",
             "location": emp.location or "",
-            # CONTACT column
+        
             "email": emp.official_email or "",
             "phone": emp.mobile_number or "",
-            # SALARY column
+          
             "salary": float(master.salary) if master and master.salary else None,
             "currency": master.currency if master else "USD",
             "employment_type": master.employment_type if master else "Full-Time",
-            # STATUS column
+          
             "employment_status": master.employment_status if master else "Active",
-            # For detail modal
+         
             "joining_date": str(emp.joining_date) if emp.joining_date else None,
             "grade": emp.grade or "",
             "work_location": master.work_location if master else "",
@@ -164,10 +136,6 @@ def list_employees(
     }
 
 
-# ════════════════════════════════════════════════════════════════════
-# DEPARTMENT DROPDOWN
-# ════════════════════════════════════════════════════════════════════
-
 def get_departments(db: Session) -> list:
     """
     Returns distinct department names for the 'All Departments' dropdown.
@@ -180,20 +148,9 @@ def get_departments(db: Session) -> list:
     return rows
 
 
-# ════════════════════════════════════════════════════════════════════
-# CREATE — Add Employee button
-# ════════════════════════════════════════════════════════════════════
 
 def create_master(db: Session, payload: EmployeeMasterCreate) -> EmployeeMaster:
-    """
-    Creates EmployeeMaster record for an existing employee.
-    Called when HR clicks 'Add Employee' and fills the form.
 
-    Validates:
-    - Employee must exist in employees table
-    - No duplicate master record for same employee_id
-    """
-    # Check employee exists
     emp = db.execute(
         select(Employee).where(Employee.id == payload.employee_id)
     ).scalar_one_or_none()
@@ -204,7 +161,7 @@ def create_master(db: Session, payload: EmployeeMasterCreate) -> EmployeeMaster:
                    "The base employee record must exist first (created during onboarding)."
         )
 
-    # Check no duplicate
+    
     existing = db.execute(
         select(EmployeeMaster).where(EmployeeMaster.employee_id == payload.employee_id)
     ).scalar_one_or_none()
@@ -234,9 +191,6 @@ def create_master(db: Session, payload: EmployeeMasterCreate) -> EmployeeMaster:
     return obj
 
 
-# ════════════════════════════════════════════════════════════════════
-# GET — single master record
-# ════════════════════════════════════════════════════════════════════
 
 def get_master_by_employee_id(db: Session, employee_id: int) -> EmployeeMaster:
     """Returns raw EmployeeMaster record by employee_id. 404 if not found."""
@@ -249,10 +203,7 @@ def get_master_by_employee_id(db: Session, employee_id: int) -> EmployeeMaster:
 
 
 def get_employee_detail(db: Session, employee_id: int) -> dict:
-    """
-    Returns combined Employee + EmployeeMaster data for the View button detail modal.
-    All fields shown in the screenshot's detail view.
-    """
+
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -266,7 +217,6 @@ def get_employee_detail(db: Session, employee_id: int) -> dict:
     full_name = f"{emp.first_name or ''} {emp.last_name or ''}".strip()
 
     return {
-        # Employee table fields
         "id": emp.id,
         "employee_code": emp.employee_code,
         "name": full_name,
@@ -298,22 +248,10 @@ def get_employee_detail(db: Session, employee_id: int) -> dict:
     }
 
 
-# ════════════════════════════════════════════════════════════════════
-# UPDATE — edit salary, status, employment type
-# ════════════════════════════════════════════════════════════════════
-
 def update_master(
     db: Session, employee_id: int, payload: EmployeeMasterUpdate
 ) -> EmployeeMaster:
-    """
-    Partial update of EmployeeMaster record.
-    Only fields sent in the request body are changed.
-
-    Common use cases:
-    - Change employment_status: Active → On Leave (STATUS badge in screenshot)
-    - Update salary (SALARY column in screenshot)
-    - Change employment_type: Full-Time → Contract (badge under salary)
-    """
+ 
     obj = get_master_by_employee_id(db, employee_id)
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(obj, key, value)
@@ -322,17 +260,8 @@ def update_master(
     db.refresh(obj)
     return obj
 
-
-# ════════════════════════════════════════════════════════════════════
-# DELETE
-# ════════════════════════════════════════════════════════════════════
-
 def soft_delete_master(db: Session, employee_id: int) -> dict:
-    """
-    Soft delete — sets employment_status='Terminated' and Employee.is_active=False.
-    Triggered by trash icon in ACTIONS column.
-    Recommended over hard delete to preserve history.
-    """
+  
     obj = get_master_by_employee_id(db, employee_id)
     obj.employment_status = "Terminated"
     obj.updated_at = datetime.utcnow()
@@ -348,29 +277,17 @@ def soft_delete_master(db: Session, employee_id: int) -> dict:
 
 
 def hard_delete_master(db: Session, employee_id: int) -> None:
-    """
-    Hard delete — permanently removes the EmployeeMaster record.
-    The base Employee record in employees table is NOT deleted.
-    """
+   
     obj = get_master_by_employee_id(db, employee_id)
     db.delete(obj)
     db.commit()
-
-
-# ════════════════════════════════════════════════════════════════════
-# EXPORT CSV DATA
-# ════════════════════════════════════════════════════════════════════
 
 def export_csv_data(
     db: Session,
     department: Optional[str] = None,
     employment_status: Optional[str] = None,
 ) -> list:
-    """
-    Returns all employee rows for CSV export.
-    Applies the same filters as the table.
-    Triggered by 'Export CSV' button in screenshot.
-    """
+
     stmt = (
         select(Employee, EmployeeMaster)
         .outerjoin(EmployeeMaster, EmployeeMaster.employee_id == Employee.id)

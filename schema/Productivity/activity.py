@@ -3,39 +3,31 @@ from datetime import datetime
 from typing import Optional
 
 
-# ACTIVITY SCHEMAS
+
 
 
 class ActivityOpen(BaseModel):
-    """
-    Used when starting an activity (like app_session open)
-    """
-    activity_type: str                 # app / website / idle
-    name: Optional[str] = None         # app name or website
+
+    activity_type: str             
+    name: Optional[str] = None         
     description: Optional[str] = None
     activity_metadata: Optional[str] = None
     productive: Optional[str] = None
 
 
 class ActivityClose(BaseModel):
-    """
-    Used when closing an activity
-    """
+
     activity_id: int
 
 
 class ActivityUpdate(BaseModel):
-    """
-    Used for manual updates (rare, controlled)
-    """
+   
     description: Optional[str] = None
     productive: Optional[str] = None
 
 
 class ActivityResponse(BaseModel):
-    """
-    What API returns
-    """
+
     id: int
     employee_id: int
     department_id: Optional[int]
@@ -55,15 +47,13 @@ class ActivityResponse(BaseModel):
     updated_at: Optional[datetime]
 
     class Config:
-        from_attributes = True  #  Pydantic v2 (orm_mode is DEAD)
+        from_attributes = True  
 
 
-# APP SESSION SCHEMAS
+
 
 class AppOpen(BaseModel):
-    """
-    Start / open an app session
-    """
+  
     app_name: str
     category: str
     priority: str
@@ -74,16 +64,12 @@ class AppOpen(BaseModel):
 
 
 class AppClose(BaseModel):
-    """
-    Close app session
-    """
+
     app_name: str
 
 
 class AppSessionResponse(BaseModel):
-    """
-    API response for app session
-    """
+ 
     id: int
     app_name: str
     category: str
@@ -98,4 +84,4 @@ class AppSessionResponse(BaseModel):
     duration_seconds: Optional[int]
 
     class Config:
-        from_attributes = True  #  FIXED (no orm_mode)
+        from_attributes = True  

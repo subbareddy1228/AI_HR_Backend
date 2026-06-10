@@ -1,6 +1,3 @@
-# FILE 5 of 18 | model/Payroll/loan_advance.py
-# Model: LoanAdvance
-# Table: loans_advances
 
 from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey
 from core.database import Base

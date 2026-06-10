@@ -1,6 +1,3 @@
-# FILE 1 of 18 | model/Payroll/salary_structure.py
-# Models: SalaryStructure, EmployeeSalaryMapping
-# Tables: salary_structures, employee_salary_mappings
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Numeric, Date, ForeignKey
 from core.database import Base

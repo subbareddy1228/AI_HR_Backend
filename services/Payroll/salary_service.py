@@ -1,5 +1,3 @@
-# services/Payroll/salary_service.py
-# Service layer for SalaryStructure and EmployeeSalaryMapping
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -12,8 +10,6 @@ from schema.Payroll.salary_structure import (
     EmployeeSalaryMappingCreate,
 )
 
-
-# ── Salary Structure ─────────────────────────────────────────────────────────
 
 def create_salary_structure(db: Session, payload: SalaryStructureCreate) -> SalaryStructure:
     """Create a new salary structure. Raises 409 if name already exists."""
@@ -35,12 +31,12 @@ def create_salary_structure(db: Session, payload: SalaryStructureCreate) -> Sala
 
 
 def list_salary_structures(db: Session) -> List[SalaryStructure]:
-    """Return all salary structures."""
+    
     return db.execute(select(SalaryStructure)).scalars().all()
 
 
 def get_salary_structure(db: Session, structure_id: int) -> SalaryStructure:
-    """Fetch a single salary structure by ID. Raises 404 if not found."""
+ 
     obj = db.execute(
         select(SalaryStructure).where(SalaryStructure.id == structure_id)
     ).scalar_one_or_none()
@@ -51,7 +47,7 @@ def get_salary_structure(db: Session, structure_id: int) -> SalaryStructure:
 
 
 def update_salary_structure(db: Session, structure_id: int, payload: SalaryStructureUpdate) -> SalaryStructure:
-    """Update a salary structure. Raises 404 if not found."""
+   
     obj = get_salary_structure(db, structure_id)
 
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -63,16 +59,14 @@ def update_salary_structure(db: Session, structure_id: int, payload: SalaryStruc
 
 
 def delete_salary_structure(db: Session, structure_id: int) -> None:
-    """Delete a salary structure. Raises 404 if not found."""
+   
     obj = get_salary_structure(db, structure_id)
     db.delete(obj)
     db.commit()
 
 
-# ── Employee Salary Mapping ───────────────────────────────────────────────────
-
 def assign_employee_to_structure(db: Session, payload: EmployeeSalaryMappingCreate) -> EmployeeSalaryMapping:
-    """Assign an employee to a salary structure. Updates if mapping already exists."""
+    
     existing = db.execute(
         select(EmployeeSalaryMapping).where(EmployeeSalaryMapping.employee_id == payload.employee_id)
     ).scalar_one_or_none()
@@ -92,7 +86,7 @@ def assign_employee_to_structure(db: Session, payload: EmployeeSalaryMappingCrea
 
 
 def get_employee_salary_mapping(db: Session, employee_id: int) -> EmployeeSalaryMapping:
-    """Get the salary mapping for a specific employee. Raises 404 if not found."""
+    
     obj = db.execute(
         select(EmployeeSalaryMapping).where(EmployeeSalaryMapping.employee_id == employee_id)
     ).scalar_one_or_none()

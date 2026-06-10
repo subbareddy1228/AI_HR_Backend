@@ -3,8 +3,6 @@ from typing import Optional, Any
 from datetime import datetime
 
 
-# ── Workflow schemas ───────────────────────────────────────────────────────────
-
 class WorkflowBase(BaseModel):
     workflow_name: str
     workflow_type: str
@@ -28,8 +26,6 @@ class WorkflowResponse(WorkflowBase):
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
-
-# ── WorkflowInstance schemas ───────────────────────────────────────────────────
 
 class WorkflowInstanceBase(BaseModel):
     workflow_id: int

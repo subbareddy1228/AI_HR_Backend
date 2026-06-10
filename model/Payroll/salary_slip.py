@@ -1,6 +1,3 @@
-# FILE 3 of 18 | model/Payroll/salary_slip.py
-# Model: SalarySlip
-# Table: salary_slips
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, Text, ForeignKey
 from core.database import Base

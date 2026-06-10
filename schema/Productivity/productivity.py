@@ -3,9 +3,6 @@ from typing import Optional
 from datetime import date, datetime
 
 
-
-# RESPONSE: Individual productivity record
-
 class ProductivityOut(BaseModel):
     id: int
     employee_id: int
@@ -24,11 +21,11 @@ class ProductivityOut(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True  # SQLAlchemy → Pydantic
+        from_attributes = True  
 
 
 
-# RESPONSE: Summary metrics
+
 
 class SummaryMetrics(BaseModel):
     overall_score: float

@@ -1,6 +1,3 @@
-# FILE 6 of 18 | model/Payroll/statutory_compliance.py
-# Model: StatutoryConfig
-# Table: statutory_configs
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, Numeric, Text
 from core.database import Base

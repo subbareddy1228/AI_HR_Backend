@@ -15,9 +15,6 @@ from core.database import Base
 import enum
 
 
-# =========================
-# ENUMS (DB SAFE)
-# =========================
 
 class LeadStatus(enum.Enum):
     Contacted = "Contacted"
@@ -32,9 +29,6 @@ class Visibility(enum.Enum):
     Public = "Public"
 
 
-# =========================
-# LEAD MODEL
-# =========================
 
 class Lead(Base):
     __tablename__ = "leads"

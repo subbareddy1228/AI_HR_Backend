@@ -1,4 +1,3 @@
-# app/services/screenshot_cleanup.py
 
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -11,10 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def delete_old_screenshots(db: Session) -> int:
-    """
-    Delete screenshots older than configured retention minutes
-    and remove corresponding S3 objects.
-    """
+   
 
     cutoff = datetime.utcnow() - timedelta(
         minutes=config.S3_SCREENSHOT_RETENTION_MINUTES

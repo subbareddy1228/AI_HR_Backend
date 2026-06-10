@@ -12,7 +12,7 @@ class LeaveRequestCreate(BaseModel):
 
 
 class LeaveRequestUpdate(BaseModel):
-    status: Optional[str] = None    # PENDING | APPROVED | REJECTED | CANCELLED
+    status: Optional[str] = None    
     approved_by: Optional[int] = None
     rejection_reason: Optional[str] = None
 

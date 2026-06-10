@@ -13,8 +13,8 @@ class EmployeeConfirmationCreate(BaseModel):
 
 class EmployeeConfirmationUpdate(BaseModel):
     confirmation_date: Optional[date] = None
-    performance_rating: Optional[str] = None    # EXCELLENT | GOOD | SATISFACTORY | POOR
-    status: Optional[str] = None                # PENDING | CONFIRMED | EXTENDED | TERMINATED
+    performance_rating: Optional[str] = None    
+    status: Optional[str] = None              
     extended_till: Optional[date] = None
     reviewed_by: Optional[int] = None
     remarks: Optional[str] = None

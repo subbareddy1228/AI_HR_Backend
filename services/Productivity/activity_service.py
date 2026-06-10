@@ -19,7 +19,7 @@ from schema.Productivity.ProductivityActivity import ActivityCreate
 
 
 async def create_activity(db: AsyncSession, act_in: ActivityCreate) -> ProductivityActivity:
-    """Create a new ProductivityActivity record (async)."""
+   
     logger.info(f"Creating ProductivityActivity for employee_id={act_in.employee_id}, type={act_in.activity_type}, duration={act_in.duration_seconds}")
     act = ProductivityActivity(
         employee_id=act_in.employee_id,

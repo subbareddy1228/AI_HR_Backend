@@ -1,5 +1,3 @@
-# FILE 9 (6/8) | schema/Payroll/statutory_compliance.py
-# Schemas: StatutoryConfigBase/Create/Update/Response
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional

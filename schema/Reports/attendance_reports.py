@@ -1,20 +1,14 @@
-# schema/Reports/attendance_reports.py
 
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import date, datetime, time
 
 
-# ── Top stat cards ────────────────────────────────────────────────────────────
-
 class AttendanceReportStats(BaseModel):
     generated_reports: int
     pending_reports: int
     todays_reports: int
     compliance_ready: int
-
-
-# ── Report Type Summary (bar chart right side) ────────────────────────────────
 
 class ReportTypeSummary(BaseModel):
     daily_reports_total: int
@@ -27,19 +21,15 @@ class ReportTypeSummary(BaseModel):
     compliance_reports_generated: int
 
 
-# ── Report list table ─────────────────────────────────────────────────────────
-
 class AttendanceReportItem(BaseModel):
     report_name: str
-    category: str           # Daily | Monthly | Exception | Compliance
+    category: str          
     date: Optional[datetime] = None
     generated_at: Optional[str] = None
     department: Optional[str] = None
     details: Optional[str] = None
-    status: str             # generated | pending | failed
+    status: str            
 
-
-# ── Report Generation History ─────────────────────────────────────────────────
 
 class ReportGenerationHistoryItem(BaseModel):
     report_type: str
@@ -47,23 +37,17 @@ class ReportGenerationHistoryItem(BaseModel):
     to_date: date
     generated_by: str
     file_size: Optional[str] = None
-    status: str             # Generated | Generating | Failed
-
-
-# ── Daily Attendance Summary ──────────────────────────────────────────────────
+    status: str           
 
 class DailyAttendanceSummaryItem(BaseModel):
     employee_id: str
     employee_name: str
     department: Optional[str]
     date: date
-    status: str             # PRESENT | ABSENT | LATE | HALF_DAY | ON_LEAVE | HOLIDAY
-    check_in: Optional[time] = None
+    status: str           
     check_out: Optional[time] = None
     remarks: Optional[str] = None
 
-
-# ── Late Arrivals ─────────────────────────────────────────────────────────────
 
 class LateArrivalItem(BaseModel):
     employee_id: str
@@ -74,8 +58,6 @@ class LateArrivalItem(BaseModel):
     late_by_minutes: int
 
 
-# ── Early Departures ──────────────────────────────────────────────────────────
-
 class EarlyDepartureItem(BaseModel):
     employee_id: str
     employee_name: str
@@ -85,17 +67,13 @@ class EarlyDepartureItem(BaseModel):
     early_by_minutes: int
 
 
-# ── Missing Punch ─────────────────────────────────────────────────────────────
-
 class MissingPunchItem(BaseModel):
     employee_id: str
     employee_name: str
     department: Optional[str]
     date: date
-    punch_type: str         # CHECK_IN | CHECK_OUT | BOTH
+    punch_type: str       
 
-
-# ── Monthly Attendance Register ───────────────────────────────────────────────
 
 class MonthlyAttendanceItem(BaseModel):
     employee_id: str
@@ -111,9 +89,6 @@ class MonthlyAttendanceItem(BaseModel):
     holidays: int
     total_working_days: int
 
-
-# ── Department-wise Attendance Summary ───────────────────────────────────────
-
 class DeptAttendanceSummaryItem(BaseModel):
     department: str
     total_employees: int
@@ -122,8 +97,6 @@ class DeptAttendanceSummaryItem(BaseModel):
     on_leave: int
     attendance_pct: float
 
-
-# ── Loss of Pay ───────────────────────────────────────────────────────────────
 
 class LossOfPayItem(BaseModel):
     employee_id: str
@@ -134,8 +107,6 @@ class LossOfPayItem(BaseModel):
     lop_amount: float
 
 
-# ── Overtime Summary ──────────────────────────────────────────────────────────
-
 class OvertimeSummaryItem(BaseModel):
     employee_id: str
     employee_name: str
@@ -144,8 +115,6 @@ class OvertimeSummaryItem(BaseModel):
     year: int
     total_overtime_hours: float
 
-
-# ── WFH Tracking ─────────────────────────────────────────────────────────────
 
 class WFHTrackingItem(BaseModel):
     employee_id: str
@@ -156,17 +125,15 @@ class WFHTrackingItem(BaseModel):
     wfh_days: int
 
 
-# ── Exception Report ─────────────────────────────────────────────────────────
-
 class ExceptionReportItem(BaseModel):
     employee_id: str
     employee_name: str
     department: Optional[str]
     date: date
-    exception_type: str     # LATE | EARLY_DEPARTURE | MISSING_PUNCH | CONTINUOUS_ABSENCE | UNAPPROVED_OT
+    exception_type: str    
 
 
-# ── Compliance Reports ────────────────────────────────────────────────────────
+
 
 class ComplianceMusterRollItem(BaseModel):
     employee_id: str
@@ -174,7 +141,7 @@ class ComplianceMusterRollItem(BaseModel):
     department: Optional[str]
     date: date
     status: str
-    format: str             # Factory Act format
+    format: str            
 
 
 class AttendanceRegisterItem(BaseModel):
@@ -183,4 +150,4 @@ class AttendanceRegisterItem(BaseModel):
     department: Optional[str]
     month: int
     year: int
-    attendance_record: str  # e.g. P,P,A,P,H,...
+    attendance_record: str  

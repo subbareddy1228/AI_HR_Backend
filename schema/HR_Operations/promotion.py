@@ -16,7 +16,7 @@ class PromotionCreate(BaseModel):
 
 
 class PromotionUpdate(BaseModel):
-    status: Optional[str] = None    # PENDING | APPROVED | REJECTED
+    status: Optional[str] = None    
     approved_by: Optional[int] = None
     revised_salary: Optional[Decimal] = None
     remarks: Optional[str] = None

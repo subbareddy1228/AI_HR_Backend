@@ -35,7 +35,7 @@ class EmployeeDocumentBase(BaseModel):
     version       : str                          = Field("v1.0", example="v1.0")
     version_notes : Optional[str]                = None
     upload_date   : Optional[date]               = None
-    expiry_date   : Optional[date]               = None   # None → "No Expiry"
+    expiry_date   : Optional[date]               = None   
     notes         : Optional[str]                = None
 
 

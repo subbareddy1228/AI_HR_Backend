@@ -1,7 +1,3 @@
-# services/Employee_Management/employee_document_service.py
-# Service layer for Document Vault & Management
-# Covers: upload, bulk-upload, list (with filters), get, update,
-#         review/approve/reject, version bump, stats, checklist, delete
 
 from __future__ import annotations
 
@@ -27,10 +23,6 @@ from schema.Employee_Management.employee_document import (
 )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Internal helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
 def _get_or_404(db: Session, doc_id: int) -> EmployeeDocument:
     """Fetch a document by PK or raise 404."""
     obj = db.execute(
@@ -43,10 +35,6 @@ def _get_or_404(db: Session, doc_id: int) -> EmployeeDocument:
         )
     return obj
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Upload
-# ─────────────────────────────────────────────────────────────────────────────
 
 def upload_document(
     db: Session,
@@ -66,9 +54,7 @@ def bulk_upload_documents(
     db: Session,
     payload: BulkUploadRequest,
 ) -> BulkUploadResponse:
-    """Bulk upload — POST /documents/bulk-upload.
-    Commits each row individually so one bad record doesn't block the rest.
-    """
+   
     succeeded = 0
     errors: List[str] = []
 
@@ -81,7 +67,7 @@ def bulk_upload_documents(
             db.commit()
             db.refresh(obj)
             succeeded += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc: 
             db.rollback()
             errors.append(f"Row {idx} ({item.document_name}): {exc}")
 
@@ -93,18 +79,11 @@ def bulk_upload_documents(
     )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Read / List
-# ─────────────────────────────────────────────────────────────────────────────
-
 def list_all_documents(
     db: Session,
     filters: Optional[DocumentFilter] = None,
 ) -> List[EmployeeDocument]:
-    """List all documents with optional filters.
-    Drives the main table in the Document Vault UI.
-    Supports: category, status, employee_type, free-text search.
-    """
+
     stmt = select(EmployeeDocument)
 
     if filters:
@@ -136,7 +115,7 @@ def list_employee_documents(
     db: Session,
     employee_id: int,
 ) -> List[EmployeeDocument]:
-    """All documents for a specific employee."""
+
     return db.execute(
         select(EmployeeDocument)
         .where(EmployeeDocument.employee_id == employee_id)
@@ -149,16 +128,12 @@ def get_document(db: Session, doc_id: int) -> EmployeeDocument:
     return _get_or_404(db, doc_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Update
-# ─────────────────────────────────────────────────────────────────────────────
-
 def update_document(
     db: Session,
     doc_id: int,
     payload: EmployeeDocumentUpdate,
 ) -> EmployeeDocument:
-    """Partial update — PATCH /documents/{id}"""
+  
     obj = _get_or_404(db, doc_id)
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(obj, key, value)
@@ -168,22 +143,16 @@ def update_document(
     return obj
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Versioning
-# ─────────────────────────────────────────────────────────────────────────────
-
 def bump_version(
     db: Session,
     doc_id: int,
     new_file_path: str,
     version_notes: Optional[str] = None,
 ) -> EmployeeDocument:
-    """Replace file and increment version string (v1.0 → v2.0, v2.0 → v3.0, etc.).
-    Called when user re-uploads a new file for an existing document.
-    """
+
     obj = _get_or_404(db, doc_id)
 
-    # Parse current version like "v2.1" → major=2, minor=1
+
     raw = obj.version.lstrip("v")
     parts = raw.split(".")
     try:
@@ -196,25 +165,19 @@ def bump_version(
     obj.version       = new_version
     obj.version_notes = version_notes
     obj.upload_date   = date.today()
-    obj.status        = DocumentStatus.PENDING  # new version needs re-approval
+    obj.status        = DocumentStatus.PENDING  
     obj.updated_at    = datetime.utcnow()
     db.commit()
     db.refresh(obj)
     return obj
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Review / Approve / Reject
-# ─────────────────────────────────────────────────────────────────────────────
-
 def review_document(
     db: Session,
     doc_id: int,
     payload: ReviewRequest,
 ) -> EmployeeDocument:
-    """Approve or Reject a document — PATCH /documents/{id}/review.
-    Maps to the eye/tick/reject action icons in the UI.
-    """
+   
     obj = _get_or_404(db, doc_id)
 
     obj.status       = payload.status.value
@@ -222,7 +185,6 @@ def review_document(
     obj.reviewed_at  = datetime.utcnow()
     obj.review_notes = payload.review_notes
 
-    # Keep legacy flag in sync
     if payload.status == DocumentStatus.APPROVED:
         obj.is_verified = True
 
@@ -237,7 +199,7 @@ def verify_document(
     doc_id: int,
     verified_by: str,
 ) -> EmployeeDocument:
-    """Legacy verify shortcut — sets APPROVED + is_verified."""
+    
     obj = _get_or_404(db, doc_id)
     obj.is_verified  = True
     obj.verified_by  = verified_by
@@ -249,29 +211,15 @@ def verify_document(
     return obj
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Delete
-# ─────────────────────────────────────────────────────────────────────────────
-
 def delete_document(db: Session, doc_id: int) -> None:
-    """Hard delete — DELETE /documents/{id}"""
+ 
     obj = _get_or_404(db, doc_id)
     db.delete(obj)
     db.commit()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Dashboard stats — drives the 4 summary cards in the UI
-# ─────────────────────────────────────────────────────────────────────────────
-
 def get_vault_stats(db: Session) -> DocumentVaultStats:
-    """
-    Returns:
-      - Total Documents
-      - Approved
-      - Pending Review
-      - Expiring Soon (within 30 days, excluding NULL expiry)
-    """
+   
     today         = date.today()
     expiry_cutoff = today + timedelta(days=30)
 
@@ -308,11 +256,7 @@ def get_vault_stats(db: Session) -> DocumentVaultStats:
     )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Checklist view — GET /documents/checklist/{employee_id}
-# ─────────────────────────────────────────────────────────────────────────────
 
-# Required document types per employee (customize per HR policy)
 REQUIRED_DOCUMENT_TYPES = [
     {"document_type": "Aadhaar",              "category": "KYC",         "is_mandatory": True},
     {"document_type": "PAN",                  "category": "KYC",         "is_mandatory": True},
@@ -326,15 +270,12 @@ REQUIRED_DOCUMENT_TYPES = [
 
 
 def get_employee_checklist(db: Session, employee_id: int) -> EmployeeChecklist:
-    """Build the Checklist View for an employee.
-    Cross-references uploaded documents against REQUIRED_DOCUMENT_TYPES.
-    """
+
     uploaded: List[EmployeeDocument] = db.execute(
         select(EmployeeDocument)
         .where(EmployeeDocument.employee_id == employee_id)
     ).scalars().all()
 
-    # Build a lookup: document_type → latest uploaded doc
     uploaded_map: dict[str, EmployeeDocument] = {}
     for doc in uploaded:
         dt = doc.document_type.lower()

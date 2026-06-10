@@ -1,21 +1,16 @@
-# schema/Reports/ai_insights.py
-# Response Schemas for AI-Driven Insights
-# No model file needed — queries existing tables only
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import date
 
 
-# ── KPI Cards ─────────────────────────────────────────────────────────────────
-
 class KPICardSchema(BaseModel):
     count:      int
     label:      str
     subLabel:   str
-    severity:   str                  # high | warning | info | success
-    changeDir:  Optional[str] = None # up | down | neutral
-    unit:       Optional[str] = None # "%" for model accuracy
+    severity:   str                  
+    changeDir:  Optional[str] = None 
+    unit:       Optional[str] = None 
 
 
 class KPIResponseSchema(BaseModel):
@@ -25,12 +20,10 @@ class KPIResponseSchema(BaseModel):
     modelAccuracy:     KPICardSchema
 
 
-# ── Insight Comparison ────────────────────────────────────────────────────────
-
 class ComparisonMetricSchema(BaseModel):
     value:     float
     change:    float
-    changeDir: str     # up | down | neutral
+    changeDir: str     
     label:     str
 
 
@@ -39,8 +32,6 @@ class InsightComparisonSchema(BaseModel):
     anomalies:     ComparisonMetricSchema
     avgRiskScore:  ComparisonMetricSchema
 
-
-# ── Risk Distribution ─────────────────────────────────────────────────────────
 
 class RiskBucketSchema(BaseModel):
     count:      int
@@ -55,26 +46,19 @@ class RiskDistributionSchema(BaseModel):
     total:  int
 
 
-# ── Anomaly Trends ────────────────────────────────────────────────────────────
-
 class AnomalyTrendSchema(BaseModel):
-    period:    str    # Jan | Feb | ... or Week 1 | Day 1
+    period:    str    
     total:     int
     anomalies: int
     normal:    int
 
-
-# ── Risk Factor Correlation ───────────────────────────────────────────────────
 
 class RiskCorrelationSchema(BaseModel):
     employeeId:   int
     department:   str
     tenureMonths: float
     riskScore:    int
-    riskLevel:    str   # High | Medium | Low
-
-
-# ── Attrition Risk ────────────────────────────────────────────────────────────
+    riskLevel:    str  
 
 class AttritionRiskSchema(BaseModel):
     employeeId: str
@@ -84,18 +68,16 @@ class AttritionRiskSchema(BaseModel):
     joinDate:   str
     tenure:     str
     riskScore:  int
-    riskLevel:  str   # High | Medium | Low
+    riskLevel:  str   
     reason:     str
 
-
-# ── Alerts ────────────────────────────────────────────────────────────────────
 
 class AlertSchema(BaseModel):
     id:       int
     action:   str
     count:    Optional[int] = None
-    severity: str           # high | warning | info | success
-    color:    str           # danger | warning | primary | success
+    severity: str         
+    color:    str         
     status:   Optional[str] = None
     badge:    Optional[str] = None
     endpoint: str
@@ -106,12 +88,10 @@ class AlertResponseSchema(BaseModel):
     alerts:     List[AlertSchema]
 
 
-# ── AI Model Performance ──────────────────────────────────────────────────────
-
 class ModelSchema(BaseModel):
     name:        str
     accuracy:    float
-    status:      str    # active | inactive
+    status:      str   
     description: str
 
 
@@ -122,13 +102,11 @@ class ModelPerformanceSchema(BaseModel):
     overallAccuracy: float
 
 
-# ── Recent Insights ───────────────────────────────────────────────────────────
-
 class RecentInsightSchema(BaseModel):
-    module:   str    # Attendance | Leave | Expense
+    module:   str  
     message:  str
-    severity: str    # high | medium | low
-    color:    str    # danger | warning | success
+    severity: str   
+    color:    str    
     time:     str
 
 
@@ -136,12 +114,10 @@ class RecentInsightsResponseSchema(BaseModel):
     insights: List[RecentInsightSchema]
 
 
-# ── Attendance Anomalies ──────────────────────────────────────────────────────
-
 class AttendanceAnomalySchema(BaseModel):
     date:        str
     absentCount: int
-    severity:    str   # High | Medium
+    severity:    str  
 
 
 class AttendanceAnomalyResponseSchema(BaseModel):
@@ -151,7 +127,6 @@ class AttendanceAnomalyResponseSchema(BaseModel):
     anomalies:        List[AttendanceAnomalySchema]
 
 
-# ── Leave Patterns ────────────────────────────────────────────────────────────
 
 class LeavePatternSchema(BaseModel):
     month:     str
@@ -160,14 +135,12 @@ class LeavePatternSchema(BaseModel):
     isSpike:   bool
 
 
-# ── Payroll Anomalies ─────────────────────────────────────────────────────────
-
 class PayrollAnomalySchema(BaseModel):
     employeeCode: str
     employeeName: str
     netPay:       float
     vsAverage:    float
-    flag:         str   # Zero/Very Low | Unusually High
+    flag:         str   
 
 
 class PayrollAnomalyResponseSchema(BaseModel):
@@ -175,8 +148,6 @@ class PayrollAnomalyResponseSchema(BaseModel):
     anomalyCount:  int
     anomalies:     List[PayrollAnomalySchema]
 
-
-# ── Workforce Trend ───────────────────────────────────────────────────────────
 
 class WorkforceTrendSchema(BaseModel):
     month:               str

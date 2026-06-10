@@ -18,7 +18,7 @@ class Candidate(Base):
     token_expires_at = Column(DateTime, nullable=False)
 
     status = Column(String, default="SENT")  
-    # SENT | IN_PROGRESS | SUBMITTED | APPROVED | REJECTED
+ 
 
     form_data = Column(JSON, default={})
 

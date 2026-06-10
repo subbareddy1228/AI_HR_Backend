@@ -1,6 +1,4 @@
-# FILE 7 of 18 | model/Payroll/bank_transfer.py
-# Model: BankTransfer
-# Table: bank_transfers
+
 
 from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey
 from core.database import Base

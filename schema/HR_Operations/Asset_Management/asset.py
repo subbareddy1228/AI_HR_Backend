@@ -2,7 +2,7 @@ from datetime import date
 from pydantic import BaseModel, ConfigDict
 
 
-# 🔹 Shared fields
+
 class AssetBase(BaseModel):
     asset_name: str
     category: str
@@ -18,13 +18,11 @@ class AssetBase(BaseModel):
     warranty_until: date | None = None
 
 
-# 🔹 Create request
-# Client should NOT control lifecycle status during creation
 class AssetCreate(AssetBase):
     pass
 
 
-# 🔹 Update request
+
 class AssetUpdate(BaseModel):
     asset_name: str | None = None
     category: str | None = None
@@ -37,13 +35,13 @@ class AssetUpdate(BaseModel):
     department: str | None = None
     warranty_until: date | None = None
 
-    # Optional — only if you allow manual lifecycle updates
+  
     status: str | None = None
 
 
-# 🔹 Response schema
+
 class AssetResponse(AssetBase):
     id: int
-    status: str  # ✅ REQUIRED because service uses it
+    status: str 
 
     model_config = ConfigDict(from_attributes=True)

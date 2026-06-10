@@ -3,8 +3,6 @@ from typing import Optional, Any
 from datetime import datetime
 
 
-# ── Survey schemas ─────────────────────────────────────────────────────────────
-
 class SurveyBase(BaseModel):
     title: str
     description: Optional[str] = None
@@ -35,8 +33,6 @@ class SurveyResponse(SurveyBase):
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
-
-# ── SurveyResponse schemas ─────────────────────────────────────────────────────
 
 class SurveyResponseBase(BaseModel):
     survey_id: int

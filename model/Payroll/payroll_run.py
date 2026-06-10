@@ -1,6 +1,3 @@
-# FILE 2 of 18 | model/Payroll/payroll_run.py
-# Models: PayrollRun, PayrollRunDetail
-# Tables: payroll_runs, payroll_run_details
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, Text, ForeignKey
 from core.database import Base

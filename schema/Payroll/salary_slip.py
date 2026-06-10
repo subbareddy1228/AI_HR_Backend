@@ -1,5 +1,3 @@
-# FILE 9 (3/8) | schema/Payroll/salary_slip.py
-# Schemas: SalarySlipBase/Create/Update/Response
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional

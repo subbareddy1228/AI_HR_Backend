@@ -1,6 +1,3 @@
-# model/Reports/saved_report.py
-# Models: ReportFeature, SavedReport
-# Tables: report_features, saved_reports
 
 from sqlalchemy import Column, Integer, String, JSON, DateTime, Boolean, Text, Enum as SAEnum
 from core.database import Base
@@ -8,7 +5,6 @@ from datetime import datetime
 import enum
 
 
-# ── Enums ──────────────────────────────────────────────────────────────────────
 
 class FeatureStatus(str, enum.Enum):
     published   = "Published"
@@ -26,9 +22,6 @@ class FeatureCategory(str, enum.Enum):
     sharing  = "Sharing"
 
 
-# ── ReportFeature ──────────────────────────────────────────────────────────────
-# Drives the main table in the screenshot:
-# Icon | Feature Name | Category | Last Updated | Status | Actions
 
 class ReportFeature(Base):
     __tablename__ = "report_features"
@@ -52,9 +45,6 @@ class ReportFeature(Base):
     created_at   = Column(DateTime, default=datetime.utcnow)
     updated_at   = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-
-# ── SavedReport ────────────────────────────────────────────────────────────────
-# Stores user-built report configurations (filters, columns, data source)
 
 class SavedReport(Base):
     __tablename__ = "saved_reports"

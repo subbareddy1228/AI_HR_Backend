@@ -1,4 +1,4 @@
-# schema/Reports/employee_reports.py
+
 
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
@@ -6,8 +6,6 @@ from datetime import datetime, date
 
 
 
-
-# ── Top stat cards ────────────────────────────────────────────────────────────
 
 class EmployeeReportStats(BaseModel):
     total_headcount: int
@@ -17,8 +15,6 @@ class EmployeeReportStats(BaseModel):
     avg_time_to_join_days: float
     promotion_rate_pct: float
 
-
-# ── Headcount & Demographics ──────────────────────────────────────────────────
 
 class HeadcountDeptItem(BaseModel):
     department: str
@@ -33,13 +29,13 @@ class HeadcountDeptItem(BaseModel):
 
 
 class AgeDistributionItem(BaseModel):
-    age_range: str          # 20-25 | 26-30 | 31-35 | 36-40 | 41-45 | 46-50 | 50+
+    age_range: str       
     count: int
     percentage: float
 
 
 class TenureDistributionItem(BaseModel):
-    tenure_range: str       # 0-1 years | 1-3 years | 3-5 years | 5-7 years | 7-10 years | 10+ years
+    tenure_range: str      
     count: int
     percentage: float
 
@@ -70,8 +66,6 @@ class GradeLevelItem(BaseModel):
     pct_of_total: float
 
 
-# ── Employee List ─────────────────────────────────────────────────────────────
-
 class EmployeeListItem(BaseModel):
     name: str
     employee_id: str
@@ -83,16 +77,12 @@ class EmployeeListItem(BaseModel):
     joining_date: date
 
 
-# ── New Joiner Reports ────────────────────────────────────────────────────────
-
 class NewJoinerItem(BaseModel):
     period: str
     count: int
     accepted: int
     declined: int
 
-
-# ── Attrition Analytics ───────────────────────────────────────────────────────
 
 class AttritionAnalyticsItem(BaseModel):
     department: str
@@ -122,7 +112,7 @@ class AttritionReasonItem(BaseModel):
 class ExitInterviewInsightItem(BaseModel):
     insight: str
     mentions: int
-    severity: str           # High | Medium | Low
+    severity: str           
 
 
 class ReplacementCostItem(BaseModel):
@@ -130,9 +120,6 @@ class ReplacementCostItem(BaseModel):
     avg_cost_per_hire: float
     total_replacement_cost: float
     hires_needed: int
-
-
-# ── Joining & Onboarding ──────────────────────────────────────────────────────
 
 class JoiningOnboardingItem(BaseModel):
     department: str
@@ -164,10 +151,8 @@ class JoiningDateVarianceItem(BaseModel):
     avg_variance_days: float
 
 
-# ── Employee Movement ─────────────────────────────────────────────────────────
-
 class EmployeeMovementItem(BaseModel):
-    type: str               # Promotion | Transfer | Designation Change | Department Change | Inter-location Transfer
+    type: str              
     employee_name: str
     employee_id: str
     from_value: str
@@ -198,10 +183,8 @@ class DeptStrengthOverTimeItem(BaseModel):
     jan_2024: int
     feb_2024: int
     mar_2024: int
-    trend: str              # UP | DOWN | STABLE
+    trend: str            
 
-
-# ── Bottom metrics ────────────────────────────────────────────────────────────
 
 class JoiningMetrics(BaseModel):
     offer_acceptance_rate: float
