@@ -1,8 +1,3 @@
-# routers/Employee_Management/employee_self_service.py
-# Employee Self Service — Complete Router
-# Based on uploaded backend structure + screenshot
-# Queries existing tables only — no new model/schema/service files needed
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
@@ -27,17 +22,10 @@ from model.models                                import AttendanceRecord, LeaveR
 router = APIRouter(prefix="/self-service", tags=["Employee Self Service"])
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 1. DASHBOARD — Quick summary for the employee portal home
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/{employee_id}/dashboard")
 def get_dashboard(employee_id: int, db: Session = Depends(get_db)):
-    """
-    Employee portal dashboard — all key summary data in one call.
-    Covers: profile snippet, leave balance, attendance this month,
-    pending requests, recent payslip, upcoming holidays.
-    """
+    
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -47,7 +35,7 @@ def get_dashboard(employee_id: int, db: Session = Depends(get_db)):
     today   = date.today()
     m_start = today.replace(day=1)
 
-    # Attendance this month
+    
     present_days = (
         db.query(func.count(AttendanceRecord.id))
         .filter(
@@ -67,7 +55,7 @@ def get_dashboard(employee_id: int, db: Session = Depends(get_db)):
         .scalar() or 0
     )
 
-    # Leave requests this month
+    
     leave_this_month = (
         db.query(func.count(LeaveRequest.id))
         .filter(
@@ -81,7 +69,7 @@ def get_dashboard(employee_id: int, db: Session = Depends(get_db)):
         .scalar() or 0
     )
 
-    # Latest salary slip
+    
     latest_slip = (
         db.execute(
             select(SalarySlip)
@@ -90,7 +78,7 @@ def get_dashboard(employee_id: int, db: Session = Depends(get_db)):
         ).scalars().first()
     )
 
-    # Pending helpdesk tickets
+    
     open_tickets = (
         db.query(func.count(HRHelpdesk.id))
         .filter(
@@ -100,7 +88,6 @@ def get_dashboard(employee_id: int, db: Session = Depends(get_db)):
         .scalar() or 0
     )
 
-    # Pending loan/advance
     active_loans = (
         db.query(func.count(LoanAdvance.id))
         .filter(
@@ -144,13 +131,11 @@ def get_dashboard(employee_id: int, db: Session = Depends(get_db)):
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 2. PROFILE — View + update permitted fields
-# ══════════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/{employee_id}/profile")
 def get_self_profile(employee_id: int, db: Session = Depends(get_db)):
-    """Full employee profile — personal + employment data."""
+    
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -202,11 +187,6 @@ def update_self_profile(
     official_email: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    """
-    Employee can update only permitted fields:
-    mobile_number, official_email.
-    Other fields require HR approval.
-    """
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -223,9 +203,6 @@ def update_self_profile(
     return {"message": "Profile updated successfully", "employeeId": employee_id}
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 3. ATTENDANCE — Personal attendance summary
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/{employee_id}/attendance")
 def get_self_attendance(
@@ -234,7 +211,6 @@ def get_self_attendance(
     year:        int            = Query(default=None),
     month:       int            = Query(default=None),
 ):
-    """Monthly attendance records for the employee."""
     today  = date.today()
     year   = year  or today.year
     month  = month or today.month
@@ -257,7 +233,7 @@ def get_self_attendance(
         .order_by(AttendanceRecord.date)
     ).scalars().all()
 
-    # Summary counts
+
     status_counts: dict = {}
     for r in records:
         status_counts[r.status] = status_counts.get(r.status, 0) + 1
@@ -286,10 +262,6 @@ def get_self_attendance(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 4. LEAVES — View + apply leave
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/{employee_id}/leaves")
 def get_self_leaves(
     employee_id: int,
@@ -297,7 +269,6 @@ def get_self_leaves(
     status:      Optional[str] = Query(None),
     year:        int            = Query(default=None),
 ):
-    """All leave requests for the employee."""
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -345,7 +316,6 @@ def apply_leave(
     reason:      Optional[str] = None,
     db:          Session       = Depends(get_db),
 ):
-    """Apply for leave."""
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -375,17 +345,12 @@ def apply_leave(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 5. PAYSLIPS — View salary slips
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/{employee_id}/payslips")
 def get_self_payslips(
     employee_id: int,
     db:          Session = Depends(get_db),
     year:        int     = Query(default=None),
 ):
-    """All salary slips for the employee."""
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -429,7 +394,6 @@ def get_payslip_detail(
     slip_id:     int,
     db:          Session = Depends(get_db),
 ):
-    """Single payslip detail."""
     slip = db.execute(
         select(SalarySlip).where(
             SalarySlip.id          == slip_id,
@@ -461,13 +425,9 @@ def get_payslip_detail(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 6. DOCUMENTS — View + upload personal documents
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/{employee_id}/documents")
 def get_self_documents(employee_id: int, db: Session = Depends(get_db)):
-    """All documents uploaded by/for the employee."""
+    
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -493,13 +453,10 @@ def get_self_documents(employee_id: int, db: Session = Depends(get_db)):
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 7. LOANS & ADVANCES — View + apply
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/{employee_id}/loans")
 def get_self_loans(employee_id: int, db: Session = Depends(get_db)):
-    """All loan/advance requests for the employee."""
+    
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -539,7 +496,6 @@ def apply_loan(
     reason:      Optional[str] = None,
     db:          Session       = Depends(get_db),
 ):
-    """Apply for a loan or salary advance."""
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -565,13 +521,10 @@ def apply_loan(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 8. REIMBURSEMENTS — View + submit claims
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/{employee_id}/reimbursements")
 def get_self_reimbursements(employee_id: int, db: Session = Depends(get_db)):
-    """All reimbursement claims for the employee."""
+    
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -609,7 +562,6 @@ def submit_reimbursement(
     description:  Optional[str] = None,
     db:           Session       = Depends(get_db),
 ):
-    """Submit a reimbursement claim."""
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -636,9 +588,6 @@ def submit_reimbursement(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 9. HR HELPDESK — Raise + track tickets
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/{employee_id}/helpdesk")
 def get_self_tickets(
@@ -646,7 +595,6 @@ def get_self_tickets(
     db:          Session        = Depends(get_db),
     status:      Optional[str] = Query(None),
 ):
-    """All helpdesk tickets raised by the employee."""
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -685,7 +633,6 @@ def raise_ticket(
     priority:    str = "MEDIUM",
     db:          Session = Depends(get_db),
 ):
-    """Raise a new HR helpdesk ticket."""
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -713,13 +660,9 @@ def raise_ticket(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 10. TRANSFER REQUESTS — View own transfer history
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/{employee_id}/transfers")
 def get_self_transfers(employee_id: int, db: Session = Depends(get_db)):
-    """Transfer requests for the employee."""
+    
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -749,13 +692,9 @@ def get_self_transfers(employee_id: int, db: Session = Depends(get_db)):
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 11. LIFECYCLE HISTORY — Full career journey
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/{employee_id}/lifecycle")
 def get_self_lifecycle(employee_id: int, db: Session = Depends(get_db)):
-    """Full lifecycle event history for the employee."""
+    
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
@@ -794,13 +733,10 @@ def get_self_lifecycle(employee_id: int, db: Session = Depends(get_db)):
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 12. ONBOARDING TASKS — For new joiners
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/{employee_id}/onboarding-tasks")
 def get_self_onboarding_tasks(employee_id: int, db: Session = Depends(get_db)):
-    """Pending onboarding tasks for new joiners."""
+    
     emp = db.execute(
         select(Employee).where(Employee.id == employee_id)
     ).scalar_one_or_none()
