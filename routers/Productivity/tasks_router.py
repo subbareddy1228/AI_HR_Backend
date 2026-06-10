@@ -11,7 +11,7 @@ router = APIRouter(prefix="/taskmanagement")
 
 
 
-# GET ALL TASKS
+
 
 
 @router.get("/", response_model=List[TaskSchema])
@@ -20,7 +20,7 @@ def get_tasks(db: Session = Depends(get_db)):
 
 
 
-# CREATE TASK
+
 
 
 @router.post("/", response_model=TaskSchema, status_code=status.HTTP_201_CREATED)
@@ -33,7 +33,7 @@ def create_task(request: TaskCreate, db: Session = Depends(get_db)):
 
 
 
-# UPDATE TASK (PATCH – GENERIC UPDATE)
+
 
 
 @router.patch("/{task_id}", response_model=TaskSchema)
@@ -57,7 +57,6 @@ def update_task(
 
 
 
-# COMPLETE TASK (EXPLICIT STATE CHANGE)
 
 
 @router.post("/{task_id}/complete", response_model=TaskSchema)
@@ -81,7 +80,6 @@ def complete_task(task_id: int, db: Session = Depends(get_db)):
 
 
 
-# REOPEN TASK (OPTIONAL BUT REALISTIC)
 
 
 @router.post("/{task_id}/reopen", response_model=TaskSchema)
@@ -99,7 +97,7 @@ def reopen_task(task_id: int, db: Session = Depends(get_db)):
 
 
 
-# DELETE TASK
+
 
 
 @router.delete("/{task_id}", status_code=status.HTTP_200_OK)

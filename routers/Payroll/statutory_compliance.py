@@ -1,10 +1,3 @@
-# FILE 15 of 18 | routers/Payroll/statutory_compliance.py
-# Router: Statutory Compliance — prefix: /statutory  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   GET  /statutory/     — get current config (first record or 404)
-#   POST /statutory/     — create config
-#   PUT  /statutory/{id} — update config
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select

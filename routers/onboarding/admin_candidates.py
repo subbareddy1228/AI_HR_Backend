@@ -1,6 +1,6 @@
 # routers/admin_candidates.py
 
-print("🔥 admin_candidates router loaded")
+print("admin_candidates router loaded")
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -19,9 +19,6 @@ router = APIRouter(
     tags=["Onboarding Candidates"]
 )
 
-# =====================================================
-# SEND INVITE EMAIL (HTML)
-# =====================================================
 
 async def send_invite_email(
     email: str,
@@ -78,10 +75,6 @@ async def send_invite_email(
     await FastMail(mail_config).send_message(message)
 
 
-# =====================================================
-# INVITE CANDIDATE
-# =====================================================
-
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def invite_candidate(
     payload: CandidateCreate,
@@ -111,7 +104,6 @@ async def invite_candidate(
 
     onboarding_link = f"https://yourdomain.com/onboarding/{token}"
 
-    # Send email (do NOT fail API if email fails)
     if payload.email:
         try:
             await send_invite_email(
@@ -132,10 +124,6 @@ async def invite_candidate(
     }
 
 
-# =====================================================
-# LIST ALL CANDIDATES (TABLE VIEW)
-# =====================================================
-
 @router.get("/")
 def list_candidates(db: Session = Depends(get_db)):
     return (
@@ -144,10 +132,6 @@ def list_candidates(db: Session = Depends(get_db)):
         .all()
     )
 
-
-# =====================================================
-# APPROVE CANDIDATE (ADMIN ACTION)
-# =====================================================
 
 @router.put("/{candidate_id}/approve")
 def approve_candidate(
@@ -175,10 +159,6 @@ def approve_candidate(
         "status": candidate.status
     }
 
-
-# =====================================================
-# DELETE CANDIDATE
-# =====================================================
 
 @router.delete("/{candidate_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_candidate(

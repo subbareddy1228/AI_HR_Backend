@@ -6,14 +6,13 @@ from core.database import get_db
 from model.models import User
 from typing import List
 
-#  JWT settings (reuse same as in auth router) 
+ 
 SECRET_KEY = "your_super_secret_key"
 ALGORITHM = "HS256"
 
-#  OAuth2 scheme 
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-#  Get current user 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -28,7 +27,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-#  Role-based access 
+ 
 def require_roles(allowed_roles: List[str]):
     """
     Dependency to ensure current user has one of the allowed roles.

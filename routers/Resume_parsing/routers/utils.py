@@ -20,10 +20,10 @@ from .config import (
 )
 
 
-# OpenAI client
+
 _client = OpenAI(api_key=OPENAI_API_KEY)
 
-#  File Parsing
+
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         pages = [p.extract_text() or "" for p in pdf.pages]
@@ -42,7 +42,7 @@ def extract_text(filename: str, content: bytes) -> str:
         return extract_text_from_docx(content)
     raise ValueError("Unsupported file type. Use PDF or DOCX.")
 
-# OpenAI Helpers 
+ 
 def ai_extract_fields(resume_text: str) -> Dict[str, Any]:
     prompt = f"""
 Extract the following from this resume:
@@ -107,7 +107,7 @@ def ai_similarity_score(resume_text: str, jd_text: str) -> float:
     sim = _cosine(e1, e2)
     return round(sim * 100, 2)
 
-# Email 
+
 def send_email_smtp(to_name: str, to_email: str, score: float, role: str) -> Tuple[bool, str]:
     subject = f"Your Resume Screening Result for {role}"
     body = f"""Hi {to_name or 'Candidate'},

@@ -1,4 +1,3 @@
-# app/routers/admin_reports_router.py
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -13,14 +12,14 @@ router = APIRouter(prefix="/admin/reports")
 
 @router.post("/productivity/export")
 def export_productivity(req: ReportRequest, db: Session = Depends(get_db), _=Depends(require_roles("Admin"))):
-    # Optionally use req fields to filter
+    
     scope = {}
     if req.employee_id: scope["employee_id"] = req.employee_id
     if req.team_id: scope["team_id"] = req.team_id
     if req.department_id: scope["department_id"] = req.department_id
 
     try:
-        # generated_by: could be current user id, but we allow None here
+        
         path = generate_productivity_report(db, generated_by=None, scope=scope)
         return FileResponse(path, filename=path.split("/")[-1])
     except Exception as e:

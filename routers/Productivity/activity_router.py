@@ -20,7 +20,6 @@ router = APIRouter()
 
 
 
-# APP SESSIONS
 
 
 @router.post("/sessions/open", status_code=status.HTTP_201_CREATED)
@@ -91,11 +90,11 @@ def admin_grouped_monitoring(
 ):
     offset = (page - 1) * limit
 
-    # 🔹 Default to today
+
     if target_date is None:
         target_date = date.today()
 
-    #  UTC-AWARE date range (FIX)
+   
     start_of_day = datetime.combine(
         target_date, time.min, tzinfo=timezone.utc
     )
@@ -188,7 +187,6 @@ def admin_grouped_monitoring(
         "date": target_date.isoformat(),
     }
 
-# ACTIVITIES
 
 
 @router.post("/activities/open", response_model=ActivityResponse)

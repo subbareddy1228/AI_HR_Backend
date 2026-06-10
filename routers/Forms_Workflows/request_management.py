@@ -46,8 +46,6 @@ def list_requests(
     return db.execute(query).scalars().all()
 
 
-# ── Static sub-paths before /{request_id} ─────────────────────────────────────
-
 @router.get("/employee/{employee_id}", response_model=list[HRRequestResponse])
 def requests_by_employee(employee_id: int, db: Session = Depends(get_db)):
     return db.execute(

@@ -7,7 +7,6 @@ from core.database import get_db
 
 router = APIRouter()
 
-# Create a new task
 @router.post("/", response_model=schemas.TaskOut)
 def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
     db_task = model.models.Task(
@@ -22,12 +21,10 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
     db.refresh(db_task)
     return db_task
 
-# Get all tasks
 @router.get("/", response_model=List[schemas.TaskOut])
 def get_tasks(db: Session = Depends(get_db)):
     return db.query(model.models.Task).all()
 
-# Get task by ID
 @router.get("/{task_id}", response_model=schemas.TaskOut)
 def get_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(model.models.Task).filter(model.models.Task.id == task_id).first()
@@ -35,7 +32,6 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Task not found")
     return task
 
-# Update task
 @router.put("/{task_id}", response_model=schemas.TaskOut)
 def update_task(task_id: int, task_update: schemas.TaskUpdate, db: Session = Depends(get_db)):
     task = db.query(model.models.Task).filter(model.models.Task.id == task_id).first()
@@ -50,7 +46,6 @@ def update_task(task_id: int, task_update: schemas.TaskUpdate, db: Session = Dep
     db.refresh(task)
     return task
 
-# Delete task
 @router.delete("/{task_id}")
 def delete_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(model.models.Task).filter(model.models.Task.id == task_id).first()
@@ -60,7 +55,6 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Task deleted"}
 
-# Task progress
 @router.get("/progress")
 def get_progress(
     assignee: Optional[str] = Query(None, description="Filter by assignee"),

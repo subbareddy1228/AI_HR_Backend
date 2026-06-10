@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import List, Optional
 
 def create_offer(db: Session, data: OfferTrackingCreate) -> OfferTracking:
-    """Create a new offer"""
     offer = OfferTracking(**data.dict())
     db.add(offer)
     db.commit()
@@ -19,7 +18,6 @@ def get_offers(
     position: Optional[str] = None,
     user: Optional[User] = None
 ) -> List[OfferTracking]:
-    """Get all offers with optional filters, filtered by recruiter"""
     query = db.query(OfferTracking)
 
     if user and user.role.lower() != "admin":
@@ -35,7 +33,6 @@ def get_offers(
     return query.order_by(OfferTracking.created_at.desc()).all()
 
 def get_offer(db: Session, offer_id: int) -> Optional[OfferTracking]:
-    """Get a specific offer by ID"""
     return db.query(OfferTracking).filter(OfferTracking.id == offer_id).first()
 
 def update_offer(
@@ -62,7 +59,6 @@ def update_offer_status(
     offer_id: int,
     status: OfferStatus
 ) -> Optional[OfferTracking]:
-    """Update offer status"""
     offer = get_offer(db, offer_id)
     if not offer:
         return None
@@ -83,7 +79,6 @@ def update_offer_status(
     return offer
 
 def delete_offer(db: Session, offer_id: int) -> bool:
-    """Delete an offer"""
     offer = get_offer(db, offer_id)
     if not offer:
         return False
@@ -93,7 +88,6 @@ def delete_offer(db: Session, offer_id: int) -> bool:
     return True
 
 def get_offer_stats(db: Session, user: Optional[User] = None) -> dict:
-    """Get offer statistics filtered by recruiter"""
     query = db.query(OfferTracking)
     
     # Filter by recruiter (unless admin)

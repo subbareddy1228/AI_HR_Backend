@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/pipeline/candidates", tags=["Pipeline"])
 
 @router.get("/", response_model=List[schemas.CandidateOut])
 def list_candidates(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    # Get all job IDs for the current recruiter (unless admin)
+
     if user.role.lower() == "admin":
         job_ids = list(db.exec(select(Job.id)).all())
     else:
@@ -23,14 +23,14 @@ def list_candidates(db: Session = Depends(get_db), user: User = Depends(get_curr
     if not job_ids:
         return []
     
-    # Get all applications for these jobs
+   
     applications = db.exec(select(Application).where(Application.job_id.in_(job_ids))).all()
     candidate_ids = list(set([app.candidate_id for app in applications if app.candidate_id]))
     
     if not candidate_ids:
         return []
     
-    # Get candidates for these IDs
+    
     return db.query(model.models.Candidate).filter(model.models.Candidate.id.in_(candidate_ids)).all()
 
 

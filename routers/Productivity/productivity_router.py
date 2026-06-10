@@ -19,7 +19,7 @@ router = APIRouter(prefix="/productivity")
 
 
 
-# Logged-in user's productivity (SYNC)
+
 
 @router.get("/", response_model=ProductivityOut)
 def my_productivity(
@@ -33,7 +33,7 @@ def my_productivity(
 
 
 
-# Summary metrics (ASYNC)
+
 
 @router.get("/summary", response_model=SummaryMetrics)
 def summary(db: Session = Depends(get_db)):
@@ -44,7 +44,7 @@ def summary(db: Session = Depends(get_db)):
 
 
 
-# Recompute productivity (ASYNC)
+
 
 @router.post("/compute")
 def compute(
@@ -59,7 +59,7 @@ def compute(
 
 
 
-# Productivity by employee (ASYNC)
+
 
 @router.get(
     "/employee/{employee_id}",

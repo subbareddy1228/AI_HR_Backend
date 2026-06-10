@@ -1,15 +1,3 @@
-# FILE 13 of 18 | routers/Payroll/reimbursements.py
-# Router: Reimbursements — prefix: /reimbursements  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   POST   /reimbursements/                      — create
-#   GET    /reimbursements/                      — list all
-#   GET    /reimbursements/employee/{employee_id} — by employee
-#   GET    /reimbursements/{id}                  — get one
-#   PUT    /reimbursements/{id}                  — update
-#   DELETE /reimbursements/{id}                  — delete
-#   PATCH  /reimbursements/{id}/approve          — set status Approved
-#   PATCH  /reimbursements/{id}/reject           — set status Rejected
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -129,9 +117,6 @@ def delete_reimbursement(reimbursement_id: int, db: Session = Depends(get_db)):
 
 @router.get("/receipts/{reimbursement_id}/download")
 def download_receipt(reimbursement_id: int, db: Session = Depends(get_db)):
-    """
-    Download the receipt file attached to a reimbursement claim.
-    """
     result = db.execute(
         select(Reimbursement).where(Reimbursement.id == reimbursement_id)
     )

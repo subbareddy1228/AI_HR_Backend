@@ -70,7 +70,7 @@ def get_employee_screenshots(
         .filter(Screenshot.employee_id == employee_id)
         .order_by(Screenshot.timestamp.desc())
         .offset(offset)
-        .limit(limit + 1)   #  fetch one extra
+        .limit(limit + 1)  
         .all()
     )
 

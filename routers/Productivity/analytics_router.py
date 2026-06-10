@@ -1,4 +1,3 @@
-# app/routers/analytics_router.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -10,7 +9,7 @@ from model.Productivity.activity import ProductivityActivity
 router = APIRouter(prefix="/analytics")
 
 
-# Employee Analytics
+
 
 @router.get("/employee/{employee_id}")
 def employee_analytics(
@@ -41,7 +40,7 @@ def employee_analytics(
     }
 
 
-# Team Analytics
+
 
 @router.get("/team/{team_id}")
 def team_analytics(
@@ -72,7 +71,6 @@ def team_analytics(
     }
 
 
-# Department Analytics
 
 @router.get("/department/{department_id}")
 def department_analytics(

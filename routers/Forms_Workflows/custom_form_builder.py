@@ -17,8 +17,6 @@ from schema.Forms_Workflows.custom_form import (
 router = APIRouter(prefix="/custom-forms", tags=["Forms & Workflows"])
 
 
-# ── Form definitions ───────────────────────────────────────────────────────────
-
 @router.post("/", response_model=CustomFormResponse, status_code=status.HTTP_201_CREATED)
 def create_form(payload: CustomFormCreate, db: Session = Depends(get_db)):
     form = CustomForm(**payload.model_dump())
@@ -82,7 +80,6 @@ def delete_form(form_id: int, db: Session = Depends(get_db)):
     db.commit()
 
 
-# ── Submissions ────────────────────────────────────────────────────────────────
 
 @router.post("/{form_id}/submit", response_model=FormSubmissionResponse, status_code=status.HTTP_201_CREATED)
 def submit_form(form_id: int, payload: FormSubmissionCreate, db: Session = Depends(get_db)):

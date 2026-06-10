@@ -42,8 +42,6 @@ def list_approvals(
     return db.execute(query).scalars().all()
 
 
-# ── Static sub-paths before /{approval_id} ────────────────────────────────────
-
 @router.get("/pending/{assigned_to}", response_model=list[ApprovalRequestResponse])
 def pending_for_approver(assigned_to: str, db: Session = Depends(get_db)):
     return db.execute(

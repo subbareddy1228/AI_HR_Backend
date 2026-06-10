@@ -39,7 +39,7 @@ def update_project(
     if not ProductivityProject:
         raise HTTPException(status_code=404, detail="ProductivityProject not found")
 
-    #  What client actually sent
+    
     payload = request.dict(exclude_unset=True)
     print("PATCH payload from client:", payload)
 
