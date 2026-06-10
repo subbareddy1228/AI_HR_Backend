@@ -793,7 +793,6 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.get("/api/test")
 def test_api():
     return {"message": "Backend is working correctly!"}
-<<<<<<< HEAD
  
 
 
@@ -807,7 +806,7 @@ from routers.Payroll.statutory_compliance import router as compliance_router
 
 # ── Register ─────────────────────────────────────────────────────────────────
 app.include_router(compliance_router)
-=======
+
 
 
 # ── Lifespan (FastAPI 0.95+) ───────────────────────────────
@@ -820,4 +819,4 @@ async def lifespan(app: FastAPI):
     """
     on_startup()
     yield
->>>>>>> 6d0ca7248276c37edc2925e4d26c09bc3bc42a25
+
