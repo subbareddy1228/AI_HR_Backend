@@ -6,7 +6,6 @@ from enum import Enum
 
 
 
-# Users 
 class UserCreate(BaseModel):
     name: str
     username: Optional[str] = None    
@@ -24,7 +23,6 @@ class UserRead(BaseModel):
     email: str
     role: str
 
-# Jobs
 class JobBase(BaseModel):
     title: str
     department: str

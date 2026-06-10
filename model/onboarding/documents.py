@@ -7,12 +7,12 @@ class OnboardingDocuments(Base):
 
     id = Column(Integer, primary_key=True)
 
-    # Required documents (*)
+  
     pan_card = Column(String, nullable=False)
     aadhaar_card = Column(String, nullable=False)
     highest_education_proof = Column(String, nullable=False)
 
-    # Optional documents
+
     esi_card = Column(String)
     driving_license = Column(String)
     passport = Column(String)

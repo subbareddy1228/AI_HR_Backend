@@ -8,7 +8,6 @@ from datetime import datetime
 from core.database import Base, get_db
 
 
-# ── Model ──────────────────────────────────────────────────────────────────────
 class Tenant(Base):
     __tablename__ = "tenants"
 
@@ -26,7 +25,6 @@ class Tenant(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-# ── Schemas ────────────────────────────────────────────────────────────────────
 class TenantCreate(BaseModel):
     tenant_name: str
     domain: Optional[str] = None
@@ -66,7 +64,6 @@ class TenantResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ── Router ─────────────────────────────────────────────────────────────────────
 router = APIRouter(prefix="/tenants", tags=["Super Admin"])
 
 

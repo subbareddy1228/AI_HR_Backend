@@ -1,5 +1,3 @@
-# routers/Reports/compliance_reports.py
- 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
@@ -28,10 +26,7 @@ from schema.Reports.compliance_reports import (
  
 router = APIRouter(prefix="/api/reports/compliance", tags=["Compliance Reports"])
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# DASHBOARD STATS
-# ══════════════════════════════════════════════════════════════════════════════
+
  
 @router.get("/stats", response_model=ComplianceDashboardStats)
 def get_compliance_stats(
@@ -58,10 +53,7 @@ def get_compliance_stats(
         compliance_rate_pct=compliance_rate,
     )
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# FULL COMPLIANCE REPORT TABLE
-# ══════════════════════════════════════════════════════════════════════════════
+
  
 @router.get("/list", response_model=ComplianceReportList)
 def get_compliance_reports(
@@ -72,7 +64,6 @@ def get_compliance_reports(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Full compliance report table — 15 categories as shown in screenshot."""
     employees = db.execute(
         select(Employee).where(Employee.is_active == True)
     ).scalars().all()
@@ -147,17 +138,13 @@ def get_compliance_reports(
         items=items,
     )
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# INDIVIDUAL STATUTORY REPORTS
-# ══════════════════════════════════════════════════════════════════════════════
+
  
 @router.get("/pf", response_model=List[PFComplianceItem])
 def pf_compliance_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """PF compliance — employee & employer contributions."""
     details = db.execute(select(PayrollRunDetail)).scalars().all()
     return [
         PFComplianceItem(
@@ -179,7 +166,6 @@ def esi_compliance_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """ESI compliance — employee & employer contributions."""
     esi_config = db.execute(select(StatutoryConfig)).scalar_one_or_none()
     esi_limit = float(esi_config.esi_wage_limit) if esi_config else 21000
     details = db.execute(select(PayrollRunDetail)).scalars().all()
@@ -201,7 +187,6 @@ def pt_compliance_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Professional Tax compliance."""
     details = db.execute(select(PayrollRunDetail)).scalars().all()
     return [
         PTComplianceItem(
@@ -220,7 +205,6 @@ def tds_compliance_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """TDS compliance report."""
     details = db.execute(select(PayrollRunDetail)).scalars().all()
     return [
         TDSComplianceItem(
@@ -239,7 +223,6 @@ def gratuity_compliance_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Gratuity compliance report."""
     settlements = db.execute(select(FinalSettlement)).scalars().all()
     return [
         GratuityComplianceItem(

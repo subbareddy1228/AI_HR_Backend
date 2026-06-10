@@ -1,5 +1,3 @@
-# FILE 9 (4/8) | schema/Payroll/reimbursement.py
-# Schemas: ReimbursementBase/Create/Update/Response
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional

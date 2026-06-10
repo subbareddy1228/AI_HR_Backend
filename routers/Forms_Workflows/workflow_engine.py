@@ -18,7 +18,6 @@ from schema.Forms_Workflows.workflow import (
 router = APIRouter(prefix="/workflows", tags=["Forms & Workflows"])
 
 
-# ── Workflow definitions ───────────────────────────────────────────────────────
 
 @router.post("/", response_model=WorkflowResponse, status_code=status.HTTP_201_CREATED)
 def create_workflow(payload: WorkflowCreate, db: Session = Depends(get_db)):
@@ -39,7 +38,6 @@ def list_workflows(db: Session = Depends(get_db)):
     return db.execute(select(Workflow)).scalars().all()
 
 
-# ── Instances (defined before /{workflow_id} to avoid path conflict) ───────────
 
 @router.post("/instances/", response_model=WorkflowInstanceResponse, status_code=status.HTTP_201_CREATED)
 def create_instance(payload: WorkflowInstanceCreate, db: Session = Depends(get_db)):
@@ -121,7 +119,6 @@ def reject_instance(instance_id: int, db: Session = Depends(get_db)):
     return instance
 
 
-# ── Single workflow CRUD (after /instances/ routes) ───────────────────────────
 
 @router.get("/{workflow_id}", response_model=WorkflowResponse)
 def get_workflow(workflow_id: int, db: Session = Depends(get_db)):

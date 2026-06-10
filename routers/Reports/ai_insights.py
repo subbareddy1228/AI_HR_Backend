@@ -1,5 +1,3 @@
-# routers/Reports/ai_insights.py
-
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract, case
@@ -34,11 +32,6 @@ router = APIRouter()
 MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun",
                "Jul","Aug","Sep","Oct","Nov","Dec"]
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 1. KPI CARDS
-# High Risk Employees | Pending Alerts | High Priority Items | Model Accuracy
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/kpi", response_model=KPIResponseSchema)
 def get_insights_kpi(db: Session = Depends(get_db)):
@@ -97,11 +90,6 @@ def get_insights_kpi(db: Session = Depends(get_db)):
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 2. INSIGHT COMPARISON
-# Attrition Rate | Anomalies | Avg Risk Score
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/insights/comparison", response_model=InsightComparisonSchema)
 def get_insight_comparison(db: Session = Depends(get_db)):
     today   = date.today()
@@ -139,9 +127,6 @@ def get_insight_comparison(db: Session = Depends(get_db)):
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 3. RISK DISTRIBUTION — donut chart
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/risk-distribution", response_model=RiskDistributionSchema)
 def get_risk_distribution(db: Session = Depends(get_db)):
@@ -172,10 +157,6 @@ def get_risk_distribution(db: Session = Depends(get_db)):
         "total":  total,
     }
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 4. ANOMALY TRENDS — area chart (Daily | Weekly | Monthly toggle)
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/anomaly-trends", response_model=List[AnomalyTrendSchema])
 def get_anomaly_trends(
@@ -210,9 +191,6 @@ def get_anomaly_trends(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 5. RISK FACTOR CORRELATION — scatter chart
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/risk-correlation", response_model=List[RiskCorrelationSchema])
 def get_risk_correlation(
@@ -248,9 +226,6 @@ def get_risk_correlation(
     return sorted(result, key=lambda x: x["riskScore"], reverse=True)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 6. ATTRITION RISK — high risk employee list
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/attrition-risk", response_model=List[AttritionRiskSchema])
 def get_attrition_risk(
@@ -286,9 +261,6 @@ def get_attrition_risk(
     return sorted(result, key=lambda x: x["riskScore"], reverse=True)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 7. QUICK ACTIONS & ALERTS — right panel
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/alerts", response_model=AlertResponseSchema)
 def get_intelligent_alerts(db: Session = Depends(get_db)):
@@ -345,9 +317,6 @@ def get_intelligent_alerts(db: Session = Depends(get_db)):
     return {"alertCount": len(alerts), "alerts": alerts}
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 8. AI MODEL PERFORMANCE — right panel progress bars
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/model-performance", response_model=ModelPerformanceSchema)
 def get_model_performance(db: Session = Depends(get_db)):
@@ -389,9 +358,6 @@ def get_model_performance(db: Session = Depends(get_db)):
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 9. RECENT INSIGHTS — right panel
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/recent", response_model=RecentInsightsResponseSchema)
 def get_recent_insights(db: Session = Depends(get_db)):
@@ -443,9 +409,6 @@ def get_recent_insights(db: Session = Depends(get_db)):
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 10. ATTENDANCE ANOMALIES
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/attendance-anomalies", response_model=AttendanceAnomalyResponseSchema)
 def get_attendance_anomalies(
@@ -481,9 +444,6 @@ def get_attendance_anomalies(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 11. LEAVE PATTERNS
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/leave-patterns", response_model=List[LeavePatternSchema])
 def get_leave_patterns(
@@ -519,9 +479,6 @@ def get_leave_patterns(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 12. PAYROLL ANOMALIES
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/payroll-anomalies", response_model=PayrollAnomalyResponseSchema)
 def get_payroll_anomalies(
@@ -569,9 +526,6 @@ def get_payroll_anomalies(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 13. WORKFORCE TREND
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/insights/workforce-trend", response_model=List[WorkforceTrendSchema])
 def get_workforce_trend(

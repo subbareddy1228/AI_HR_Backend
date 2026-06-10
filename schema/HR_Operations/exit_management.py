@@ -7,7 +7,7 @@ class ExitManagementCreate(BaseModel):
     employee_id: int
     resignation_date: date
     last_working_date: Optional[date] = None
-    exit_type: str          # RESIGNATION | TERMINATION | RETIREMENT | ABSCONDING
+    exit_type: str         
     reason: Optional[str] = None
     remarks: Optional[str] = None
 

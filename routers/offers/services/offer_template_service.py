@@ -18,7 +18,6 @@ def get_offer_templates(
     department: Optional[str] = None,
     user: Optional[User] = None
 ) -> List[OfferTemplate]:
-    """Get all offer templates with optional filters, filtered by recruiter"""
     query = db.query(OfferTemplate)
     
     # Filter by recruiter (unless admin)
@@ -33,7 +32,6 @@ def get_offer_templates(
     return query.order_by(OfferTemplate.created_at.desc()).all()
 
 def get_offer_template(db: Session, template_id: int) -> Optional[OfferTemplate]:
-    """Get a specific offer template by ID"""
     return db.query(OfferTemplate).filter(OfferTemplate.id == template_id).first()
 
 def update_offer_template(
@@ -56,7 +54,6 @@ def update_offer_template(
     return template
 
 def delete_offer_template(db: Session, template_id: int) -> bool:
-    """Delete an offer template"""
     template = get_offer_template(db, template_id)
     if not template:
         return False

@@ -3,8 +3,6 @@ from typing import Optional
 from datetime import datetime
 
 
-# ── ApprovalRequest schemas ────────────────────────────────────────────────────
-
 class ApprovalRequestBase(BaseModel):
     reference_type: str
     reference_id: int
@@ -35,8 +33,6 @@ class ApprovalRequestResponse(ApprovalRequestBase):
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
-
-# ── Action schema (approve / reject body) ─────────────────────────────────────
 
 class ApprovalActionSchema(BaseModel):
     action_by: str

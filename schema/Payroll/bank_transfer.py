@@ -1,5 +1,3 @@
-# FILE 9 (7/8) | schema/Payroll/bank_transfer.py
-# Schemas: BankTransferBase/Create/Update/Response
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional

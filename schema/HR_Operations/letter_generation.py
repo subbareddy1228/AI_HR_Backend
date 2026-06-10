@@ -5,7 +5,7 @@ from typing import Optional
 
 class LetterGenerationCreate(BaseModel):
     employee_id: int
-    letter_type: str        # OFFER | APPOINTMENT | CONFIRMATION | RELIEVING | EXPERIENCE | SALARY | WARNING | TERMINATION
+    letter_type: str        
     letter_date: date
     subject: str
     body: str

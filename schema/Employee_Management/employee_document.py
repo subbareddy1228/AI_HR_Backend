@@ -1,6 +1,3 @@
-# schema/Employee_Management/employee_document.py
-# Pydantic v2 schemas — mirrors Document Vault & Management UI
-# Covers: upload, update, review/approve, bulk-upload, checklist, stats
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
@@ -9,7 +6,6 @@ from decimal import Decimal
 import enum
 
 
-# ── Enums (match UI badge values) ───────────────────────────────────────────
 
 class DocumentCategory(str, enum.Enum):
     KYC         = "KYC"
@@ -26,7 +22,6 @@ class DocumentStatus(str, enum.Enum):
     REJECTED = "REJECTED"
 
 
-# ── Base ─────────────────────────────────────────────────────────────────────
 
 class EmployeeDocumentBase(BaseModel):
     employee_id   : int
@@ -40,21 +35,19 @@ class EmployeeDocumentBase(BaseModel):
     version       : str                          = Field("v1.0", example="v1.0")
     version_notes : Optional[str]                = None
     upload_date   : Optional[date]               = None
-    expiry_date   : Optional[date]               = None   # None → "No Expiry"
+    expiry_date   : Optional[date]               = None   
     notes         : Optional[str]                = None
 
 
-# ── Create ────────────────────────────────────────────────────────────────────
 
 class EmployeeDocumentCreate(EmployeeDocumentBase):
-    """Payload for POST /documents/ — single upload."""
+   
     pass
 
 
-# ── Bulk upload ───────────────────────────────────────────────────────────────
 
 class BulkDocumentItem(BaseModel):
-    """Single item inside a bulk-upload request."""
+  
     employee_id   : int
     document_name : str
     document_type : str
@@ -70,7 +63,7 @@ class BulkDocumentItem(BaseModel):
 
 
 class BulkUploadRequest(BaseModel):
-    """Payload for POST /documents/bulk-upload"""
+    
     documents: List[BulkDocumentItem] = Field(..., min_length=1)
 
 
@@ -81,10 +74,9 @@ class BulkUploadResponse(BaseModel):
     errors    : List[str] = []
 
 
-# ── Update ────────────────────────────────────────────────────────────────────
 
 class EmployeeDocumentUpdate(BaseModel):
-    """PATCH payload — all fields optional."""
+    
     document_name : Optional[str]              = None
     document_type : Optional[str]              = None
     category      : Optional[DocumentCategory] = None
@@ -99,22 +91,19 @@ class EmployeeDocumentUpdate(BaseModel):
     notes         : Optional[str]              = None
 
 
-# ── Review / Approve / Reject ─────────────────────────────────────────────────
 
 class ReviewRequest(BaseModel):
-    """Body for PATCH /documents/{id}/review"""
+   
     status       : DocumentStatus
     reviewed_by  : int   = Field(..., description="Employee ID of the reviewer")
     review_notes : Optional[str] = None
 
 
-# ── Legacy verify (kept for backward compat) ──────────────────────────────────
 
 class VerifyRequest(BaseModel):
     verified_by: str
 
 
-# ── Response ──────────────────────────────────────────────────────────────────
 
 class EmployeeDocumentResponse(BaseModel):
     id            : int
@@ -129,7 +118,7 @@ class EmployeeDocumentResponse(BaseModel):
     version       : str
     version_notes : Optional[str]    = None
     upload_date   : Optional[date]   = None
-    expiry_date   : Optional[date]   = None   # None means "No Expiry" in UI
+    expiry_date   : Optional[date]   = None  
     status        : str
     reviewed_by   : Optional[int]    = None
     reviewed_at   : Optional[datetime] = None
@@ -144,31 +133,31 @@ class EmployeeDocumentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ── Dashboard stats (top summary cards in UI) ────────────────────────────────
+
 
 class DocumentVaultStats(BaseModel):
-    """Response for GET /documents/stats — drives the 4 summary cards."""
+  
     total_documents : int
     approved        : int
     pending_review  : int
-    expiring_soon   : int   # expiry_date within next 30 days
+    expiring_soon   : int  
 
 
-# ── Checklist ────────────────────────────────────────────────────────────────
+
 
 class ChecklistItem(BaseModel):
-    """One row in the Checklist View."""
+   
     document_type : str
     category      : str
     is_mandatory  : bool
-    status        : str    # PENDING | APPROVED | REJECTED | MISSING
-    document_id   : Optional[int]   = None   # None if document not yet uploaded
+    status        : str    
+    document_id   : Optional[int]   = None   
     document_name : Optional[str]   = None
     expiry_date   : Optional[date]  = None
 
 
 class EmployeeChecklist(BaseModel):
-    """Response for GET /documents/checklist/{employee_id}"""
+   
     employee_id     : int
     total_required  : int
     completed       : int
@@ -177,10 +166,9 @@ class EmployeeChecklist(BaseModel):
     items           : List[ChecklistItem]
 
 
-# ── Filter params (used by list endpoint) ────────────────────────────────────
 
 class DocumentFilter(BaseModel):
     category      : Optional[DocumentCategory] = None
     status        : Optional[DocumentStatus]   = None
-    employee_type : Optional[str]              = None   # Full-time | Part-time | Contract
-    search        : Optional[str]              = None   # name / type / employee search
+    employee_type : Optional[str]              = None  
+    search        : Optional[str]              = None   

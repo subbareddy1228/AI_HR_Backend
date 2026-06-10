@@ -34,10 +34,6 @@ def root():
 
 @router.get("/screening-config")
 def get_screening_config(user: User = Depends(get_current_user)):
-    """
-    Exposes SCORE_THRESHOLD from Backend/.env (loaded at server start).
-    Use this so the UI never assumes a fixed percentage (e.g. 25%) when a row omits `threshold`.
-    """
     return {"score_threshold": SCORE_THRESHOLD}
 
 
@@ -49,12 +45,6 @@ def list_candidates(
     user: User = Depends(get_current_user),
     show_all: bool = Query(False, description="If True, show all screened candidates regardless of aptitude completion")
 ):
-    """
-    Get all AI-screened candidates from candidate_records table filtered by recruiter.
-    Increased default limit to 1000 to ensure all screened candidates are returned.
-    Set show_all=True to see all screened candidates regardless of aptitude test completion.
-    """
-    # Get all candidate emails that belong to this recruiter's jobs
     recruiter_candidate_emails = set()
     recruiter_has_jobs = False
     
@@ -65,15 +55,15 @@ def list_candidates(
         recruiter_has_jobs = len(job_ids) > 0
         
         if job_ids:
-            # Get all applications for these jobs
+            
             applications = db.execute(select(Application).where(Application.job_id.in_(job_ids))).scalars().all()
             print(f" Found {len(applications)} applications for recruiter's jobs")
-            # Get unique candidate emails from applications
+            
             for app in applications:
                 if app.candidate_email:
                     recruiter_candidate_emails.add(app.candidate_email.lower().strip())
             
-            # Also get emails from Candidate table that have applications to recruiter's jobs
+            
             candidate_ids = list(set([app.candidate_id for app in applications if app.candidate_id]))
             if candidate_ids:
                 candidates = db.execute(select(Candidate).where(Candidate.id.in_(candidate_ids))).scalars().all()
@@ -83,15 +73,13 @@ def list_candidates(
         
         print(f" Recruiter {user.id} has {len(recruiter_candidate_emails)} unique candidate emails from applications")
     
-    # Query candidate records
+    
     query = db.query(CandidateRecord).order_by(CandidateRecord.id.desc())
     
-    # For non-admin users, filter by recruiter's candidate emails
-    # NOTE: candidate_records table doesn't track which recruiter screened which resume
-    # So we filter by applications to ensure recruiters only see candidates from their jobs
+    
     if user.role.lower() != "admin":
         if recruiter_candidate_emails:
-            # Filter by applications if they exist
+            
             query = query.filter(
                 func.lower(func.trim(CandidateRecord.candidate_email)).in_(
                     [email.lower().strip() for email in recruiter_candidate_emails]
@@ -99,22 +87,17 @@ def list_candidates(
             )
             print(f"🔍 Filtering candidate_records by {len(recruiter_candidate_emails)} emails from applications")
         elif recruiter_has_jobs:
-            # Recruiter has jobs but no applications yet
-            # Show all screened candidates (resume_screened = "yes") for ResumeScreening page
-            # This allows recruiters to see resumes they've screened directly through the UI
-            # SECURITY NOTE: This shows ALL screened candidates, not just this recruiter's
-            # This is acceptable for the ResumeScreening page where recruiters need to see what they've screened
+            
             query = query.filter(CandidateRecord.resume_screened == "yes")
             print(f" Recruiter {user.id} has jobs but no applications - showing all screened candidates (resume_screened='yes')")
         else:
-            # No jobs at all - return empty result
+            
             print(f" Recruiter {user.id} has no jobs, returning empty result")
             return []
     
     rows = query.offset(offset).limit(limit).all()
     print(f" Found {len(rows)} candidate_records after filtering")
     
-    # Get all emails that have completed aptitude tests (only if show_all is False)
     completed_aptitude_emails = set()
     if not show_all:
         try:
@@ -132,21 +115,19 @@ def list_candidates(
     
     result = []
     for r in rows:
-        # Get stage value - handle None, empty string, or actual value
+       
         stage_value = None
         if hasattr(r, 'stage'):
             stage_value = r.stage
         if not stage_value or stage_value == '':
-            stage_value = "Applied"  # Default to Applied if stage is None or empty
-        
-        # Only filter by aptitude completion if show_all is False
+            stage_value = "Applied"  
+       
         if not show_all:
-            # Don't filter out candidates who are in Interview stage or beyond, even if they completed aptitude test
-            # This ensures Interview candidates are always visible
+            
             candidate_stage_lower = stage_value.lower() if stage_value else ''
             is_advanced_stage = candidate_stage_lower in ['interview', 'offer', 'hired']
             
-            # Filter out candidates who have completed aptitude test UNLESS they're in Interview stage or beyond
+            
             if r.candidate_email and r.candidate_email.lower() in completed_aptitude_emails and not is_advanced_stage:
                 continue
         
@@ -176,16 +157,13 @@ def update_candidate_stage_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """
-    Update candidate stage in candidate_records and sync with other tables.
-    """
+   
     try:
-        # Get candidate record
+        
         candidate_record = db.query(CandidateRecord).filter(CandidateRecord.id == candidate_id).first()
         if not candidate_record:
             raise HTTPException(status_code=404, detail="Candidate not found")
         
-        # Update stage using the utility function to sync all tables
         if candidate_record.candidate_email:
             success = update_candidate_stage_all_tables(db, candidate_record.candidate_email, payload.stage)
             if success:
@@ -210,10 +188,7 @@ def update_candidate_stage_endpoint(
 
 @router.post("/sync-stages")
 def sync_candidate_stages_endpoint(db: Session = Depends(get_db)):
-    """
-    Sync candidate stages based on scores in candidate_records table.
-    This fixes candidates who have been screened but their stages weren't updated correctly.
-    """
+    
     try:
         print("=" * 60)
         print("Syncing Candidate Stages Based on Scores")
@@ -221,7 +196,7 @@ def sync_candidate_stages_endpoint(db: Session = Depends(get_db)):
         print(f"Score Threshold: {SCORE_THRESHOLD}")
         print()
         
-        # 1. Update candidate_records stages based on scores
+       
         print(" Updating candidate_records stages...")
         update_records_query = text("""
             UPDATE candidate_records 
@@ -240,7 +215,7 @@ def sync_candidate_stages_endpoint(db: Session = Depends(get_db)):
         records_updated = result.rowcount
         print(f" Updated {records_updated} candidate_records")
         
-        # 2. Update candidate table stages based on candidate_records
+        
         print("\ Syncing candidate table stages from candidate_records...")
         sync_candidates_query = text("""
             UPDATE candidate c
@@ -257,7 +232,7 @@ def sync_candidate_stages_endpoint(db: Session = Depends(get_db)):
         candidates_updated = result.rowcount
         print(f" Updated {candidates_updated} candidate records")
         
-        # 3. Update application table stages based on candidate_records
+        
         print("\n Syncing application table stages from candidate_records...")
         sync_applications_from_records_query = text("""
             UPDATE application a
@@ -275,7 +250,7 @@ def sync_candidate_stages_endpoint(db: Session = Depends(get_db)):
         applications_from_records_updated = result.rowcount
         print(f" Updated {applications_from_records_updated} application records from candidate_records")
         
-        # 4. Update application table stages based on candidate table
+        
         print("\n Syncing application table stages from candidate table...")
         sync_applications_from_candidate_query = text("""
             UPDATE application a
@@ -293,10 +268,10 @@ def sync_candidate_stages_endpoint(db: Session = Depends(get_db)):
         applications_from_candidate_updated = result.rowcount
         print(f" Updated {applications_from_candidate_updated} application records from candidate table")
         
-        # 5. Show statistics
+        
         print("\n Current Statistics:")
         
-        # Count by stage in candidate_records
+      
         stats_query = text("""
             SELECT 
                 stage,
@@ -348,14 +323,14 @@ async def process_resume(
     candidate_email: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
-    # 1) Extract resume text
+   
     content = await file.read()
     try:
         resume_text = extract_text(file.filename, content)
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
 
-    # 2) Extract fields with AI (handle OpenAI API key / service errors so we return JSON + CORS)
+    
     try:
         fields = ai_extract_fields(resume_text)
     except OpenAIAuthError as e:
@@ -378,7 +353,6 @@ async def process_resume(
         fields["name"], fields["email"], fields["skills"], fields["experience_summary"]
     )
 
-    # Resolve canonical identity from candidate context (UI candidate_id/email) before duplicate checks.
     canonical_email = (candidate_email or "").strip() or (email or "").strip()
     if candidate_id is not None:
         try:
@@ -388,7 +362,6 @@ async def process_resume(
         except Exception as e:
             print(f"Warning: Could not resolve canonical email from candidate_id={candidate_id}: {e}")
 
-    # Check if this candidate's resume has already been screened.
     duplicate_keys = []
     if canonical_email:
         duplicate_keys.append(canonical_email.lower().strip())
@@ -417,7 +390,6 @@ async def process_resume(
             else:
                 raise
 
-    # 3) Generate JD with AI
     try:
         jd_text = ai_generate_jd(role, experience_level)
     except (OpenAIAuthError, OpenAIAPIError) as e:
@@ -426,7 +398,7 @@ async def process_resume(
             detail="AI resume screening is unavailable. Please check OpenAI API key configuration."
         )
 
-    # 4) Compare & Score
+   
     try:
         score = ai_similarity_score(resume_text, jd_text)
     except (OpenAIAuthError, OpenAIAPIError) as e:
@@ -435,22 +407,19 @@ async def process_resume(
             detail="AI resume screening is unavailable. Please check OpenAI API key configuration."
         )
     
-    # Ensure score is not None (handle edge cases)
+   
     if score is None:
         score = 0.0
         print(f" Warning: Score was None for {email}, setting to 0.0")
 
-    # 5) Save ALL candidates (both shortlisted and rejected) to prevent duplicate screening
     email_status = "skipped"
     save_path = os.path.join("uploads", file.filename)
     os.makedirs("uploads", exist_ok=True)
     with open(save_path, "wb") as f:
         f.write(content)
 
-    # Determine initial stage based on score
     initial_stage = "Rejected" if score < SCORE_THRESHOLD else "Screening"
     
-    # Create record with resume_screened field (handle if column doesn't exist yet)
     rec_data = {
         "role": role,
         "experience_level": experience_level,
@@ -465,10 +434,9 @@ async def process_resume(
         "email_sent": "no",
         "stage": initial_stage
     }
-    
-    # Only add resume_screened if the column exists in the model
+   
     if hasattr(CandidateRecord, 'resume_screened'):
-        rec_data["resume_screened"] = "yes"  # Mark as screened
+        rec_data["resume_screened"] = "yes"  
     
     rec = CandidateRecord(**rec_data)
     db.add(rec)
@@ -476,8 +444,7 @@ async def process_resume(
     db.refresh(rec)
     rec_id = rec.id
 
-    # 6) Create/Update Candidate record (SQLModel) to keep tables in sync.
-    # IMPORTANT: Prefer updating the Candidate row by candidate_id (from UI list) to avoid mismatches when AI extracts a different email.
+    
     candidate_for_list = None
     sync_email = None
 
@@ -497,7 +464,7 @@ async def process_resume(
         except Exception as e:
             print(f"Warning: Could not update Candidate by candidate_id={candidate_id}: {e}")
 
-    # Fallback: update/create Candidate by email extracted from resume (original behavior)
+    
     if not sync_email and email:
         try:
             email_normalized = email.lower().strip()
@@ -538,11 +505,11 @@ async def process_resume(
             import traceback
             traceback.print_exc()
 
-    # If UI provided candidate_email (from list row), use it as a last-resort sync key
+   
     if not sync_email and candidate_email:
         sync_email = candidate_email
     
-    # 7) Send email ONLY if shortlisted (score >= threshold)
+    
     if score >= SCORE_THRESHOLD and (sync_email or email):
         ok, msg = send_email_smtp(name, email, score, role)
         rec.email_sent = "yes" if ok else f"error: {msg}"
@@ -550,7 +517,7 @@ async def process_resume(
         db.add(rec)
         db.commit()
         email_status = rec.email_sent
-        #  STAGE MANAGEMENT: Ensure Candidate table is also updated
+        
         try:
             if sync_email:
                 update_candidate_stage_all_tables(db, sync_email, "Screening")
@@ -559,13 +526,13 @@ async def process_resume(
         except Exception as e:
             print(f"Warning: Could not update candidate stage: {e}")
     elif score < SCORE_THRESHOLD:
-        #  REJECTED: Stage already set to "Rejected" above
+        
         email_status = "not_sent_rejected"
-        # Ensure stage is "Rejected" in candidate_records
+       
         rec.stage = "Rejected"
         db.add(rec)
         db.commit()
-        #  STAGE MANAGEMENT: Update Candidate table (SQLModel) to "Rejected" as well
+       
         try:
             if sync_email:
                 update_candidate_stage_all_tables(db, sync_email, "Rejected")
@@ -574,12 +541,11 @@ async def process_resume(
         except Exception as e:
             print(f"Warning: Could not update candidate stage: {e}")
         
-        #  APPLICATION MANAGEMENT: Update all Application records for this candidate to "Rejected"
+        
         try:
             stage_email = sync_email or email
             if stage_email:
-                # Use raw SQL to update all Application records with stage "Applied" to "Rejected"
-                # This handles both candidate_id and candidate_email matches
+              
                 try:
                     result = db.execute(
                         text("""
@@ -599,9 +565,9 @@ async def process_resume(
                         print(f" Updated {sql_updated} Application record(s) to 'Rejected' for {stage_email}")
                 except Exception as sql_error:
                     print(f"Warning: SQL update failed: {sql_error}")
-                    # Fallback to ORM approach
+                    
                     try:
-                        # Find candidate_id from Candidate table
+                        
                         candidate = None
                         try:
                             statement = select(Candidate).where(Candidate.email == stage_email)
@@ -609,9 +575,9 @@ async def process_resume(
                         except AttributeError:
                             candidate = db.query(Candidate).filter(Candidate.email == stage_email).first()
                         
-                        updated_apps = set()  # Track updated application IDs to avoid duplicates
+                        updated_apps = set()  
                         
-                        # Update by candidate_id
+                       
                         if candidate:
                             applications = db.query(Application).filter(
                                 Application.candidate_id == candidate.id
@@ -623,7 +589,7 @@ async def process_resume(
                                     db.add(app)
                                     updated_apps.add(app.id)
                         
-                        # Update by email (avoid duplicates)
+                        
                         applications_by_email = db.query(Application).filter(
                             Application.candidate_email == stage_email
                         ).all()

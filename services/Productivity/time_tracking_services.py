@@ -11,13 +11,13 @@ from model.Productivity.task import ProductivityTask
 
 logger = get_logger(__name__)
 
-# ---------------- OVERVIEW ----------------
+
 def get_time_tracking_overview(db: Session, user, period: str):
     logger.info(f"Getting time tracking overview for user_id={user.id}, period={period}")
     try:
         today = date.today()
 
-        # Active session (attendance without logout)
+        
         active = (
             db.query(Attendance)
             .filter(
@@ -42,7 +42,7 @@ def get_time_tracking_overview(db: Session, user, period: str):
             }
             logger.debug(f"Found active session: {current_session}")
 
-        # Stats (weekly)
+      
         week_start = today - timedelta(days=today.weekday())
 
         total_hours = (
@@ -95,13 +95,13 @@ def get_time_entries(db: Session, period: str, project_id: int | None):
             q = q.filter(Attendance.date >= today - timedelta(days=29))
 
         else:
-            # allow exact date: YYYY-MM-DD
+          
             try:
                 date_obj = datetime.strptime(period, "%Y-%m-%d").date()
                 q = q.filter(Attendance.date == date_obj)
             except ValueError:
                 logger.warning(f"Invalid period '{period}', no date filter applied")
-                pass  # invalid period → no filter or raise 400
+                pass 
 
         entries = (
             q.order_by(Attendance.date.desc())
@@ -117,7 +117,7 @@ def get_time_entries(db: Session, period: str, project_id: int | None):
             if not a.login_time:
                 continue
 
-            #  TIMEZONE-SAFE
+           
             end_dt = a.logout_time or datetime.now(timezone.utc)
             duration = end_dt - a.login_time
 

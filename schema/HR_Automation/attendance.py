@@ -8,7 +8,7 @@ class AttendanceCreate(BaseModel):
     attendance_date: date
     check_in: Optional[time] = None
     check_out: Optional[time] = None
-    status: Optional[str] = "PRESENT"   # PRESENT | ABSENT | LATE | HALF_DAY | ON_LEAVE | HOLIDAY
+    status: Optional[str] = "PRESENT"   
     remarks: Optional[str] = None
 
 

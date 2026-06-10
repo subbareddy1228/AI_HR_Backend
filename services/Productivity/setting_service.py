@@ -1,4 +1,4 @@
-# app/services/setting_service.py
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from model.Productivity.setting import NotificationSetting

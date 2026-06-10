@@ -32,22 +32,20 @@ def list_alerts(
 
     query = db.query(Alert)
 
-    #  filters FIRST
+ 
     if status:
         query = query.filter(Alert.status == status)
 
     if priority:
         query = query.filter(Alert.priority == priority)
 
-    #  ordering
+   
     query = query.order_by(Alert.created_at.desc())
 
-    #  pagination LAST
     query = query.limit(limit)
 
     alerts = query.all()
 
-    # enrich response (safe)
     for a in alerts:
         if a.employee:
             a.employee_name = (

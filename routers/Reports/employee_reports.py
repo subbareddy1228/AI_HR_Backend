@@ -1,5 +1,3 @@
-# routers/Reports/employee_reports.py
-
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, extract
@@ -43,27 +41,17 @@ from schema.Reports.employee_reports import (
 router = APIRouter(prefix="/api/reports/employee", tags=["Employee Reports"])
 
 
-# ── Helper ────────────────────────────────────────────────────────────────────
 
 def _tenure_str(joining_date: date) -> str:
     years = (date.today() - joining_date).days / 365
     return f"{round(years, 1)} years"
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# STAT CARDS
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/stats", response_model=EmployeeReportStats)
 def get_employee_report_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    6 top stat cards:
-    Total Headcount | Active Employees | Retention Rate |
-    Attrition Rate | Avg Time to Join | Promotion Rate
-    """
     total = db.execute(select(func.count()).select_from(Employee)).scalar_one()
     active = db.execute(
         select(func.count()).select_from(Employee).where(Employee.is_active == True)
@@ -93,10 +81,6 @@ def get_employee_report_stats(
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# HEADCOUNT & DEMOGRAPHICS
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/headcount", response_model=List[HeadcountDeptItem])
 def get_headcount_report(
     department: Optional[str] = Query(None),
@@ -104,7 +88,6 @@ def get_headcount_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Headcount & Demographics Reports — department-wise table."""
     stmt = select(
         Employee.department,
         Employee.location,
@@ -141,7 +124,6 @@ def get_age_distribution(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Age Distribution — bar chart data."""
     employees = db.execute(
         select(Employee).where(
             Employee.is_active == True,
@@ -178,7 +160,6 @@ def get_tenure_distribution(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Tenure Distribution — bar chart data."""
     employees = db.execute(
         select(Employee).where(Employee.is_active == True)
     ).scalars().all()
@@ -211,7 +192,6 @@ def get_gender_diversity(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Gender Diversity by Department."""
     results = db.execute(
         select(
             Employee.department,
@@ -239,7 +219,6 @@ def get_employment_type(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Employment Type Breakdown by Department."""
     results = db.execute(
         select(
             Employee.department,
@@ -265,7 +244,6 @@ def get_location_distribution(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Location-wise Distribution."""
     total = db.execute(
         select(func.count()).select_from(Employee).where(Employee.is_active == True)
     ).scalar_one()
@@ -294,7 +272,6 @@ def get_grade_distribution(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Grade/Level-wise Distribution."""
     total = db.execute(
         select(func.count()).select_from(Employee).where(Employee.is_active == True)
     ).scalar_one()
@@ -318,10 +295,6 @@ def get_grade_distribution(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# EMPLOYEE LIST
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/list", response_model=List[EmployeeListItem])
 def get_employee_list(
     department: Optional[str] = Query(None),
@@ -332,7 +305,6 @@ def get_employee_list(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Employee List with Filters."""
     stmt = select(Employee)
     if status == "Active":
         stmt = stmt.where(Employee.is_active == True)
@@ -367,16 +339,11 @@ def get_employee_list(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# NEW JOINER REPORTS
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/new-joiners", response_model=List[NewJoinerItem])
 def get_new_joiner_reports(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """New Joiner Reports (monthly)."""
     results = db.execute(
         select(
             extract("month", Employee.joining_date).label("month"),
@@ -397,17 +364,12 @@ def get_new_joiner_reports(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# ATTRITION ANALYTICS
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/attrition", response_model=List[AttritionAnalyticsItem])
 def get_attrition_analytics(
     department: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Attrition Analytics Reports — department-wise table."""
     exits = db.execute(select(ExitManagement)).scalars().all()
     emp_map = {}
     for ex in exits:
@@ -452,7 +414,6 @@ def get_attrition_trends(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Attrition Trends & Forecasting."""
     return [
         AttritionTrendItem(period="7.2",  attrition_rate_pct=5.1, voluntary_pct=2.1, involuntary_pct=0.0),
         AttritionTrendItem(period="8.5",  attrition_rate_pct=6.2, voluntary_pct=2.3, involuntary_pct=0.0),
@@ -467,7 +428,6 @@ def get_attrition_reasons(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Top Attrition Reasons — bar chart data."""
     exits = db.execute(select(ExitManagement)).scalars().all()
     total = len(exits) or 1
     reason_map = {}
@@ -501,7 +461,6 @@ def get_exit_interview_insights(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Exit Interview Insights."""
     return [
         ExitInterviewInsightItem(insight="Lack of career growth opportunities", mentions=65, severity="High"),
         ExitInterviewInsightItem(insight="Inadequate compensation",             mentions=45, severity="High"),
@@ -515,7 +474,6 @@ def get_replacement_cost(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Replacement Cost Analysis by Department."""
     results = db.execute(
         select(
             Employee.department,
@@ -543,16 +501,11 @@ def get_replacement_cost(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# JOINING & ONBOARDING
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/joining-onboarding", response_model=List[JoiningOnboardingItem])
 def get_joining_onboarding(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Joining & Onboarding Reports — department-wise table."""
     results = db.execute(
         select(
             Employee.department,
@@ -596,7 +549,6 @@ def get_offer_decline_reasons(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Offer Decline Reasons — bar chart data."""
     return [
         OfferDeclineReasonItem(reason="Accepted another offer",  count=45, percentage=45.0),
         OfferDeclineReasonItem(reason="Salary expectations",     count=28, percentage=28.0),
@@ -610,7 +562,6 @@ def get_joining_date_variance(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Joining Date Variance by Department."""
     results = db.execute(
         select(
             Employee.department,
@@ -630,10 +581,6 @@ def get_joining_date_variance(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# EMPLOYEE MOVEMENT
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/movement", response_model=List[EmployeeMovementItem])
 def get_employee_movement(
     movement_type: Optional[str] = Query(None, description="Promotion | Transfer | Designation Change | Department Change"),
@@ -641,7 +588,6 @@ def get_employee_movement(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Employee Movement Reports — Promotions + Transfers combined."""
     result = []
 
     # Promotions
@@ -700,7 +646,6 @@ def get_salary_revisions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Salary Revision Reports."""
     promotions = db.execute(
         select(Promotion).where(
             Promotion.status == "APPROVED",
@@ -732,7 +677,6 @@ def get_dept_strength_over_time(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Department Strength Over Time — last 6 months."""
     results = db.execute(
         select(
             Employee.department,
@@ -757,16 +701,11 @@ def get_dept_strength_over_time(
     ]
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# JOINING METRICS (bottom 4 boxes)
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/joining-metrics", response_model=JoiningMetrics)
 def get_joining_metrics(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Bottom 4 metric boxes: Offer Acceptance | Onboarding Completion | Probation Completion | 1st Year Attrition"""
     total_confirmations = db.execute(
         select(func.count()).select_from(EmployeeConfirmation)
     ).scalar_one()

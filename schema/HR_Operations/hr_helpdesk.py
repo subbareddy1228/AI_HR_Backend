@@ -5,7 +5,7 @@ from typing import Optional
 
 class HRHelpdeskCreate(BaseModel):
     employee_id: int
-    category: str           # PAYROLL | LEAVE | POLICY | ONBOARDING | OTHER
+    category: str          
     subject: str
     description: str
     priority: Optional[str] = "MEDIUM"

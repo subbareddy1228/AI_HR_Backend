@@ -15,7 +15,7 @@ from schema.Productivity.productivity import SummaryMetrics
 
 
 
-# ASYNC SERVICES
+
 
 def get_summary_metrics(db: Session):
     logger.info("Computing summary metrics")
@@ -73,7 +73,7 @@ def get_productivity_by_employee(
     return result.scalars().all()
 
 
-# SYNC SERVICES
+
 
 
 def calculate_employee_productivity(

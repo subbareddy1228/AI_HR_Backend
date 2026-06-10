@@ -1,11 +1,11 @@
-# app/schemas/admin_schemas.py
+
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
 class ProductiveEntityCreate(BaseModel):
     name: str
-    entity_type: str  # "app" or "website"
+    entity_type: str  
     productive: Optional[bool] = True
 
 class ProductiveEntityResponse(ProductiveEntityCreate):
@@ -16,11 +16,11 @@ class ProductiveEntityResponse(ProductiveEntityCreate):
         from_attributes = True
 
 class ReportRequest(BaseModel):
-    scope: Optional[str] = "org"  # "org", "team", "department", "employee"
+    scope: Optional[str] = "org"  
     team_id: Optional[int] = None
     department_id: Optional[int] = None
     employee_id: Optional[int] = None
-    period_start: Optional[str] = None  # ISO date strings
+    period_start: Optional[str] = None  
     period_end: Optional[str] = None
 
 class ReportLogResponse(BaseModel):

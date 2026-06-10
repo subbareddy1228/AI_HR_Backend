@@ -1,5 +1,3 @@
-# services/Payroll/slip_service.py
-# Service layer for SalarySlip operations
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -11,7 +9,7 @@ from schema.Payroll.salary_slip import SalarySlipCreate, SalarySlipUpdate
 
 
 def create_salary_slip(db: Session, payload: SalarySlipCreate) -> SalarySlip:
-    """Create a new salary slip."""
+    
     obj = SalarySlip(**payload.model_dump())
     db.add(obj)
     db.commit()
@@ -25,7 +23,7 @@ def list_salary_slips(
     slip_month: Optional[int] = None,
     slip_year: Optional[int] = None,
 ) -> List[SalarySlip]:
-    """List salary slips with optional filters."""
+    
     stmt = select(SalarySlip)
     if employee_id:
         stmt = stmt.where(SalarySlip.employee_id == employee_id)
@@ -48,7 +46,7 @@ def get_salary_slip(db: Session, slip_id: int) -> SalarySlip:
 
 
 def get_slips_by_employee(db: Session, employee_id: int) -> List[SalarySlip]:
-    """Get all salary slips for an employee, most recent first."""
+    
     return db.execute(
         select(SalarySlip)
         .where(SalarySlip.employee_id == employee_id)
@@ -57,7 +55,7 @@ def get_slips_by_employee(db: Session, employee_id: int) -> List[SalarySlip]:
 
 
 def publish_salary_slip(db: Session, slip_id: int) -> SalarySlip:
-    """Mark a salary slip as published (visible to employee)."""
+   
     obj = get_salary_slip(db, slip_id)
     obj.is_published = True
     db.commit()
@@ -66,7 +64,7 @@ def publish_salary_slip(db: Session, slip_id: int) -> SalarySlip:
 
 
 def update_salary_slip(db: Session, slip_id: int, payload: SalarySlipUpdate) -> SalarySlip:
-    """Update a salary slip's fields."""
+   
     obj = get_salary_slip(db, slip_id)
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(obj, key, value)
@@ -76,7 +74,7 @@ def update_salary_slip(db: Session, slip_id: int, payload: SalarySlipUpdate) -> 
 
 
 def delete_salary_slip(db: Session, slip_id: int) -> None:
-    """Delete a salary slip. Raises 404 if not found."""
+    
     obj = get_salary_slip(db, slip_id)
     db.delete(obj)
     db.commit()

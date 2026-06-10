@@ -1,15 +1,3 @@
-# FILE 16 of 18 | routers/Payroll/bank_transfer.py
-# Router: Bank Transfers — prefix: /bank-transfers  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   POST   /bank-transfers/                         — create
-#   GET    /bank-transfers/                         — list all
-#   GET    /bank-transfers/payroll-run/{run_id}     — all transfers for a payroll run
-#   GET    /bank-transfers/{id}                     — get one
-#   PUT    /bank-transfers/{id}                     — update
-#   DELETE /bank-transfers/{id}                     — delete
-#   PATCH  /bank-transfers/{id}/mark-success        — set status Success
-#   PATCH  /bank-transfers/{id}/mark-failed         — set status Failed
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select

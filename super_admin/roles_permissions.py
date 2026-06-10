@@ -8,20 +8,19 @@ from datetime import datetime
 from core.database import Base, get_db
 
 
-# ── Model ──────────────────────────────────────────────────────────────────────
+
 class Role(Base):
     __tablename__ = "roles"
 
     id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(100), unique=True, nullable=False)
     description = Column(String(255), nullable=True)
-    permissions = Column(JSON, nullable=True)       # {"module": ["read","write","delete"]}
+    permissions = Column(JSON, nullable=True)       
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-# ── Schemas ────────────────────────────────────────────────────────────────────
 class RoleCreate(BaseModel):
     role_name: str
     description: Optional[str] = None
@@ -47,7 +46,6 @@ class RoleResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ── Router ─────────────────────────────────────────────────────────────────────
 router = APIRouter(prefix="/roles", tags=["Super Admin"])
 
 

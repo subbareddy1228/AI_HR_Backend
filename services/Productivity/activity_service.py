@@ -1,13 +1,11 @@
-# app/services/activity_service.py
+
 
 from typing import List, Optional
 from datetime import datetime
 
-# Async imports
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-# Sync imports
 from sqlalchemy.orm import Session
 
 from utils.productivity.logger import get_logger
@@ -19,7 +17,7 @@ from schema.Productivity.ProductivityActivity import ActivityCreate
 
 
 async def create_activity(db: AsyncSession, act_in: ActivityCreate) -> ProductivityActivity:
-    """Create a new ProductivityActivity record (async)."""
+   
     logger.info(f"Creating ProductivityActivity for employee_id={act_in.employee_id}, type={act_in.activity_type}, duration={act_in.duration_seconds}")
     act = ProductivityActivity(
         employee_id=act_in.employee_id,
@@ -46,7 +44,7 @@ async def list_activities_by_employee(
     start: Optional[str] = None,
     end: Optional[str] = None
 ) -> List[ProductivityActivity]:
-    """Get activities for a specific employee within an optional date range (async)."""
+  
     logger.info(f"Fetching activities for employee_id={employee_id}, start={start}, end={end}")
     stmt = select(ProductivityActivity).where(ProductivityActivity.employee_id == employee_id)
 

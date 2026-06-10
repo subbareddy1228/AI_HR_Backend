@@ -4,7 +4,7 @@ from typing import Dict
 class UploadResponse(BaseModel):
     
 
-    # exactly same names as model
+   
     pan_card: bool
     aadhaar_card: bool
     highest_education_proof: bool

@@ -1,6 +1,4 @@
-# model/Reports/dashboard_metric.py
-# Model: DashboardMetric
-# Table: dashboard_metrics
+
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Enum as SAEnum
 from core.database import Base

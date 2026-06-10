@@ -1,14 +1,9 @@
-# FILE 9 (1/8) | schema/Payroll/salary_structure.py
-# Schemas: SalaryStructureBase/Create/Update/Response
-#          EmployeeSalaryMappingBase/Create/Update/Response
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import date, datetime
 from decimal import Decimal
 
-
-# ── SalaryStructure ─────────────────────────────────────────────────────────
 
 class SalaryStructureBase(BaseModel):
     structure_name: str
@@ -48,8 +43,6 @@ class SalaryStructureResponse(SalaryStructureBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ── EmployeeSalaryMapping ───────────────────────────────────────────────────
 
 class EmployeeSalaryMappingBase(BaseModel):
     employee_id: int

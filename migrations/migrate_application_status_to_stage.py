@@ -1,18 +1,14 @@
-"""
-Migration script to rename 'status' column to 'stage' in application table
-and sync stage values across application, candidate, and candidate_records tables.
-"""
 import sys
 import codecs
 from sqlalchemy import create_engine, text
 from core.database import DATABASE_URL
 
-# Handle Windows console encoding for emojis
+
 if sys.platform == 'win32':
     sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
 
 def migrate_application_status_to_stage():
-    """Rename status to stage in application table and sync with other tables"""
+    
     engine = create_engine(DATABASE_URL)
     
     try:
@@ -71,7 +67,7 @@ def migrate_application_status_to_stage():
                 conn.commit()
                 print("[OK] Migrated data from status to stage")
                 
-                # Set default for stage column
+                
                 print("[INFO] Setting default value for 'stage' column...")
                 set_default_query = text("""
                     ALTER TABLE application 
@@ -81,7 +77,7 @@ def migrate_application_status_to_stage():
                 conn.commit()
                 print("[OK] Set default value")
                 
-                # Drop old status column (optional - comment out if you want to keep it)
+                
                 print("[INFO] Dropping old 'status' column...")
                 drop_status_query = text("""
                     ALTER TABLE application 
@@ -91,7 +87,7 @@ def migrate_application_status_to_stage():
                 conn.commit()
                 print("[OK] Dropped 'status' column")
             
-            # Create index on stage column
+            
             print("[INFO] Creating index on 'stage' column...")
             create_index_query = text("""
                 CREATE INDEX IF NOT EXISTS idx_application_stage 
@@ -101,10 +97,10 @@ def migrate_application_status_to_stage():
             conn.commit()
             print("[OK] Created index")
             
-            # Sync stages across all three tables
+            
             print("\n[INFO] Syncing stages across application, candidate, and candidate_records...")
             
-            # 1. Sync from candidate_records to candidate and application
+           
             sync_from_records_query = text("""
                 -- Update candidate table from candidate_records
                 UPDATE candidate c
@@ -126,7 +122,7 @@ def migrate_application_status_to_stage():
             conn.commit()
             print(f"[OK] Synced from candidate_records: {result1.rowcount} records updated")
             
-            # 2. Sync from candidate to application
+           
             sync_from_candidate_query = text("""
                 UPDATE application a
                 SET stage = c.stage
@@ -139,7 +135,7 @@ def migrate_application_status_to_stage():
             conn.commit()
             print(f"[OK] Synced from candidate: {result2.rowcount} records updated")
             
-            # 3. Sync from application to candidate (for cases where application stage is more advanced)
+            
             sync_from_application_query = text("""
                 UPDATE candidate c
                 SET stage = a.stage
@@ -152,10 +148,10 @@ def migrate_application_status_to_stage():
             conn.commit()
             print(f"[OK] Synced from application (advanced stages): {result3.rowcount} records updated")
             
-            # Show statistics
+            
             print("\n[INFO] Current Statistics:")
             
-            # Application table stats
+            
             app_stats_query = text("""
                 SELECT stage, COUNT(*) as count
                 FROM application
@@ -167,7 +163,7 @@ def migrate_application_status_to_stage():
             for stage, count in app_stats:
                 print(f"      {stage}: {count} applications")
             
-            # Candidate table stats
+            
             candidate_stats_query = text("""
                 SELECT stage, COUNT(*) as count
                 FROM candidate
@@ -179,7 +175,7 @@ def migrate_application_status_to_stage():
             for stage, count in candidate_stats:
                 print(f"      {stage}: {count} candidates")
             
-            # Candidate_records stats
+            
             records_stats_query = text("""
                 SELECT stage, COUNT(*) as count
                 FROM candidate_records

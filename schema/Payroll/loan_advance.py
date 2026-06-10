@@ -1,5 +1,3 @@
-# FILE 9 (5/8) | schema/Payroll/loan_advance.py
-# Schemas: LoanAdvanceBase/Create/Update/Response
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional

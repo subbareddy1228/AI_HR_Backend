@@ -23,13 +23,13 @@ def create_notification(note: NotificationCreate, db: Session = Depends(get_db))
     return new_note
 
 
-# READ ALL
+
 @router.get("/", response_model=list[NotificationSchema])
 def get_notifications(db: Session = Depends(get_db)):
     return db.query(ProductivityNotification).all()
 
 
-# UPDATE
+
 @router.put("/{notification_id}", response_model=NotificationSchema)
 def update_notification(notification_id: int, request: NotificationCreate, db: Session = Depends(get_db)):
     ProductivityNotification = db.query(ProductivityNotification).filter(ProductivityNotification.id == notification_id).first()
@@ -42,7 +42,7 @@ def update_notification(notification_id: int, request: NotificationCreate, db: S
     return ProductivityNotification
 
 
-# DELETE
+
 @router.delete("/{notification_id}")
 def delete_notification(notification_id: int, db: Session = Depends(get_db)):
     ProductivityNotification = db.query(ProductivityNotification).filter(ProductivityNotification.id == notification_id).first()

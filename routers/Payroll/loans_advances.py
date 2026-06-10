@@ -1,15 +1,3 @@
-# FILE 14 of 18 | routers/Payroll/loans_advances.py
-# Router: Loans & Advances — prefix: /loans  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   POST   /loans/                      — create
-#   GET    /loans/                      — list all
-#   GET    /loans/employee/{employee_id} — by employee
-#   GET    /loans/{id}                  — get one
-#   PUT    /loans/{id}                  — update
-#   DELETE /loans/{id}                  — delete
-#   PATCH  /loans/{id}/approve          — set status Approved + Active
-#   PATCH  /loans/{id}/reject           — set status Rejected
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select

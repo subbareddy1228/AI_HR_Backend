@@ -1,7 +1,3 @@
-# routers/Reports/custom_report_builder.py
-# Custom Report Builder — Full Router
-# Matches screenshot: feature list, KPI counts, CRUD, status updates, run
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
@@ -20,19 +16,8 @@ from schema.Reports.saved_report import (
 
 router = APIRouter(prefix="/custom", tags=["Custom Report Builder"])
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# SECTION 1 — REPORT FEATURES
-# Drives the main table in the screenshot
-# ══════════════════════════════════════════════════════════════════════════════
-
-# ── KPI summary cards (Total / Published / In Progress / Scheduled) ───────────
 @router.get("/features/kpi")
 def get_feature_kpi(db: Session = Depends(get_db)):
-    """
-    Returns the 4 KPI cards shown at the top of the screenshot:
-    Total Features | Published | In Progress | Scheduled
-    """
     total = (
         db.execute(select(func.count(ReportFeature.id))
                    .where(ReportFeature.is_active == True))
@@ -63,8 +48,6 @@ def get_feature_kpi(db: Session = Depends(get_db)):
         "scheduled":     scheduled,
     }
 
-
-# ── LIST features (with search / category / status filter + pagination) ────────
 @router.get("/features")
 def list_features(
     db:       Session = Depends(get_db),
@@ -115,7 +98,6 @@ def list_features(
     }
 
 
-# ── GET single feature ────────────────────────────────────────────────────────
 @router.get("/features/{feature_id}", response_model=ReportFeatureResponse)
 def get_feature(feature_id: int, db: Session = Depends(get_db)):
     feature = db.execute(
@@ -126,7 +108,6 @@ def get_feature(feature_id: int, db: Session = Depends(get_db)):
     return feature
 
 
-# ── CREATE feature (+ Add New Report button) ──────────────────────────────────
 @router.post("/features", response_model=ReportFeatureResponse, status_code=201)
 def create_feature(payload: ReportFeatureCreate, db: Session = Depends(get_db)):
     feature = ReportFeature(**payload.model_dump())
@@ -136,7 +117,6 @@ def create_feature(payload: ReportFeatureCreate, db: Session = Depends(get_db)):
     return feature
 
 
-# ── UPDATE feature (edit pencil icon) ────────────────────────────────────────
 @router.put("/features/{feature_id}", response_model=ReportFeatureResponse)
 def update_feature(
     feature_id: int,
@@ -159,7 +139,6 @@ def update_feature(
     return feature
 
 
-# ── UPDATE status only (tick / clock / X icon actions in the row) ─────────────
 @router.patch("/features/{feature_id}/status")
 def update_feature_status(
     feature_id: int,
@@ -182,8 +161,6 @@ def update_feature_status(
         "message": f"Status updated to '{status.value}'",
     }
 
-
-# ── DELETE feature (X icon) ───────────────────────────────────────────────────
 @router.delete("/features/{feature_id}")
 def delete_feature(feature_id: int, db: Session = Depends(get_db)):
     feature = db.execute(
@@ -201,12 +178,6 @@ def delete_feature(feature_id: int, db: Session = Depends(get_db)):
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SECTION 2 — SAVED REPORTS
-# Stores user-built report configs (Report Builder tab)
-# ══════════════════════════════════════════════════════════════════════════════
-
-# ── LIST saved reports ────────────────────────────────────────────────────────
 @router.get("/saved")
 def list_saved_reports(db: Session = Depends(get_db)):
     reports = db.execute(
@@ -229,7 +200,6 @@ def list_saved_reports(db: Session = Depends(get_db)):
     }
 
 
-# ── GET one saved report ──────────────────────────────────────────────────────
 @router.get("/saved/{report_id}", response_model=SavedReportResponse)
 def get_saved_report(report_id: int, db: Session = Depends(get_db)):
     report = db.execute(
@@ -240,7 +210,6 @@ def get_saved_report(report_id: int, db: Session = Depends(get_db)):
     return report
 
 
-# ── CREATE saved report ───────────────────────────────────────────────────────
 @router.post("/saved", response_model=SavedReportResponse, status_code=201)
 def create_saved_report(payload: SavedReportCreate, db: Session = Depends(get_db)):
     existing = db.execute(
@@ -256,7 +225,6 @@ def create_saved_report(payload: SavedReportCreate, db: Session = Depends(get_db
     return report
 
 
-# ── UPDATE saved report ───────────────────────────────────────────────────────
 @router.put("/saved/{report_id}", response_model=SavedReportResponse)
 def update_saved_report(
     report_id: int,
@@ -279,7 +247,6 @@ def update_saved_report(
     return report
 
 
-# ── DELETE saved report ───────────────────────────────────────────────────────
 @router.delete("/saved/{report_id}")
 def delete_saved_report(report_id: int, db: Session = Depends(get_db)):
     report = db.execute(
@@ -294,7 +261,6 @@ def delete_saved_report(report_id: int, db: Session = Depends(get_db)):
     return {"message": f"Report '{report.report_name}' deleted", "id": report_id}
 
 
-# ── RUN a saved report ────────────────────────────────────────────────────────
 @router.post("/saved/{report_id}/run")
 def run_saved_report(report_id: int, db: Session = Depends(get_db)):
     report = db.execute(

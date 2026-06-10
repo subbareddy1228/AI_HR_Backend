@@ -1,4 +1,3 @@
-# app/services/asset_insurance_service.py
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session

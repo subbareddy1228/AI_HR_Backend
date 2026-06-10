@@ -1,6 +1,3 @@
-# FILE 4 of 18 | model/Payroll/reimbursement.py
-# Model: Reimbursement
-# Table: reimbursements
 
 from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey
 from core.database import Base

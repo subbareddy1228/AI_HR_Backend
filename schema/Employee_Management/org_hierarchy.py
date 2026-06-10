@@ -1,12 +1,10 @@
-# schema/Employee_Management/org_hierarchy.py
- 
+
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
  
  
-# ── Department ────────────────────────────────────────────────────────────────
- 
+
 class DepartmentBase(BaseModel):
     name: str
     code: Optional[str] = None
@@ -40,7 +38,7 @@ class DepartmentResponse(DepartmentBase):
  
  
 class DepartmentTree(DepartmentResponse):
-    """Nested tree node for Visual Org Chart."""
+    
     children: List['DepartmentTree'] = []
  
     model_config = ConfigDict(from_attributes=True)
@@ -49,22 +47,20 @@ class DepartmentTree(DepartmentResponse):
 DepartmentTree.model_rebuild()
  
  
-# ── Dashboard Stats ───────────────────────────────────────────────────────────
- 
+
 class OrgHierarchyStats(BaseModel):
-    """Top stats cards shown on the Org Hierarchy page."""
+  
     total_departments: int
     total_employees: int
     avg_span_of_control: float
     pending_changes: int
  
  
-# ── Reporting Relationships ───────────────────────────────────────────────────
- 
+
 class ReportingRelationshipBase(BaseModel):
     employee_id: int
     manager_id: int
-    relationship_type: str = "DIRECT"   # DIRECT | DOTTED_LINE | MATRIX
+    relationship_type: str = "DIRECT"   
     effective_date: Optional[datetime] = None
     is_active: Optional[bool] = True
  
@@ -88,30 +84,27 @@ class ReportingRelationshipResponse(ReportingRelationshipBase):
  
  
 class ReportingRelationshipSummary(BaseModel):
-    """Summary counts shown in the Reporting Relationships section."""
+    
     direct_reports: int
     dotted_line_reports: int
     matrix_reports: int
     individual_contributors: int
  
  
-# ── Hierarchy Health ──────────────────────────────────────────────────────────
+
  
 class HierarchyHealth(BaseModel):
-    """Hierarchy Health section on the dashboard."""
+    
     reporting_completeness_pct: float
     overloaded_managers: int
     underloaded_managers: int
-    manager_to_ic_ratio: str            # e.g. "4:1"
- 
- 
-# ── Span of Control Analytics ─────────────────────────────────────────────────
+    manager_to_ic_ratio: str            
  
 class SpanOfControlItem(BaseModel):
     manager_id: int
     manager_name: str
     direct_report_count: int
-    status: str                         # OVERLOADED | NORMAL | UNDERLOADED
+    status: str                         
  
  
 class SpanOfControlAnalytics(BaseModel):
@@ -121,11 +114,11 @@ class SpanOfControlAnalytics(BaseModel):
     details: List[SpanOfControlItem]
  
  
-# ── Hierarchy Change Request ──────────────────────────────────────────────────
+
  
 class HierarchyChangeRequestCreate(BaseModel):
     employee_id: int
-    change_type: str                    # DEPARTMENT_CHANGE | MANAGER_CHANGE | DESIGNATION_CHANGE
+    change_type: str                   
     from_value: Optional[str] = None
     to_value: str
     remarks: Optional[str] = None
@@ -133,7 +126,7 @@ class HierarchyChangeRequestCreate(BaseModel):
  
  
 class HierarchyChangeRequestUpdate(BaseModel):
-    status: str                         # APPROVED | REJECTED
+    status: str                        
     remarks: Optional[str] = None
     approved_by: Optional[int] = None
  
@@ -153,7 +146,7 @@ class HierarchyChangeRequestResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
  
  
-# ── Hierarchy History (Time-Travel) ───────────────────────────────────────────
+
  
 class HierarchyHistoryResponse(BaseModel):
     id: int
@@ -170,7 +163,7 @@ class HierarchyHistoryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
  
  
-# ── Department & Location View ────────────────────────────────────────────────
+
  
 class DepartmentLocationView(BaseModel):
     department_id: int

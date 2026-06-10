@@ -5,7 +5,6 @@ from enum import Enum as PyEnum
 
 
 
-# ENUMS (match frontend)
 class DealStatus(str, PyEnum):
     OPEN = "Open"
     WON = "Won"
@@ -34,57 +33,55 @@ class DealProject(str, PyEnum):
     EDUCATIONAL_PLATFORM = "Educational Platform"
 
 
-
-# BASE SCHEMA
 class DealBase(BaseModel):
     deal_name: str
     pipeline: Optional[str] = None
-    status: Optional[str] = None  # Changed from DealStatus enum to str to accept stage values (New, Prospect, Proposal, Won, Open, Lost)
+    status: Optional[str] = None 
     deal_value: Optional[float] = None
-    currency: Optional[str] = None  # Changed from DealCurrency enum to str to be more flexible
+    currency: Optional[str] = None  
     period: Optional[str] = None
     period_value: Optional[int] = None
     contact: Optional[str] = None
-    project: Optional[str] = None  # Changed from DealProject enum to str to be more flexible
+    project: Optional[str] = None  
     due_date: Optional[date] = None
     expected_closing_date: Optional[date] = None
     assignee: Optional[str] = None
     tags: Optional[str] = None
     followup_date: Optional[date] = None
-    source: Optional[str] = None  # Changed from DealSource enum to str to be more flexible
-    priority: Optional[str] = None  # Changed from DealPriority enum to str to be more flexible
+    source: Optional[str] = None  
+    priority: Optional[str] = None  
     description: Optional[str] = None
     model_config = {"from_attributes": True}
 
 
 
-# CREATE SCHEMA
+
 class DealCreate(DealBase):
     pass
 
-# UPDATE SCHEMA
+
 class DealUpdate(BaseModel):
     deal_name: Optional[str] = None
     pipeline: Optional[str] = None
-    status: Optional[str] = None  # Changed from DealStatus enum to str
+    status: Optional[str] = None  
     deal_value: Optional[float] = None
-    currency: Optional[str] = None  # Changed from DealCurrency enum to str
+    currency: Optional[str] = None 
     period: Optional[str] = None
     period_value: Optional[int] = None
     contact: Optional[str] = None
-    project: Optional[str] = None  # Changed from DealProject enum to str
+    project: Optional[str] = None 
     due_date: Optional[date] = None
     expected_closing_date: Optional[date] = None
     assignee: Optional[str] = None
     tags: Optional[str] = None
     followup_date: Optional[date] = None
-    source: Optional[str] = None  # Changed from DealSource enum to str
-    priority: Optional[str] = None  # Changed from DealPriority enum to str
+    source: Optional[str] = None  
+    priority: Optional[str] = None  
     description: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
-# OUTPUT SCHEMA
+
 class DealOut(DealBase):
     id: int
     model_config = {"from_attributes": True}

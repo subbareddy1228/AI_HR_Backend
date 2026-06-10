@@ -1,4 +1,4 @@
-# schema/Reports/compliance_reports.py
+
  
 from pydantic import BaseModel, ConfigDict
 
@@ -9,7 +9,7 @@ from datetime import date
  
 class ComplianceDashboardStats(BaseModel):
 
-    """Top 4 stat cards on Compliance Dashboard."""
+  
 
     total_reports: int
 
@@ -24,13 +24,12 @@ class ComplianceDashboardStats(BaseModel):
  
 class ComplianceReportItem(BaseModel):
 
-    """One row in the compliance report table."""
 
     sn: int
 
     report_name: str
 
-    category: str                   # Statutory | Document | Policy
+    category: str                  
 
     employee_name: Optional[str] = None
 
@@ -60,13 +59,12 @@ class ComplianceReportItem(BaseModel):
 
     last_updated: Optional[date] = None
 
-    status: str                     # Compliant | Non-Compliant | Pending | Alert | In Progress | Expired | Missing
+    status: str                   
  
  
 class ComplianceReportList(BaseModel):
 
-    """Full compliance report table response."""
-
+    
     total: int
 
     compliant: int
@@ -80,7 +78,7 @@ class ComplianceReportList(BaseModel):
  
 class PFComplianceItem(BaseModel):
 
-    """PF compliance row."""
+   
 
     employee_id: int
 
@@ -101,7 +99,7 @@ class PFComplianceItem(BaseModel):
  
 class ESIComplianceItem(BaseModel):
 
-    """ESI compliance row."""
+   
 
     employee_id: int
 
@@ -118,7 +116,6 @@ class ESIComplianceItem(BaseModel):
  
 class PTComplianceItem(BaseModel):
 
-    """Professional Tax compliance row."""
 
     employee_id: int
 
@@ -133,8 +130,7 @@ class PTComplianceItem(BaseModel):
  
 class TDSComplianceItem(BaseModel):
 
-    """TDS compliance row."""
-
+  
     employee_id: int
 
     employee_name: str
@@ -148,7 +144,6 @@ class TDSComplianceItem(BaseModel):
  
 class GratuityComplianceItem(BaseModel):
 
-    """Gratuity compliance row."""
 
     employee_id: int
 

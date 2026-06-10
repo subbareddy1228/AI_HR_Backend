@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
-# Define structured question model
 class Question(BaseModel):
     q: str
     a: Optional[str] = None

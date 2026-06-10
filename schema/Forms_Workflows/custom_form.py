@@ -3,8 +3,6 @@ from typing import Optional, Any
 from datetime import datetime
 
 
-# ── CustomForm schemas ─────────────────────────────────────────────────────────
-
 class CustomFormBase(BaseModel):
     form_name: str
     form_category: str
@@ -32,8 +30,6 @@ class CustomFormResponse(CustomFormBase):
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
-
-# ── FormSubmission schemas ─────────────────────────────────────────────────────
 
 class FormSubmissionBase(BaseModel):
     form_id: int

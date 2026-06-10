@@ -9,13 +9,13 @@ class TransferCreate(BaseModel):
     to_department: str
     from_location: Optional[str] = None
     to_location: Optional[str] = None
-    transfer_type: str      # INTER_DEPARTMENT | INTER_LOCATION | INTER_COMPANY
+    transfer_type: str     
     effective_date: date
     reason: Optional[str] = None
 
 
 class TransferUpdate(BaseModel):
-    status: Optional[str] = None    # PENDING | APPROVED | REJECTED | COMPLETED
+    status: Optional[str] = None    
     approved_by: Optional[int] = None
     remarks: Optional[str] = None
 

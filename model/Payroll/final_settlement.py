@@ -1,6 +1,4 @@
-# FILE 8 of 18 | model/Payroll/final_settlement.py
-# Model: FinalSettlement
-# Table: final_settlements
+
 
 from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey
 from core.database import Base

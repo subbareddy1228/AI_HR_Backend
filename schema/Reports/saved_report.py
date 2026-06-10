@@ -1,13 +1,9 @@
-# schema/Reports/saved_report.py
-# Schemas for ReportFeature and SavedReport
 
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, Any
 from datetime import datetime
 from model.Reports.saved_report import FeatureStatus, FeatureCategory
 
-
-# ── ReportFeature Schemas ──────────────────────────────────────────────────────
 
 class ReportFeatureBase(BaseModel):
     feature_name: str
@@ -38,8 +34,6 @@ class ReportFeatureResponse(ReportFeatureBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ── SavedReport Schemas ────────────────────────────────────────────────────────
 
 class SavedReportBase(BaseModel):
     report_name:      str

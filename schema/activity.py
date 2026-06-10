@@ -23,15 +23,12 @@ class ActivityBase(BaseModel):
     companies: Optional[str] = None    
     created_date: Optional[date] = None
 
-# Schema for creating an activity
 class ActivityCreate(ActivityBase):
     pass
 
-# Schema for updating an activity
 class ActivityUpdate(ActivityBase):
     pass
 
-# Schema for returning an activity (with ID)
 class Activity(ActivityBase):
     id: int
 

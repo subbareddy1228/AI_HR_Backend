@@ -10,7 +10,7 @@ def calculate_employee_productivity(db: Session, employee_id: int):
     total = len(activities)
     productive_count = sum(1 for a in activities if a.productive == "Yes")
     score = round((productive_count / total) * 100, 2) if total else 0
-    # Bottleneck detection
+   
     bottlenecks = defaultdict(int)
     for a in activities:
         if a.productive == "No":

@@ -1,4 +1,3 @@
-# app/schemas/asset_maintenance.py
 
 from pydantic import BaseModel
 from uuid import UUID

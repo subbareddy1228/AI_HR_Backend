@@ -1,5 +1,3 @@
-# routers/Reports/leave_reports.py
- 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, extract
@@ -24,17 +22,13 @@ from schema.Reports.leave_reports import (
  
 router = APIRouter(prefix="/api/reports/leave", tags=["Leave Reports"])
  
-# ── Constants ─────────────────────────────────────────────────────────────────
 CASUAL_TOTAL  = 12
 SICK_TOTAL    = 10
 EARNED_TOTAL  = 15
-ACCRUAL_RATE  = 1.25     # days per month for Earned Leave
-DAILY_RATE    = 2000     # ₹ per day for encashment calculation
+ACCRUAL_RATE  = 1.25  
+DAILY_RATE    = 2000     
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# STAT CARDS
-# ══════════════════════════════════════════════════════════════════════════════
+
  
 @router.get("/stats", response_model=LeaveReportStats)
 def get_leave_stats(
@@ -45,10 +39,7 @@ def get_leave_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Top stat cards:
-    Total Employees | Avg Age | Total Leaves | Pending | Approved | Rejected
-    """
+    
     emp_stmt = select(Employee).where(Employee.is_active == True)
     if department:
         emp_stmt = emp_stmt.where(Employee.department == department)
@@ -85,10 +76,7 @@ def get_leave_stats(
         rejected=rejected,
     )
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# EMPLOYEE-WISE LEAVE BALANCE
-# ══════════════════════════════════════════════════════════════════════════════
+
  
 @router.get("/balance", response_model=List[LeaveBalanceItem])
 def get_employee_leave_balance(
@@ -100,7 +88,7 @@ def get_employee_leave_balance(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Employee-wise Leave Balance table."""
+    
     stmt = select(Employee).where(Employee.is_active == True)
     if department:
         stmt = stmt.where(Employee.department == department)
@@ -155,16 +143,13 @@ def get_employee_leave_balance(
     return result
  
  
-# ══════════════════════════════════════════════════════════════════════════════
-# DEPARTMENT-WISE LEAVE LIABILITY
-# ══════════════════════════════════════════════════════════════════════════════
  
 @router.get("/dept-liability", response_model=List[DeptLeaveLiabilityItem])
 def get_dept_leave_liability(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Department-wise Leave Liability table."""
+    
     results = db.execute(
         select(
             Employee.department,
@@ -258,16 +243,12 @@ def get_leave_accrual_register(
     return result
  
  
-# ══════════════════════════════════════════════════════════════════════════════
-# CARRY-FORWARD LEAVE TRACKING
-# ══════════════════════════════════════════════════════════════════════════════
  
 @router.get("/carry-forward", response_model=List[CarryForwardItem])
 def get_carry_forward_tracking(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Carry-forward Leave Tracking table."""
     employees = db.execute(
         select(Employee).where(Employee.is_active == True)
     ).scalars().all()
@@ -292,17 +273,13 @@ def get_carry_forward_tracking(
  
     return result
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# LEAVE ENCASHMENT LIABILITY BY DEPARTMENT
-# ══════════════════════════════════════════════════════════════════════════════
+
  
 @router.get("/encashment", response_model=List[LeaveEncashmentItem])
 def get_leave_encashment_liability(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Leave Encashment Liability by Department — department cards."""
     results = db.execute(
         select(
             Employee.department,
@@ -323,9 +300,6 @@ def get_leave_encashment_liability(
     ]
  
  
-# ══════════════════════════════════════════════════════════════════════════════
-# EMPLOYEE LEAVE RECORDS
-# ══════════════════════════════════════════════════════════════════════════════
  
 @router.get("/records", response_model=List[EmployeeLeaveRecordItem])
 def get_employee_leave_records(
@@ -335,7 +309,6 @@ def get_employee_leave_records(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Employee Leave Records table — bottom of the page."""
     emp_stmt = select(Employee).where(Employee.is_active == True)
     if department:
         emp_stmt = emp_stmt.where(Employee.department == department)

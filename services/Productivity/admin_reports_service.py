@@ -1,4 +1,4 @@
-# app/services/admin_reports_service.py
+
 import os
 from datetime import datetime
 import pandas as pd
@@ -7,18 +7,14 @@ from sqlalchemy.orm import Session
 from model.Productivity.productivity import Productivity
 from model.Productivity.report_log import ReportLog
 
-# ensure UPLOAD_DIR exists (adapt to your config; using /tmp for example)
 DEFAULT_REPORT_DIR = os.getenv("REPORT_DIR", "reports")
 os.makedirs(DEFAULT_REPORT_DIR, exist_ok=True)
 
 def generate_productivity_report(db: Session, generated_by: int | None = None, scope: dict | None = None) -> str:
-    """
-    Generate an Excel (xlsx) report of productivity rows filtered by scope.
-    Returns file path.
-    """
+   
     query = db.query(Productivity)
     if scope:
-        # simple filtering keys: employee_id, team_id, department_id, period etc.
+        
         if scope.get("employee_id"):
             query = query.filter(Productivity.employee_id == scope["employee_id"])
         if scope.get("team_id"):
@@ -27,7 +23,7 @@ def generate_productivity_report(db: Session, generated_by: int | None = None, s
             query = query.filter(Productivity.department_id == scope["department_id"])
 
     rows = query.all()
-    # Convert rows to list of dicts (safe)
+
     data = []
     for r in rows:
         data.append({
@@ -49,7 +45,7 @@ def generate_productivity_report(db: Session, generated_by: int | None = None, s
     file_path = os.path.join(DEFAULT_REPORT_DIR, filename)
     df.to_excel(file_path, index=False)
 
-    # log the report
+   
     log = ReportLog(report_type="productivity", generated_by=generated_by, file_path=file_path)
     db.add(log)
     db.commit()

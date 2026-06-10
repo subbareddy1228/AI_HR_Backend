@@ -1,4 +1,3 @@
-# app/schemas/asset_allocation.py
 
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
@@ -15,7 +14,7 @@ class AssetAllocationCreate(BaseModel):
 
 
 class AssetAllocationResponse(BaseModel):
-    id: UUID  # ✅ FIXED — allocation id is UUID
+    id: UUID  
     asset_id: int
     employee_id: str
     employee_name: str

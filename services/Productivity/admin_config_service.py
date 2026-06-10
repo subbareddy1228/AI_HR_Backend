@@ -1,4 +1,4 @@
-# app/services/admin_config_service.py
+
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -6,7 +6,7 @@ from model.Productivity.productive_entity import ProductiveEntity
 from schema.Productivity.admin_schemas import ProductiveEntityCreate
 
 def add_entity(db: Session, data: ProductiveEntityCreate) -> ProductiveEntity:
-    # Check duplicates
+
     existing = db.query(ProductiveEntity).filter(ProductiveEntity.name == data.name).first()
     if existing:
         raise ValueError("Entity already exists")

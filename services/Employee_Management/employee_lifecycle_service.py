@@ -1,5 +1,3 @@
-# services/Employee_Management/employee_lifecycle_service.py
-# Business logic for all Employee Lifecycle tabs
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
@@ -16,25 +14,17 @@ from model.Employee_Management.employee_lifecycle import (
     ContractRenewal,
 )
 from schema.Employee_Management.employee_lifecycle import (
-    # Core event
     LifecycleEventCreate, LifecycleEventUpdate,
     LifecycleAnalyticsResponse, LifecycleEventCount,
-    # Onboarding
     OnboardingTaskCreate, OnboardingTaskUpdate,
-    # Probation
     ProbationReviewCreate, ProbationReviewUpdate,
-    # Transfer
+
     TransferRequestCreate, TransferRequestUpdate,
-    # Exit
     ExitProcessCreate, ExitProcessUpdate, ExitProcessWithClearance,
-    # Contract
     ContractRenewalCreate, ContractRenewalUpdate, ContractRenewalResponse,
-    # Dashboard / Analytics
     LifecycleDashboardResponse, ExitAnalyticsResponse,
 )
 
-
-# ─── Generic helper ───────────────────────────────────────────────────────────
 
 def _get_or_404(db: Session, model, record_id: int, label: str = "Record"):
     obj = db.execute(
@@ -52,9 +42,6 @@ def _touch(obj):
     obj.updated_at = datetime.utcnow()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 1. Core Lifecycle Events
-# ══════════════════════════════════════════════════════════════════════════════
 
 def log_lifecycle_event(db: Session, payload: LifecycleEventCreate) -> EmployeeLifecycleEvent:
     obj = EmployeeLifecycleEvent(**payload.model_dump())
@@ -192,9 +179,6 @@ def get_lifecycle_analytics(db: Session, employee_id: int) -> LifecycleAnalytics
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 2. Onboarding Tasks
-# ══════════════════════════════════════════════════════════════════════════════
 
 def create_onboarding_task(db: Session, payload: OnboardingTaskCreate) -> OnboardingTask:
     obj = OnboardingTask(**payload.model_dump())
@@ -250,10 +234,6 @@ def delete_onboarding_task(db: Session, task_id: int) -> None:
     _touch(obj)
     db.commit()
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 3. Probation Reviews
-# ══════════════════════════════════════════════════════════════════════════════
 
 def create_probation_review(db: Session, payload: ProbationReviewCreate) -> ProbationReview:
     obj = ProbationReview(**payload.model_dump())
@@ -311,10 +291,6 @@ def complete_probation_review(db: Session, review_id: int, rating: str) -> Proba
     db.refresh(obj)
     return obj
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 4. Transfer Requests
-# ══════════════════════════════════════════════════════════════════════════════
 
 def create_transfer_request(db: Session, payload: TransferRequestCreate) -> TransferRequest:
     obj = TransferRequest(**payload.model_dump())
@@ -385,10 +361,6 @@ def delete_transfer_request(db: Session, transfer_id: int) -> None:
     db.commit()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 5. Exit Processes
-# ══════════════════════════════════════════════════════════════════════════════
-
 def _clearance_pending(obj: ExitProcess) -> int:
     return sum([
         not obj.it_clearance,
@@ -436,7 +408,7 @@ def update_exit_process(
     obj = _get_or_404(db, ExitProcess, exit_id, "Exit process")
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(obj, field, value)
-    # auto-complete when all clearances done
+
     if all([obj.it_clearance, obj.admin_clearance, obj.finance_clearance, obj.hr_clearance]):
         obj.status = "completed"
     _touch(obj)
@@ -461,10 +433,6 @@ def delete_exit_process(db: Session, exit_id: int) -> None:
     _touch(obj)
     db.commit()
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 6. Contract Renewals
-# ══════════════════════════════════════════════════════════════════════════════
 
 def _days_remaining(obj: ContractRenewal) -> Optional[int]:
     if obj.contract_end:
@@ -525,10 +493,6 @@ def delete_contract_renewal(db: Session, contract_id: int) -> None:
     _touch(obj)
     db.commit()
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 7. Dashboard Summary
-# ══════════════════════════════════════════════════════════════════════════════
 
 def get_lifecycle_dashboard(db: Session) -> LifecycleDashboardResponse:
     today = date.today()
@@ -591,10 +555,6 @@ def get_lifecycle_dashboard(db: Session) -> LifecycleDashboardResponse:
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 8. Exit Analytics  (Reports & Analytics tab)
-# ══════════════════════════════════════════════════════════════════════════════
-
 def get_exit_analytics(db: Session) -> ExitAnalyticsResponse:
     exits = db.execute(
         select(ExitProcess).where(ExitProcess.is_active == True)
@@ -604,14 +564,14 @@ def get_exit_analytics(db: Session) -> ExitAnalyticsResponse:
     voluntary = sum(1 for e in exits if (e.exit_type or "").lower() == "voluntary")
     involuntary = sum(1 for e in exits if (e.exit_type or "").lower() == "involuntary")
 
-    # Avg tenure
+ 
     tenures = []
     for e in exits:
         if e.notice_period_start and e.last_working_day:
             tenures.append((e.last_working_day - e.notice_period_start).days / 365.0)
     avg_tenure = round(sum(tenures) / len(tenures), 1) if tenures else 0.0
 
-    # Exit reason tallies
+   
     reason_counts: dict = {}
     for e in exits:
         r = e.exit_reason or "Unknown"
@@ -624,7 +584,7 @@ def get_exit_analytics(db: Session) -> ExitAnalyticsResponse:
             for r, c in sorted(reason_counts.items(), key=lambda x: -x[1])
         ]
 
-    # Simple attrition rate = exits / (exits + active)
+  
     active_events = db.execute(
         select(func.count()).select_from(EmployeeLifecycleEvent).where(
             EmployeeLifecycleEvent.event_type == "Joining",

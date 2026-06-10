@@ -11,7 +11,6 @@ router = APIRouter(prefix="/offer-templates", tags=["Offer Templates"])
 
 @router.post("/", response_model=OfferTemplateOut)
 def create_template(data: OfferTemplateCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Create a new offer template"""
     if not data.created_by:
         data.created_by = user.id
     return create_offer_template(db, data)
@@ -23,12 +22,10 @@ def list_templates(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Get all offer templates with optional filters, filtered by recruiter"""
     return get_offer_templates(db, position, department, user)
 
 @router.get("/{template_id}", response_model=OfferTemplateOut)
 def get_template(template_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Get a specific offer template"""
     template = get_offer_template(db, template_id)
     if not template:
         raise HTTPException(status_code=404, detail="Offer template not found")
@@ -45,7 +42,6 @@ def update_template(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    """Update an offer template"""
     template = get_offer_template(db, template_id)
     if not template:
         raise HTTPException(status_code=404, detail="Offer template not found")
@@ -61,7 +57,6 @@ def update_template(
 
 @router.delete("/{template_id}")
 def delete_template(template_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Delete an offer template"""
     template = get_offer_template(db, template_id)
     if not template:
         raise HTTPException(status_code=404, detail="Offer template not found")

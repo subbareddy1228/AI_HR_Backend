@@ -1,5 +1,4 @@
-# schema/Reports/payroll_reports.py
- 
+
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from decimal import Decimal
@@ -17,29 +16,29 @@ class PayrollReportItem(BaseModel):
     """One row in the payroll report list."""
     report_name: str
     description: str
-    category: str           # Salary | Statutory | Deduction | Bank Transfer
-    type: str               # Summary | Analysis | Trend | Detailed | Statutory
-    frequency: str          # Monthly | Quarterly | Annual
-    status: str             # New | Generated | Downloaded
+    category: str         
+    type: str              
+    frequency: str          
+    status: str           
     last_generated: Optional[str] = None
  
  
 class CategorySummary(BaseModel):
-    """Bottom 4 category boxes."""
+
     category: str
     description: str
     count: int
  
  
 class RecentActivityItem(BaseModel):
-    """Recent activity list."""
+
     report_name: str
-    action: str             # Generated | Downloaded | Viewed
+    action: str            
     time: str
  
  
 class MonthlyPayrollSummaryItem(BaseModel):
-    """Monthly Payroll Summary row."""
+   
     run_id: int
     month: int
     year: int
@@ -52,7 +51,7 @@ class MonthlyPayrollSummaryItem(BaseModel):
  
  
 class DepartmentPayrollItem(BaseModel):
-    """Department-wise Payroll Cost row."""
+  
     department: Optional[str]
     headcount: int
     total_gross: float
@@ -61,14 +60,14 @@ class DepartmentPayrollItem(BaseModel):
  
  
 class GradeSalaryItem(BaseModel):
-    """Grade-wise Salary Analysis row."""
+   
     grade: Optional[str]
     headcount: int
     avg_ctc: float
  
  
 class BankTransferSummaryItem(BaseModel):
-    """Bank-wise Payment Summary row."""
+  
     bank_name: str
     transaction_count: int
     total_amount: float
@@ -76,7 +75,7 @@ class BankTransferSummaryItem(BaseModel):
  
  
 class LoanOutstandingItem(BaseModel):
-    """Loan Outstanding Report row."""
+ 
     employee_id: int
     loan_type: str
     amount: float
@@ -88,7 +87,7 @@ class LoanOutstandingItem(BaseModel):
  
  
 class PFRemittanceItem(BaseModel):
-    """PF Remittance Report row."""
+  
     employee_id: int
     employee_name: str
     department: Optional[str]
@@ -99,7 +98,7 @@ class PFRemittanceItem(BaseModel):
  
  
 class TDSReportItem(BaseModel):
-    """TDS Deduction Report row."""
+    
     employee_id: int
     employee_name: str
     gross_salary: float
@@ -107,7 +106,7 @@ class TDSReportItem(BaseModel):
  
  
 class PayrollVarianceItem(BaseModel):
-    """Month-over-month Payroll Variance row."""
+
     month: int
     year: int
     total_gross: float

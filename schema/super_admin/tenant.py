@@ -1,5 +1,3 @@
-# schema/super_admin/tenant.py
-# Pydantic schemas for multi-tenant management
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Optional
@@ -13,7 +11,7 @@ class TenantBase(BaseModel):
     contact_email: str
     contact_phone: Optional[str] = None
     address: Optional[str] = None
-    plan: Optional[str] = "BASIC"         # BASIC | STANDARD | ENTERPRISE
+    plan: Optional[str] = "BASIC"      
     max_employees: Optional[int] = 50
 
 

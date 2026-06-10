@@ -1,11 +1,11 @@
-# app/models/productive_entity.py
+
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum,func
 from core.database import Base
 
-# Optional: define allowed entity types
+
 ENTITY_TYPE_ENUM = ("app", "website")
-# ProductiveEntity Model
+
 class ProductiveEntity(Base):
     __tablename__ = "productive_entities"
 

@@ -1,5 +1,4 @@
-# model/Employee_Management/org_hierarchy.py
- 
+
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Float
 from core.database import Base
 from datetime import datetime
@@ -21,7 +20,7 @@ class Department(Base):
  
  
 class ReportingRelationship(Base):
-    """Tracks direct, dotted-line and matrix reporting between employees."""
+   
     __tablename__ = "reporting_relationships"
  
     id              = Column(Integer, primary_key=True, index=True)
@@ -36,7 +35,7 @@ class ReportingRelationship(Base):
  
  
 class HierarchyChangeRequest(Base):
-    """Hierarchy Modification & Approval Workflow."""
+   
     __tablename__ = "hierarchy_change_requests"
  
     id              = Column(Integer, primary_key=True, index=True)
@@ -54,7 +53,7 @@ class HierarchyChangeRequest(Base):
  
  
 class HierarchyHistory(Base):
-    """Historical Hierarchy View & Time-Travel — immutable audit log."""
+   
     __tablename__ = "hierarchy_history"
  
     id              = Column(Integer, primary_key=True, index=True)

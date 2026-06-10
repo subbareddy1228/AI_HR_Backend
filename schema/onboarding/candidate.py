@@ -1,4 +1,4 @@
-# schemas/candidate.py
+
 from pydantic import BaseModel, EmailStr,field_validator
 from typing import Optional
 from pydantic import Field

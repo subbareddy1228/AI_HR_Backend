@@ -1,17 +1,7 @@
-"""
-Migration Script: Transfer data from legacy_questions to aptitude_questions
-
-This script transfers all data from the old legacy_questions table 
-to the new aptitude_questions table.
-
-Usage:
-    python migrate_legacy_questions.py
-"""
-
 import sys
 import codecs
 
-# Fix UTF-8 encoding for Windows console
+
 if sys.platform == 'win32':
     sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
 
@@ -22,13 +12,13 @@ from model import LegacyQuestion
 import json
 
 def migrate_questions():
-    """Transfer all data from legacy_questions to aptitude_questions"""
+    
     
     engine = create_engine(DATABASE_URL)
     
     try:
         with Session(engine) as session:
-            # Check if legacy_questions table exists
+            
             inspector = inspect(engine)
             tables = inspector.get_table_names()
             
@@ -36,14 +26,14 @@ def migrate_questions():
                 print("Table 'legacy_questions' does not exist. Nothing to migrate.")
                 return
             
-            # Check if aptitude_questions table exists (it should, created by SQLAlchemy)
+            
             if 'aptitude_questions' not in tables:
                 print(" Table 'aptitude_questions' does not exist. Creating it...")
                 # Create the table using the model
                 LegacyQuestion.__table__.create(engine, checkfirst=True)
                 print("Created aptitude_questions table")
             
-            # Count existing records in both tables
+            
             legacy_count = session.execute(
                 text("SELECT COUNT(*) FROM legacy_questions")
             ).scalar()
@@ -67,23 +57,22 @@ def migrate_questions():
                     print("Migration cancelled.")
                     return
             
-            # Transfer all data from legacy_questions to aptitude_questions
+            
             print(f"\n ransferring {legacy_count} records from legacy_questions to aptitude_questions...")
             
-            # First, clear aptitude_questions if it exists and has data
+            
             if aptitude_count > 0:
                 print(f"   Clearing existing {aptitude_count} records from aptitude_questions...")
                 session.execute(text("TRUNCATE TABLE aptitude_questions"))
                 session.commit()
                 print("  Cleared aptitude_questions table")
             
-            # Use raw SQL to copy all data
-            # Simple INSERT ... SELECT without ON CONFLICT since we cleared the table
+            
             try:
-                # Check column types match
+                
                 print("   Checking table structures...")
                 
-                # Get all data from legacy_questions
+                
                 legacy_data = session.execute(
                     text("SELECT id, set_no, question, options::text, answer FROM legacy_questions ORDER BY id")
                 ).fetchall()
@@ -98,7 +87,7 @@ def migrate_questions():
                     batch = legacy_data[i:i+batch_size]
                     for row in batch:
                         try:
-                            # Convert options back to JSON if it's a string
+                            
                             options_value = row[3]
                             if isinstance(options_value, str):
                                 import json
@@ -135,7 +124,7 @@ def migrate_questions():
                 session.rollback()
                 raise
             
-            # Verify migration
+           
             new_count = session.execute(
                 text("SELECT COUNT(*) FROM aptitude_questions")
             ).scalar()
@@ -144,7 +133,7 @@ def migrate_questions():
             print(f"   Transferred: {legacy_count} records")
             print(f"   Total in aptitude_questions: {new_count} records")
             
-            # Show sample records
+            
             sample = session.execute(
                 text("SELECT id, set_no, LEFT(question, 50) as question_preview FROM aptitude_questions LIMIT 5")
             ).fetchall()

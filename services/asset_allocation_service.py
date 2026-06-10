@@ -1,4 +1,3 @@
-# app/services/asset_allocation_service.py
 
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
@@ -11,7 +10,7 @@ from model.HR_Operations.Asset_Management.asset_allocation import AssetAllocatio
 def allocate_asset(db: Session, data):
 
     try:
-        # 🔒 Lock asset row to avoid race condition (two users allocating same asset)
+        
         asset = (
             db.query(Asset)
             .filter(Asset.id == data.asset_id)
@@ -19,15 +18,15 @@ def allocate_asset(db: Session, data):
             .first()
         )
 
-        # ❌ Asset not found
+        
         if not asset:
             raise HTTPException(status_code=404, detail="Asset not found")
 
-        # ❌ Asset already allocated
+        
         if asset.status != "AVAILABLE":
             raise HTTPException(status_code=400, detail="Asset not available")
 
-        # ✅ Create allocation record
+      
         allocation = AssetAllocation(
             asset_id=data.asset_id,
             employee_id=data.employee_id,
@@ -37,7 +36,7 @@ def allocate_asset(db: Session, data):
             allocation_reason=data.allocation_reason,
         )
 
-        # ✅ Update lifecycle state
+      
         asset.status = "ALLOCATED"
 
         db.add(allocation)

@@ -9,11 +9,11 @@ def require_env(key: str) -> str:
         raise RuntimeError(f"Missing required environment variable: {key}")
     return val
 
-# REQUIRED
+
 OPENAI_API_KEY = require_env("OPENAI_API_KEY")
 DATABASE_URL   = require_env("DATABASE_URL")
 
-# SMTP — USE CENTRAL NAMING
+
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 
