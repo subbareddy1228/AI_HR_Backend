@@ -6,20 +6,17 @@ FnF settlement computation, and separation letter generation.
 
 import json
 import os
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from typing import List, Optional
 
-from sqlalchemy import select, func, and_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import Session, select, func
+from fastapi import HTTPException
 
-from model.HR_Operations.letter_generation import (
-    Resignation, ResignationStatus,
-    ClearanceChecklist, ClearanceItem, ClearanceStatus, ClearanceDepartment,
-    ExitInterview,
-    FnFSettlement, SettlementStatus,
-    LetterType,
+from model.HR_Operations.exit_management import (
+    Resignation, ClearanceChecklist, ClearanceItem,
+    ExitInterview, FnFSettlement,
 )
-from schema.HR_Operations.letter_generation import (
+from schema.HR_Operations.exit_management import (
     ResignationCreate, ResignationAccept,
     ClearanceInitiateRequest, ClearanceItemUpdate,
     ExitInterviewSubmit,
@@ -27,7 +24,31 @@ from schema.HR_Operations.letter_generation import (
     ExitAnalyticsResponse,
 )
 
-# Default clearance tasks seeded for every offboarding
+# ── Status constants (plain strings to match your DB) ─────────────────────────
+class ResignationStatus:
+    PENDING  = "pending"
+    ACCEPTED = "accepted"
+    REVOKED  = "revoked"
+    REJECTED = "rejected"
+
+class ClearanceStatus:
+    PENDING     = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED   = "completed"
+
+class ClearanceDepartment:
+    IT      = "IT"
+    FINANCE = "Finance"
+    ADMIN   = "Admin"
+    HR      = "HR"
+
+class SettlementStatus:
+    DRAFT      = "draft"
+    CALCULATED = "calculated"
+    APPROVED   = "approved"
+    PAID       = "paid"
+
+# ── Default clearance tasks seeded for every offboarding ─────────────────────
 DEFAULT_CLEARANCE_TASKS = [
     {"department": ClearanceDepartment.IT,      "task_description": "Return laptop, access cards, and peripherals"},
     {"department": ClearanceDepartment.IT,      "task_description": "Revoke system / application access"},
@@ -45,14 +66,12 @@ class ExitService:
     # ── Resignation ──────────────────────────────────────────────────────────
 
     @staticmethod
-    async def submit_resignation(
-        db: AsyncSession,
+    def submit_resignation(
+        db: Session,
         payload: ResignationCreate,
         employee_id: int,
     ) -> Resignation:
-        from fastapi import HTTPException
-        # Guard: one active resignation at a time
-        existing = await ExitService.get_resignation(db, employee_id)
+        existing = ExitService.get_resignation(db, employee_id)
         if existing and existing.status == ResignationStatus.PENDING:
             raise HTTPException(
                 status_code=400,
@@ -65,17 +84,13 @@ class ExitService:
             status=ResignationStatus.PENDING,
         )
         db.add(resignation)
-        await db.commit()
-        await db.refresh(resignation)
-        # TODO: send notification email to HR + manager
+        db.commit()
+        db.refresh(resignation)
         return resignation
 
     @staticmethod
-    async def get_resignation(
-        db: AsyncSession,
-        employee_id: int,
-    ) -> Optional[Resignation]:
-        result = await db.execute(
+    def get_resignation(db: Session, employee_id: int) -> Optional[Resignation]:
+        result = db.execute(
             select(Resignation)
             .where(
                 Resignation.employee_id == employee_id,
@@ -87,14 +102,13 @@ class ExitService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def accept_resignation(
-        db: AsyncSession,
+    def accept_resignation(
+        db: Session,
         resignation_id: int,
         payload: ResignationAccept,
         hr_user_id: int,
     ) -> Resignation:
-        from fastapi import HTTPException
-        resignation = await db.get(Resignation, resignation_id)
+        resignation = db.get(Resignation, resignation_id)
         if not resignation:
             raise HTTPException(status_code=404, detail="Resignation not found")
         if resignation.status != ResignationStatus.PENDING:
@@ -110,19 +124,17 @@ class ExitService:
         resignation.accepted_at = datetime.utcnow()
         resignation.hr_remarks = payload.hr_remarks
         resignation.updated_at = datetime.utcnow()
-        await db.commit()
-        await db.refresh(resignation)
-        # TODO: send acceptance email to employee
+        db.commit()
+        db.refresh(resignation)
         return resignation
 
     @staticmethod
-    async def revoke_resignation(
-        db: AsyncSession,
+    def revoke_resignation(
+        db: Session,
         resignation_id: int,
         employee_id: int,
     ) -> Resignation:
-        from fastapi import HTTPException
-        resignation = await db.get(Resignation, resignation_id)
+        resignation = db.get(Resignation, resignation_id)
         if not resignation:
             raise HTTPException(status_code=404, detail="Resignation not found")
         if resignation.employee_id != employee_id:
@@ -135,14 +147,13 @@ class ExitService:
         resignation.status = ResignationStatus.REVOKED
         resignation.revoked_at = datetime.utcnow()
         resignation.updated_at = datetime.utcnow()
-        await db.commit()
-        await db.refresh(resignation)
+        db.commit()
+        db.refresh(resignation)
         return resignation
 
     @staticmethod
-    async def get_notice_period_status(db: AsyncSession, employee_id: int) -> dict:
-        from fastapi import HTTPException
-        resignation = await ExitService.get_resignation(db, employee_id)
+    def get_notice_period_status(db: Session, employee_id: int) -> dict:
+        resignation = ExitService.get_resignation(db, employee_id)
         if not resignation or resignation.status != ResignationStatus.ACCEPTED:
             raise HTTPException(status_code=404, detail="No accepted resignation found")
         today = date.today()
@@ -150,9 +161,6 @@ class ExitService:
         days_remaining = max(
             0, (resignation.last_working_day - today).days
         ) if resignation.last_working_day else 0
-
-        # Simple buyout: remaining_days * (monthly_salary / 30)
-        # Replace with actual salary lookup in production
         return {
             "employee_id": employee_id,
             "resignation_date": resignation.resignation_date,
@@ -170,8 +178,8 @@ class ExitService:
     # ── Clearance ────────────────────────────────────────────────────────────
 
     @staticmethod
-    async def initiate_clearance(
-        db: AsyncSession,
+    def initiate_clearance(
+        db: Session,
         employee_id: int,
         payload: ClearanceInitiateRequest,
         hr_user_id: int,
@@ -183,24 +191,24 @@ class ExitService:
             initiated_by=hr_user_id,
         )
         db.add(checklist)
-        await db.flush()  # get checklist.id before adding items
+        db.flush()  # get checklist.id before adding items
 
         tasks = payload.custom_tasks if payload.custom_tasks else DEFAULT_CLEARANCE_TASKS
         for task in tasks:
             item = ClearanceItem(
                 checklist_id=checklist.id,
-                department=task["department"],
-                task_description=task["task_description"],
+                department=task["department"] if isinstance(task, dict) else task.department,
+                task_description=task["task_description"] if isinstance(task, dict) else task.task_description,
             )
             db.add(item)
 
-        await db.commit()
-        await db.refresh(checklist)
+        db.commit()
+        db.refresh(checklist)
         return checklist
 
     @staticmethod
-    async def get_clearance(db: AsyncSession, employee_id: int) -> Optional[ClearanceChecklist]:
-        result = await db.execute(
+    def get_clearance(db: Session, employee_id: int) -> Optional[ClearanceChecklist]:
+        result = db.execute(
             select(ClearanceChecklist)
             .where(ClearanceChecklist.employee_id == employee_id)
             .order_by(ClearanceChecklist.initiated_at.desc())
@@ -209,14 +217,13 @@ class ExitService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def complete_clearance_item(
-        db: AsyncSession,
+    def complete_clearance_item(
+        db: Session,
         checklist_item_id: int,
         payload: ClearanceItemUpdate,
         completed_by: int,
     ) -> ClearanceChecklist:
-        from fastapi import HTTPException
-        item = await db.get(ClearanceItem, checklist_item_id)
+        item = db.get(ClearanceItem, checklist_item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Checklist item not found")
         item.is_completed = True
@@ -224,9 +231,8 @@ class ExitService:
         item.completed_at = datetime.utcnow()
         item.remarks = payload.remarks
 
-        # Check if all items in this checklist are done
-        checklist = await db.get(ClearanceChecklist, item.checklist_id)
-        pending_result = await db.execute(
+        checklist = db.get(ClearanceChecklist, item.checklist_id)
+        pending_result = db.execute(
             select(func.count(ClearanceItem.id)).where(
                 ClearanceItem.checklist_id == item.checklist_id,
                 ClearanceItem.is_completed == False,
@@ -238,15 +244,15 @@ class ExitService:
             checklist.overall_status = ClearanceStatus.COMPLETED
             checklist.completed_at = datetime.utcnow()
 
-        await db.commit()
-        await db.refresh(checklist)
+        db.commit()
+        db.refresh(checklist)
         return checklist
 
     # ── Exit Interview ───────────────────────────────────────────────────────
 
     @staticmethod
-    async def submit_exit_interview(
-        db: AsyncSession,
+    def submit_exit_interview(
+        db: Session,
         payload: ExitInterviewSubmit,
         employee_id: int,
     ) -> ExitInterview:
@@ -263,19 +269,20 @@ class ExitService:
             additional_comments=payload.additional_comments,
         )
         db.add(interview)
-        await db.commit()
-        await db.refresh(interview)
+        db.commit()
+        db.refresh(interview)
         return interview
 
     @staticmethod
-    async def run_sentiment_analysis(db: AsyncSession, interview_id: int):
+    def run_sentiment_analysis(db: Session, interview_id: int):
         """
         Background task: calls OpenAI GPT-4 to analyse exit interview sentiment.
         Updates sentiment_label, sentiment_score, and ai_summary on the record.
+        Note: runs in background so uses a new db session concept — kept sync here.
         """
-        import httpx, os
+        import httpx
 
-        interview = await db.get(ExitInterview, interview_id)
+        interview = db.get(ExitInterview, interview_id)
         if not interview:
             return
 
@@ -298,31 +305,28 @@ class ExitService:
 
         try:
             api_key = os.getenv("OPENAI_API_KEY", "")
-            async with httpx.AsyncClient(timeout=30) as client:
-                resp = await client.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    json={
-                        "model": "gpt-4",
-                        "messages": [{"role": "user", "content": prompt}],
-                        "response_format": {"type": "json_object"},
-                    },
-                )
-                data = resp.json()
-                content = json.loads(data["choices"][0]["message"]["content"])
-                interview.sentiment_label = content.get("sentiment")
-                interview.sentiment_score = float(content.get("score", 0))
-                interview.ai_summary = content.get("summary")
-                await db.commit()
+            response = httpx.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": "gpt-4",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=30,
+            )
+            data = response.json()
+            content = json.loads(data["choices"][0]["message"]["content"])
+            interview.sentiment_label = content.get("sentiment")
+            interview.sentiment_score = float(content.get("score", 0))
+            interview.ai_summary = content.get("summary")
+            db.commit()
         except Exception:
             pass  # Gracefully degrade; raw responses are still saved
 
     @staticmethod
-    async def get_exit_interview(
-        db: AsyncSession,
-        employee_id: int,
-    ) -> Optional[ExitInterview]:
-        result = await db.execute(
+    def get_exit_interview(db: Session, employee_id: int) -> Optional[ExitInterview]:
+        result = db.execute(
             select(ExitInterview)
             .where(ExitInterview.employee_id == employee_id)
             .order_by(ExitInterview.submitted_at.desc())
@@ -333,8 +337,8 @@ class ExitService:
     # ── Full & Final Settlement ───────────────────────────────────────────────
 
     @staticmethod
-    async def calculate_settlement(
-        db: AsyncSession,
+    def calculate_settlement(
+        db: Session,
         employee_id: int,
         payload: FnFCalculateRequest,
         hr_user_id: int,
@@ -381,13 +385,13 @@ class ExitService:
             remarks=payload.remarks,
         )
         db.add(settlement)
-        await db.commit()
-        await db.refresh(settlement)
+        db.commit()
+        db.refresh(settlement)
         return settlement
 
     @staticmethod
-    async def get_settlement(db: AsyncSession, employee_id: int) -> Optional[FnFSettlement]:
-        result = await db.execute(
+    def get_settlement(db: Session, employee_id: int) -> Optional[FnFSettlement]:
+        result = db.execute(
             select(FnFSettlement)
             .where(FnFSettlement.employee_id == employee_id)
             .order_by(FnFSettlement.created_at.desc())
@@ -396,27 +400,21 @@ class ExitService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def approve_settlement(
-        db: AsyncSession, settlement_id: int, hr_user_id: int
-    ) -> FnFSettlement:
-        from fastapi import HTTPException
-        s = await db.get(FnFSettlement, settlement_id)
+    def approve_settlement(db: Session, settlement_id: int, hr_user_id: int) -> FnFSettlement:
+        s = db.get(FnFSettlement, settlement_id)
         if not s:
             raise HTTPException(status_code=404, detail="Settlement not found")
         s.status = SettlementStatus.APPROVED
         s.approved_by = hr_user_id
         s.approved_at = datetime.utcnow()
         s.updated_at = datetime.utcnow()
-        await db.commit()
-        await db.refresh(s)
+        db.commit()
+        db.refresh(s)
         return s
 
     @staticmethod
-    async def mark_settlement_paid(
-        db: AsyncSession, settlement_id: int, hr_user_id: int
-    ) -> FnFSettlement:
-        from fastapi import HTTPException
-        s = await db.get(FnFSettlement, settlement_id)
+    def mark_settlement_paid(db: Session, settlement_id: int, hr_user_id: int) -> FnFSettlement:
+        s = db.get(FnFSettlement, settlement_id)
         if not s:
             raise HTTPException(status_code=404, detail="Settlement not found")
         if s.status != SettlementStatus.APPROVED:
@@ -426,24 +424,23 @@ class ExitService:
         s.status = SettlementStatus.PAID
         s.paid_at = datetime.utcnow()
         s.updated_at = datetime.utcnow()
-        await db.commit()
-        await db.refresh(s)
+        db.commit()
+        db.refresh(s)
         return s
 
     @staticmethod
-    async def generate_settlement_pdf(db: AsyncSession, settlement_id: int):
+    def generate_settlement_pdf(db: Session, settlement_id: int):
         """Background task: render settlement breakdown as PDF via WeasyPrint."""
         try:
             from weasyprint import HTML
         except ImportError:
             return
-        s = await db.get(FnFSettlement, settlement_id)
+        s = db.get(FnFSettlement, settlement_id)
         if not s:
             return
         output_dir = os.path.join("uploads", "settlements")
         os.makedirs(output_dir, exist_ok=True)
         pdf_path = os.path.join(output_dir, f"fnf_{settlement_id}.pdf")
-
         html = f"""
         <html><body style="font-family:Arial;font-size:12pt;margin:60px 72px">
         <h2>Full & Final Settlement</h2>
@@ -473,27 +470,21 @@ class ExitService:
         HTML(string=html).write_pdf(pdf_path)
         s.pdf_path = pdf_path
         s.updated_at = datetime.utcnow()
-        await db.commit()
+        db.commit()
 
     # ── Separation Letters ────────────────────────────────────────────────────
 
     @staticmethod
-    async def generate_separation_letters(
-        db: AsyncSession,
+    def generate_separation_letters(
+        db: Session,
         employee_id: int,
         letter_types: List[str],
         hr_user_id: int,
     ) -> List[int]:
-        """
-        Delegates to HRLetterService.issue_letter for each requested type.
-        Returns list of created letter IDs.
-        """
-        from fastapi import HTTPException
         from services.letters_service import HRLetterService
         from schema.HR_Operations.letter_generation import HRLetterIssueRequest
 
-        # Verify pre-conditions
-        resignation = await ExitService.get_resignation(db, employee_id)
+        resignation = ExitService.get_resignation(db, employee_id)
         if not resignation or resignation.status != ResignationStatus.ACCEPTED:
             raise HTTPException(
                 status_code=400,
@@ -508,52 +499,41 @@ class ExitService:
         for lt in letter_types:
             req = HRLetterIssueRequest(
                 employee_id=employee_id,
-                letter_type=LetterType(lt),
+                letter_type=lt,
                 subject=LETTER_SUBJECTS.get(lt, lt.title() + " Letter"),
                 body_html=f"<p>This is to certify that Employee ID {employee_id} "
                           f"has been employed with us until "
                           f"{resignation.last_working_day}.</p>",
                 issued_on=date.today(),
             )
-            letter = await HRLetterService.issue_letter(db, req, hr_user_id)
-            await HRLetterService.generate_pdf(db, letter.id)
+            letter = HRLetterService.issue_letter(db, req, hr_user_id)
+            HRLetterService.generate_pdf(db, letter.id)
             letter_ids.append(letter.id)
         return letter_ids
 
     @staticmethod
-    async def send_separation_email(
-        db: AsyncSession,
-        employee_id: int,
-        letter_ids: List[int],
-    ):
+    def send_separation_email(db: Session, employee_id: int, letter_ids: List[int]):
         """Background: email separation letters to the employee."""
-        # Fetch employee email, attach PDFs, send.
         pass
 
     # ── Analytics ────────────────────────────────────────────────────────────
 
     @staticmethod
-    async def get_exit_analytics(
-        db: AsyncSession,
+    def get_exit_analytics(
+        db: Session,
         from_date: Optional[str] = None,
         to_date: Optional[str] = None,
         department_id: Optional[int] = None,
     ) -> ExitAnalyticsResponse:
-        """
-        Aggregated exit analytics.  Uses raw SQLAlchemy aggregates.
-        Department filtering requires joining to an Employee/User table
-        (left as TODO since schema is platform-specific).
-        """
         base_q = select(Resignation).where(Resignation.is_deleted == False)
         if from_date:
             base_q = base_q.where(Resignation.resignation_date >= from_date)
         if to_date:
             base_q = base_q.where(Resignation.resignation_date <= to_date)
 
-        result = await db.execute(base_q)
-        resignations = result.scalars().all()
+        resignations = db.execute(base_q).scalars().all()
 
-        total = len(resignations)
+        total    = len(resignations)
         accepted = sum(1 for r in resignations if r.status == ResignationStatus.ACCEPTED)
         revoked  = sum(1 for r in resignations if r.status == ResignationStatus.REVOKED)
         pending  = sum(1 for r in resignations if r.status == ResignationStatus.PENDING)
@@ -561,7 +541,6 @@ class ExitService:
         notice_days = [r.notice_period_days for r in resignations if r.notice_period_days]
         avg_notice = round(sum(notice_days) / len(notice_days), 1) if notice_days else 0
 
-        # Exit reasons frequency
         reason_counts: dict = {}
         for r in resignations:
             key = (r.reason or "Not specified")[:60]
@@ -571,16 +550,13 @@ class ExitService:
             key=lambda x: -x["count"],
         )[:10]
 
-        # Monthly attrition
         monthly: dict = {}
         for r in resignations:
             month = r.resignation_date.strftime("%Y-%m")
             monthly[month] = monthly.get(month, 0) + 1
         monthly_attrition = [{"month": k, "count": v} for k, v in sorted(monthly.items())]
 
-        # Exit interview sentiment
-        ei_result = await db.execute(select(ExitInterview))
-        interviews = ei_result.scalars().all()
+        interviews = db.execute(select(ExitInterview)).scalars().all()
         sentiment_breakdown = {"positive": 0, "neutral": 0, "negative": 0}
         scores: dict = {
             "job_satisfaction": [], "management": [],
@@ -615,5 +591,5 @@ class ExitService:
             monthly_attrition=monthly_attrition,
             sentiment_breakdown=sentiment_breakdown,
             avg_scores=avg_scores,
-            department_attrition=[],  # extend with dept join when Employee model available
+            department_attrition=[],
         )

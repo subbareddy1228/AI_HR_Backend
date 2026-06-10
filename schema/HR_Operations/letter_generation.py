@@ -1,44 +1,12 @@
-# from pydantic import BaseModel, ConfigDict
-# from datetime import date, datetime
-# from typing import Optional
-
-
-# class LetterGenerationCreate(BaseModel):
-#     employee_id: int
-#     letter_type: str        # OFFER | APPOINTMENT | CONFIRMATION | RELIEVING | EXPERIENCE | SALARY | WARNING | TERMINATION
-#     letter_date: date
-#     subject: str
-#     body: str
-#     generated_by: Optional[int] = None
-
-
-# class LetterGenerationUpdate(BaseModel):
-#     subject: Optional[str] = None
-#     body: Optional[str] = None
-#     status: Optional[str] = None
-
-
-# class LetterGenerationResponse(BaseModel):
-#     id: int
-#     employee_id: int
-#     letter_type: str
-#     letter_date: date
-#     subject: str
-#     body: str
-#     generated_by: Optional[int]
-#     status: str
-#     created_at: datetime
-#     updated_at: datetime
-
-#     model_config = ConfigDict(from_attributes=True)
 """
-schemas/hr_letters_schema.py
-Pydantic V2 schemas for HR Letters module only
+schema/HR_Operations/letter_generation.py
+Pydantic V2 schemas for HR Letters module
 """
 
+import json
 from datetime import datetime, date
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
 
@@ -65,9 +33,7 @@ class LetterStatus(str, Enum):
     REVOKED = "revoked"
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  LETTER TEMPLATES
-# ═══════════════════════════════════════════════════════════════════════════════
+# ── Letter Templates ──────────────────────────────────────────────────────────
 
 class HRLetterTemplateCreate(BaseModel):
     name: str
@@ -75,7 +41,6 @@ class HRLetterTemplateCreate(BaseModel):
     subject: str
     body_html: str
     variables: Optional[List[str]] = None
-    # variables = Jinja2 placeholder names e.g. ["employee_name", "joining_date"]
 
     model_config = {
         "json_schema_extra": {
@@ -83,7 +48,7 @@ class HRLetterTemplateCreate(BaseModel):
                 "name": "Appointment Letter Template",
                 "letter_type": "appointment",
                 "subject": "Appointment Letter - {{employee_name}}",
-                "body_html": "<p>Dear {{employee_name}},</p><p>We are pleased to offer you the position of {{designation}}.</p>",
+                "body_html": "<p>Dear {{employee_name}},</p>",
                 "variables": ["employee_name", "designation", "joining_date", "ctc"]
             }
         }
@@ -101,7 +66,7 @@ class HRLetterTemplateUpdate(BaseModel):
 class HRLetterTemplateResponse(BaseModel):
     id: int
     name: str
-    letter_type: LetterType
+    letter_type: str
     subject: str
     body_html: str
     variables: Optional[List[str]] = None
@@ -111,30 +76,43 @@ class HRLetterTemplateResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+    @field_validator("variables", mode="before")
+    @classmethod
+    def parse_variables(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return None
+        return v
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  ISSUED LETTERS
-# ═══════════════════════════════════════════════════════════════════════════════
+    @field_validator("letter_type", mode="before")
+    @classmethod
+    def parse_letter_type(cls, v):
+        if hasattr(v, 'value'):
+            return v.value
+        return str(v).lower()
+
+
+# ── Issued Letters ────────────────────────────────────────────────────────────
 
 class HRLetterIssueRequest(BaseModel):
     employee_id: int
-    template_id: Optional[int] = None      # if using a saved template
+    template_id: Optional[int] = None
     letter_type: LetterType
     subject: str
-    body_html: str                          # pre-rendered HTML content
+    body_html: str
     issued_on: Optional[date] = None
     notes: Optional[str] = None
 
     model_config = {
         "json_schema_extra": {
             "example": {
-                "employee_id": 42,
-                "template_id": 3,
-                "letter_type": "increment",
-                "subject": "Salary Increment Letter - Priya Sharma",
-                "body_html": "<p>Dear Priya, We are pleased to inform you of your salary increment.</p>",
-                "issued_on": "2026-06-01",
-                "notes": "Effective from June 2026"
+                "employee_id": 1,
+                "letter_type": "appointment",
+                "subject": "Appointment Letter",
+                "body_html": "<p>Dear Employee,</p>",
+                "issued_on": "2026-06-05"
             }
         }
     }
@@ -149,11 +127,11 @@ class HRLetterResponse(BaseModel):
     id: int
     employee_id: int
     template_id: Optional[int] = None
-    letter_type: LetterType
+    letter_type: str
     subject: str
     body_html: str
     pdf_path: Optional[str] = None
-    status: LetterStatus
+    status: str
     issued_by: int
     issued_on: Optional[date] = None
     sent_at: Optional[datetime] = None
@@ -165,27 +143,21 @@ class HRLetterResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+    @field_validator("letter_type", "status", mode="before")
+    @classmethod
+    def parse_enum_value(cls, v):
+        if hasattr(v, 'value'):
+            return v.value
+        return str(v).lower()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  EMAIL
-# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Email ─────────────────────────────────────────────────────────────────────
 
 class SendLetterEmailRequest(BaseModel):
     letter_id: int
     recipient_email: str
     cc: Optional[List[str]] = None
-    email_body: Optional[str] = None        # optional custom message; letter PDF attached
-
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "letter_id": 5,
-                "recipient_email": "priya@example.com",
-                "cc": ["hr@company.com"],
-                "email_body": "Please find your increment letter attached."
-            }
-        }
-    }
+    email_body: Optional[str] = None
 
 
 class SendLetterEmailResponse(BaseModel):
@@ -194,10 +166,8 @@ class SendLetterEmailResponse(BaseModel):
     recipient_email: str
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  DOWNLOAD
-# ═══════════════════════════════════════════════════════════════════════════════
+# ── Download ──────────────────────────────────────────────────────────────────
 
 class LetterDownloadResponse(BaseModel):
     download_url: str
-    expires_in: int     # seconds
+    expires_in: int
