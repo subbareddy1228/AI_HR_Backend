@@ -1,7 +1,3 @@
-# routers/Reports/executive_dashboard.py
-# D8 — Reports & Analytics | Executive Dashboards
-# Covers SRS Section 8.7 — HR Leadership Dashboard
-
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func, select
@@ -22,10 +18,6 @@ from schema.Reports.dashboard_metric import (
 router = APIRouter()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SECTION 1 — 6 KPI CARDS
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/dashboard/hr-leadership")
 def get_hr_leadership_dashboard(
     db:    Session = Depends(get_db),
@@ -38,7 +30,7 @@ def get_hr_leadership_dashboard(
     m_start = date(year, month, 1)
     m_end   = date(year, month + 1, 1) if month < 12 else date(year + 1, 1, 1)
 
-    # ── Total Headcount
+    
     total_emp  = db.query(func.count(Employee.id)).scalar() or 0
     active_emp = db.query(func.count(Employee.id)).filter(Employee.is_active == True).scalar() or 0
     prev_total = (
@@ -48,11 +40,11 @@ def get_hr_leadership_dashboard(
     )
     headcount_change = round(((total_emp - prev_total) / prev_total * 100), 1) if prev_total else 0
 
-    # ── Monthly Attrition
+  
     inactive_emp   = total_emp - active_emp
     attrition_rate = round((inactive_emp / total_emp * 100), 1) if total_emp else 0
 
-    # ── Open Positions (placeholder until Jobs table wired)
+    
     new_joiners = (
         db.query(func.count(Employee.id))
         .filter(Employee.joining_date >= m_start, Employee.joining_date < m_end)
@@ -60,7 +52,7 @@ def get_hr_leadership_dashboard(
     )
     open_positions = max(0, 100 - new_joiners)
 
-    # ── Payroll Cost
+    
     run = (
         db.query(PayrollRun)
         .filter(PayrollRun.run_year == year, PayrollRun.run_month == month)
@@ -84,7 +76,7 @@ def get_hr_leadership_dashboard(
     prev_payroll   = float(prev_run.total_gross) if prev_run else 0.0
     payroll_change = round(((payroll_cost - prev_payroll) / prev_payroll * 100), 1) if prev_payroll else 0.0
 
-    # ── Avg Attendance
+    
     total_att = (
         db.query(func.count(Attendance.id))
         .filter(Attendance.date >= m_start, Attendance.date < m_end)
@@ -98,7 +90,6 @@ def get_hr_leadership_dashboard(
     )
     avg_attendance = round((present_att / total_att * 100), 1) if total_att else 0.0
 
-    # ── Pending Approvals
     pending_approvals = (
         db.query(func.count(LeaveRequest.id))
         .filter(LeaveRequest.status == LeaveStatus.pending)
@@ -125,9 +116,7 @@ def get_hr_leadership_dashboard(
     }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SECTION 2 — KEY METRICS & INSIGHTS TABLE
-# ══════════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/dashboard/metrics/kpi")
 def get_metrics_kpi(db: Session = Depends(get_db)):
@@ -272,9 +261,6 @@ def delete_metric(metric_id: int, db: Session = Depends(get_db)):
     return {"message": f"Metric '{m.metric_name}' deleted", "id": metric_id}
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SECTION 3 — MANAGER & EMPLOYEE DASHBOARDS
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/dashboard/manager")
 def get_manager_dashboard(department: str = Query(...), db: Session = Depends(get_db)):
