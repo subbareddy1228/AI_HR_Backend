@@ -609,7 +609,8 @@ from routers.HR_Operations.exit_management import router as exit_management
 from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
 from routers.Payroll.reimbursements import router as reimbursements_router
 from routers.Payroll.loans_advances import router as loans_advances_router
-
+from routers.Payroll.salary_structure import router as salary_structure_router
+from routers.Payroll.payroll_run import router as payroll_run_router
 
 # CORS
 app.add_middleware(
@@ -778,6 +779,8 @@ app.include_router(employee_lifecycle_router)
 # Payroll Management
 app.include_router(reimbursements_router)
 app.include_router(loans_advances_router)
+app.include_router(salary_structure_router)
+app.include_router(payroll_run_router)
 
 # STATIC FILES
 if not os.path.exists("uploads"):
@@ -790,6 +793,20 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.get("/api/test")
 def test_api():
     return {"message": "Backend is working correctly!"}
+ 
+
+
+
+
+ # MAIN_PY_PATCH.py
+# Add these lines to your existing main.py
+
+# ── Import ──────────────────────────────────────────────────────────────────
+from routers.Payroll.statutory_compliance import router as compliance_router
+
+# ── Register ─────────────────────────────────────────────────────────────────
+app.include_router(compliance_router)
+
 
 
 # ── Lifespan (FastAPI 0.95+) ───────────────────────────────
@@ -802,3 +819,4 @@ async def lifespan(app: FastAPI):
     """
     on_startup()
     yield
+
