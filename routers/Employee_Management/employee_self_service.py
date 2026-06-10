@@ -1,6 +1,3 @@
-# FILE 12 of 12 | routers/Employee_Management/employee_self_service.py
-# Router: Employee Self-Service (read-only) — prefix: /self-service
-# Endpoints: GET /{employee_id}/profile  GET /{employee_id}/documents  GET /{employee_id}/lifecycle
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session

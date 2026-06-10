@@ -1,15 +1,3 @@
-# routers/Employee_Management/employee_lifecycle.py
-# Prefix: /api/employees/lifecycle
-# Tags: Employee Management
-#
-# Endpoints grouped by UI tab:
-#   Dashboard      → GET  /lifecycle/dashboard
-#   Joining        → /lifecycle/onboarding-tasks/…
-#   Active         → /lifecycle/probation-reviews/…  +  /lifecycle/events/…
-#   Transfers      → /lifecycle/transfers/…
-#   Exit           → /lifecycle/exits/…
-#   Reports        → /lifecycle/reports/exit-analytics  +  /lifecycle/report/by-type
-#   (legacy CRUD)  → /lifecycle/event/…  /lifecycle/employee/…
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
@@ -18,52 +6,36 @@ from datetime import date
 
 from core.database import get_db
 from schema.Employee_Management.employee_lifecycle import (
-    # Core events
+
     LifecycleEventCreate, LifecycleEventUpdate, LifecycleEventResponse,
     LifecycleAnalyticsResponse,
-    # Onboarding
     OnboardingTaskCreate, OnboardingTaskUpdate, OnboardingTaskResponse,
-    # Probation
     ProbationReviewCreate, ProbationReviewUpdate, ProbationReviewResponse,
-    # Transfers
     TransferRequestCreate, TransferRequestUpdate, TransferRequestResponse,
-    # Exit
     ExitProcessCreate, ExitProcessUpdate, ExitProcessWithClearance,
-    # Contract
     ContractRenewalCreate, ContractRenewalUpdate, ContractRenewalResponse,
-    # Dashboard / Analytics
     LifecycleDashboardResponse, ExitAnalyticsResponse,
 )
 from services.Employee_Management.employee_lifecycle_service import (
-    # Core events
+
     log_lifecycle_event, get_employee_lifecycle, get_lifecycle_event,
     update_lifecycle_event, delete_lifecycle_event,
     get_lifecycle_analytics, get_all_events_by_type,
-    # Onboarding
     create_onboarding_task, list_onboarding_tasks, get_onboarding_task,
     update_onboarding_task, complete_onboarding_task, delete_onboarding_task,
-    # Probation
     create_probation_review, list_probation_reviews, get_probation_review,
     update_probation_review, start_probation_review, complete_probation_review,
-    # Transfers
     create_transfer_request, list_transfer_requests, get_transfer_request,
     update_transfer_request, approve_transfer, reject_transfer, delete_transfer_request,
-    # Exit
     initiate_exit, list_exit_processes, get_exit_process,
     update_exit_process, generate_relieving_letter, delete_exit_process,
-    # Contract
     create_contract_renewal, list_contract_renewals, get_contract_renewal,
     update_contract_renewal, delete_contract_renewal,
-    # Dashboard / Analytics
     get_lifecycle_dashboard, get_exit_analytics,
 )
 
 router = APIRouter(prefix="/lifecycle", tags=["Employee Management"])
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Tab 1 – Lifecycle Dashboard
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.get(
     "/dashboard",
@@ -75,9 +47,6 @@ def lifecycle_dashboard(db: Session = Depends(get_db)):
     return get_lifecycle_dashboard(db)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Tab 2 – Joining Process (Onboarding Tasks)
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.post(
     "/onboarding-tasks",
@@ -137,10 +106,6 @@ def complete_task(task_id: int, db: Session = Depends(get_db)):
 def delete_task(task_id: int, db: Session = Depends(get_db)):
     delete_onboarding_task(db, task_id)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Tab 3 – Active Employment (Probation Reviews)
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.post(
     "/probation-reviews",
@@ -204,10 +169,6 @@ def complete_review(
 ):
     return complete_probation_review(db, review_id, rating)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Tab 4 – Transfers & Movements
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.post(
     "/transfers",
@@ -285,9 +246,6 @@ def delete_transfer(transfer_id: int, db: Session = Depends(get_db)):
     delete_transfer_request(db, transfer_id)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Tab 5 – Exit Management
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.post(
     "/exits",
@@ -347,11 +305,6 @@ def relieving_letter(exit_id: int, db: Session = Depends(get_db)):
 def delete_exit(exit_id: int, db: Session = Depends(get_db)):
     delete_exit_process(db, exit_id)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Contract Renewals (used on Dashboard & Active Employment)
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.post(
     "/contracts",
     response_model=ContractRenewalResponse,
@@ -402,10 +355,6 @@ def delete_contract(contract_id: int, db: Session = Depends(get_db)):
     delete_contract_renewal(db, contract_id)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Tab 6 – Reports & Analytics
-# ══════════════════════════════════════════════════════════════════════════════
-
 @router.get(
     "/reports/exit-analytics",
     response_model=ExitAnalyticsResponse,
@@ -428,10 +377,6 @@ def report_by_type(
 ):
     return get_all_events_by_type(db, event_type, from_date, to_date)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Legacy / Core Lifecycle Event CRUD (kept from original)
-# ══════════════════════════════════════════════════════════════════════════════
 
 @router.post(
     "/",

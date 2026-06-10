@@ -1,4 +1,3 @@
-# schema/Employee_Management/employee_master.py
 
 from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional
@@ -6,29 +5,26 @@ from decimal import Decimal
 from datetime import date, datetime
 
 
-# ─── Valid values (mirrors screenshot badges exactly) ───────────────
+
 VALID_EMPLOYMENT_TYPES = {"Full-Time", "Part-Time", "Contract", "Intern"}
 VALID_STATUSES = {"Active", "Inactive", "On Leave", "Resigned", "Terminated"}
 
 
 class EmployeeMasterCreate(BaseModel):
-    """
-    Used by: POST /api/employees/master/
-    Triggered by: 'Add Employee' button in the screenshot
-    """
+
     employee_id: int
 
-    # SALARY column
+
     salary: Optional[Decimal] = None
     currency: Optional[str] = "USD"
 
-    # Employment type badge (shown under salary)
+ 
     employment_type: str = "Full-Time"
 
-    # Status badge
+
     employment_status: Optional[str] = "Active"
 
-    # HR tracking fields
+
     probation_end_date: Optional[date] = None
     confirmed_date: Optional[date] = None
     reporting_manager_id: Optional[int] = None
@@ -82,9 +78,7 @@ class EmployeeMasterUpdate(BaseModel):
 
 
 class EmployeeMasterResponse(BaseModel):
-    """
-    Used by: POST, PUT responses (pure EmployeeMaster table data)
-    """
+
     id: int
     employee_id: int
     salary: Optional[Decimal]
@@ -103,33 +97,29 @@ class EmployeeMasterResponse(BaseModel):
 
 
 class EmployeeTableRow(BaseModel):
-    """
-    One row in the Employee Records table (screenshot).
-    Combines Employee + EmployeeMaster data.
-    """
-    # EMPLOYEE column
+  
     id: int
     employee_code: str
     name: str
     designation: str
 
-    # DEPARTMENT column
+  
     department: str
     location: str
 
-    # CONTACT column
+  
     email: str
     phone: str
 
-    # SALARY column
+   
     salary: Optional[Decimal]
     currency: str
-    employment_type: str      # badge: Full-time / Contract
+    employment_type: str    
 
-    # STATUS column
-    employment_status: str    # badge: Active / On Leave
+  
+    employment_status: str   
 
-    # Extra (for detail modal / View button)
+
     joining_date: Optional[str]
     grade: Optional[str]
     work_location: Optional[str]
@@ -139,10 +129,7 @@ class EmployeeTableRow(BaseModel):
 
 
 class EmployeeTableResponse(BaseModel):
-    """
-    Full paginated response for the employee table.
-    Powers: "Showing 1 to 6 of 8 employees" text + Previous/1/2/Next buttons.
-    """
+ 
     employees: list[EmployeeTableRow]
     total: int
     page: int
@@ -153,11 +140,7 @@ class EmployeeTableResponse(BaseModel):
 
 
 class EmployeeDetailResponse(BaseModel):
-    """
-    Full detail for one employee — used by the View button (detail modal).
-    Combines all fields from Employee table + EmployeeMaster table.
-    """
-    # From Employee table
+
     id: int
     employee_code: str
     name: str
@@ -190,7 +173,7 @@ class EmployeeDetailResponse(BaseModel):
 
 
 class StatsResponse(BaseModel):
-    """Powers the 4 stat cards at the top of the screenshot."""
+  
     total_employees: int        # "Total Employees — 8"
     active_employees: int       # "Active Employees — 6"
     departments: int            # "Departments — 7"

@@ -1,4 +1,4 @@
-# routers/Employee_Management/org_hierarchy.py
+
  
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -39,8 +39,7 @@ from datetime import datetime
  
 router = APIRouter(prefix="/api/org-hierarchy", tags=["Org Hierarchy"])
  
- 
-# ── Tree builder helper ───────────────────────────────────────────────────────
+
  
 def _build_tree(dept: Department, dept_map: dict) -> DepartmentTree:
     node = DepartmentTree.model_validate(dept)
@@ -48,20 +47,13 @@ def _build_tree(dept: Department, dept_map: dict) -> DepartmentTree:
         node.children.append(_build_tree(child, dept_map))
     return node
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# 1. DASHBOARD STATS
-# ══════════════════════════════════════════════════════════════════════════════
- 
+
 @router.get("/stats", response_model=OrgHierarchyStats)
 def get_org_stats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Returns top stat cards:
-    Departments | Total Employees | Avg Span of Control | Pending Changes
-    """
+
     total_departments = db.execute(
         select(func.count()).where(Department.is_active == True)
     ).scalar_one()
@@ -74,7 +66,7 @@ def get_org_stats(
         select(func.count()).where(HierarchyChangeRequest.status == "PENDING")
     ).scalar_one()
  
-    # Avg span of control = total direct reports / number of managers
+
     manager_counts = db.execute(
         select(ReportingRelationship.manager_id, func.count().label("cnt"))
         .where(
@@ -95,11 +87,6 @@ def get_org_stats(
         avg_span_of_control=round(avg_span, 1),
         pending_changes=pending_changes,
     )
- 
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# 2. DEPARTMENT CRUD
-# ══════════════════════════════════════════════════════════════════════════════
  
 @router.post("/departments", response_model=DepartmentResponse, status_code=201)
 def create_department(
@@ -186,11 +173,7 @@ def delete_department(
     db.delete(obj)
     db.commit()
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# 3. VISUAL ORG CHART (Tree)
-# ══════════════════════════════════════════════════════════════════════════════
- 
+
 @router.get("/tree", response_model=List[DepartmentTree])
 def get_org_tree(
     db: Session = Depends(get_db),
@@ -231,20 +214,13 @@ def get_dept_subtree(
             dept_map.setdefault(d.parent_department_id, []).append(d)
     return _build_tree(root, dept_map)
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# 4. REPORTING RELATIONSHIPS
-# ══════════════════════════════════════════════════════════════════════════════
- 
+
 @router.get("/reporting-relationships/summary", response_model=ReportingRelationshipSummary)
 def get_reporting_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Summary counts:
-    Direct Reports | Dotted-Line Reports | Matrix Reports | Individual Contributors
-    """
+
     direct = db.execute(
         select(func.count()).where(
             ReportingRelationship.relationship_type == "DIRECT",
@@ -342,19 +318,12 @@ def delete_reporting_relationship(
     db.commit()
  
  
-# ══════════════════════════════════════════════════════════════════════════════
-# 5. HIERARCHY HEALTH
-# ══════════════════════════════════════════════════════════════════════════════
- 
 @router.get("/hierarchy-health", response_model=HierarchyHealth)
 def get_hierarchy_health(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Hierarchy Health section:
-    Reporting Completeness % | Overloaded Managers | Underloaded Managers | Manager:IC Ratio
-    """
+
     total_employees = db.execute(select(func.count()).select_from(Employee)).scalar_one()
  
     employees_with_manager = db.execute(
@@ -392,11 +361,6 @@ def get_hierarchy_health(
         underloaded_managers=underloaded,
         manager_to_ic_ratio=ratio,
     )
- 
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# 6. SPAN OF CONTROL ANALYTICS
-# ══════════════════════════════════════════════════════════════════════════════
  
 @router.get("/span-of-control", response_model=SpanOfControlAnalytics)
 def get_span_of_control(
@@ -449,11 +413,7 @@ def get_span_of_control(
         details=details,
     )
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# 7. HIERARCHY MODIFICATION & APPROVAL WORKFLOW
-# ══════════════════════════════════════════════════════════════════════════════
- 
+
 @router.post("/change-requests", response_model=HierarchyChangeRequestResponse, status_code=201)
 def create_change_request(
     payload: HierarchyChangeRequestCreate,
@@ -500,11 +460,7 @@ def action_change_request(
     db.refresh(obj)
     return obj
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# 8. HISTORICAL HIERARCHY VIEW & TIME-TRAVEL
-# ══════════════════════════════════════════════════════════════════════════════
- 
+
 @router.get("/history/{employee_id}", response_model=List[HierarchyHistoryResponse])
 def get_employee_hierarchy_history(
     employee_id: int,
@@ -539,11 +495,7 @@ def list_hierarchy_history(
     stmt = stmt.order_by(HierarchyHistory.effective_from.desc())
     return db.execute(stmt).scalars().all()
  
- 
-# ══════════════════════════════════════════════════════════════════════════════
-# 9. DEPARTMENT & LOCATION VIEWS
-# ══════════════════════════════════════════════════════════════════════════════
- 
+
 @router.get("/department-location-view", response_model=List[DepartmentLocationView])
 def get_department_location_view(
     location: Optional[str] = Query(None),

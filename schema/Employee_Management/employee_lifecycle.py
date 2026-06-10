@@ -1,11 +1,9 @@
-# schema/Employee_Management/employee_lifecycle.py
-# Pydantic v2 schemas for all Employee Lifecycle resources
 
 from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from datetime import date, datetime
 
-# ─── Allowed event types ──────────────────────────────────────────────────────
+
 ALLOWED_EVENT_TYPES = {
     "Joining", "Probation_Start", "Probation_Extension", "Confirmation",
     "Promotion", "Demotion", "Department_Change", "Location_Change",
@@ -16,9 +14,6 @@ ALLOWED_EVENT_TYPES = {
 }
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 1. Core Lifecycle Event
-# ══════════════════════════════════════════════════════════════════════════════
 
 class LifecycleEventCreate(BaseModel):
     employee_id: int
@@ -135,10 +130,6 @@ class LifecycleAnalyticsResponse(BaseModel):
     current_status: Optional[str] = None
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 2. Onboarding / Joining Tasks  (Joining Process tab)
-# ══════════════════════════════════════════════════════════════════════════════
-
 class OnboardingTaskCreate(BaseModel):
     employee_id: int
     task: str
@@ -179,10 +170,6 @@ class OnboardingTaskResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 3. Probation Reviews  (Active Employment tab)
-# ══════════════════════════════════════════════════════════════════════════════
-
 class ProbationReviewCreate(BaseModel):
     employee_id: int
     review_date: date
@@ -221,10 +208,6 @@ class ProbationReviewResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 4. Transfer Requests  (Transfers & Movements tab)
-# ══════════════════════════════════════════════════════════════════════════════
 
 class TransferRequestCreate(BaseModel):
     employee_id: int
@@ -282,10 +265,6 @@ class TransferRequestResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 5. Exit Processes  (Exit Management tab)
-# ══════════════════════════════════════════════════════════════════════════════
-
 class ExitProcessCreate(BaseModel):
     employee_id: int
     employee_name: Optional[str] = None
@@ -339,14 +318,10 @@ class ExitProcessResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Computed field for clearance_pending count
+
 class ExitProcessWithClearance(ExitProcessResponse):
-    clearance_pending: int = 0  # computed by service
+    clearance_pending: int = 0  
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 6. Contract Renewals  (Dashboard / Active Employment)
-# ══════════════════════════════════════════════════════════════════════════════
 
 class ContractRenewalCreate(BaseModel):
     employee_id: int
@@ -378,16 +353,12 @@ class ContractRenewalResponse(BaseModel):
     renewal_status: str
     renewed_until: Optional[date] = None
     remarks: Optional[str] = None
-    days_remaining: Optional[int] = None   # computed by service
+    days_remaining: Optional[int] = None   
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# 7. Dashboard Summary  (Lifecycle Dashboard tab)
-# ══════════════════════════════════════════════════════════════════════════════
 
 class LifecycleDashboardResponse(BaseModel):
     new_joinings_this_month: int = 0
@@ -401,23 +372,19 @@ class LifecycleDashboardResponse(BaseModel):
     contract_renewals_total: int = 0
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# 8. Reports & Analytics  (Reports & Analytics tab)
-# ══════════════════════════════════════════════════════════════════════════════
-
 class ExitAnalyticsResponse(BaseModel):
     attrition_rate: float = 0.0
     voluntary_exits: int = 0
     involuntary_exits: int = 0
     avg_tenure_years: float = 0.0
-    top_exit_reasons: List[dict] = []      # [{"reason": str, "percentage": float}]
+    top_exit_reasons: List[dict] = []      
 
 
 class LifecycleReportItem(BaseModel):
     id: int
     report_name: str
     generated_date: date
-    report_type: str                       # Exit Analysis / Joining / Headcount
+    report_type: str                      
     generated_by: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
