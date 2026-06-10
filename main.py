@@ -609,7 +609,8 @@ from routers.HR_Operations.exit_management import router as exit_management
 from routers.Employee_Management.employee_lifecycle import router as employee_lifecycle_router
 from routers.Payroll.reimbursements import router as reimbursements_router
 from routers.Payroll.loans_advances import router as loans_advances_router
-
+from routers.Payroll.salary_structure import router as salary_structure_router
+from routers.Payroll.payroll_run import router as payroll_run_router
 
 # CORS
 app.add_middleware(
@@ -778,6 +779,8 @@ app.include_router(employee_lifecycle_router)
 # Payroll Management
 app.include_router(reimbursements_router)
 app.include_router(loans_advances_router)
+app.include_router(salary_structure_router)
+app.include_router(payroll_run_router)
 
 # STATIC FILES
 if not os.path.exists("uploads"):
