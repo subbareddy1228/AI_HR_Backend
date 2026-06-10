@@ -90,7 +90,7 @@ class EmployeePunch(Base):
     # HR override fields (Add Punch modal)
     remarks         = Column(Text, default="")
     is_manual       = Column(Boolean, default=False)           # Added manually by HR
-    added_by        = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    added_by        = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
 
     # Excel import reference
     import_batch_id = Column(UUID(as_uuid=True), nullable=True, index=True)
@@ -174,7 +174,7 @@ class PunchImportBatch(Base):
 
     id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     filename        = Column(String(255), nullable=False)
-    uploaded_by     = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    uploaded_by     = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     total_rows      = Column(Integer, default=0)
     success_rows    = Column(Integer, default=0)
     failed_rows     = Column(Integer, default=0)

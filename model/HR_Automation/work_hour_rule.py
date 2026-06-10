@@ -48,7 +48,7 @@ class WorkHourRuleConfig(Base):
     # ── Audit ─────────────────────────────────────────────────────────────────
     updated_at = Column(DateTime(timezone=True), server_default=func.now(),
                         onupdate=func.now())
-    updated_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"),
+    updated_by = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"),
                         nullable=True)
 
     def __repr__(self):

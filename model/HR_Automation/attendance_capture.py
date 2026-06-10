@@ -138,7 +138,7 @@ class DeviceSyncLog(Base):
     error_message  = Column(Text, default="")
     started_at     = Column(DateTime(timezone=True), server_default=func.now())
     completed_at   = Column(DateTime(timezone=True), nullable=True)
-    initiated_by   = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    initiated_by   = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
 
     device = relationship("BiometricDevice", back_populates="sync_logs")
 
@@ -201,7 +201,7 @@ class AttendancePunch(Base):
     is_valid            = Column(Boolean, default=True)
     notes               = Column(Text, default="")
     created_at          = Column(DateTime(timezone=True), server_default=func.now())
-    created_by          = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by          = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
 
     # Relationships
     employee         = relationship("Employee", back_populates="punches")
@@ -237,7 +237,7 @@ class AttendanceRecord(Base):
     late_minutes            = Column(Integer, default=0)
     is_early_checkout       = Column(Boolean, default=False)
     is_regularized          = Column(Boolean, default=False)
-    regularized_by          = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    regularized_by          = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     regularization_reason   = Column(Text, default="")
 
     punch_count             = Column(Integer, default=0)
@@ -326,4 +326,4 @@ class AttendanceSettings(Base):
     short_leave_threshold_hours     = Column(Numeric(3, 1), default=2.0)
     auto_sync_enabled               = Column(Boolean, default=False)
     updated_at                      = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    updated_by                      = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    updated_by                      = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
