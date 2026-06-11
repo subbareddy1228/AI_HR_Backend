@@ -15,7 +15,7 @@ from schema.Reports.dashboard_metric import (
     DashboardMetricResponse,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/reports/executive dashboard", tags=["Executive Dashboard Reports"])
 
 
 @router.get("/dashboard/hr-leadership")
