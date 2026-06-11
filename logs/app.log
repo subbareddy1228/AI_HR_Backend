@@ -38,3 +38,16 @@
 2026-06-10 15:11:07,835 - services.Productivity.productivity_service - DEBUG - 9096 - Found 2 employees for productivity computation
 2026-06-10 15:19:28,601 - routers.Productivity.productivity_router - INFO - 9096 - GET /productivity/employee/5
 2026-06-10 15:19:28,810 - routers.Productivity.productivity_router - INFO - 9096 - Retrieved 3 productivity records for employee 5
+2026-06-10 16:32:48,324 - routers.Productivity.productivity_router - INFO - 25180 - GET /productivity/ for user_id=5
+2026-06-10 16:32:48,525 - services.Productivity.productivity_service - INFO - 25180 - Calculating productivity for employee_id=5
+2026-06-10 16:32:48,806 - services.Productivity.productivity_service - INFO - 25180 - Productivity score for emp 5: 0.0% from 0 activities (0 productive)
+2026-06-10 16:32:49,017 - services.Productivity.productivity_service - DEBUG - 25180 - Saved productivity record id=4 for emp 5
+2026-06-10 16:32:49,021 - routers.Productivity.productivity_router - INFO - 25180 - Productivity calculated for user_id=5, score=0.0
+2026-06-10 16:33:12,912 - routers.Productivity.productivity_router - INFO - 25180 - GET /productivity/summary
+2026-06-10 16:33:12,912 - services.Productivity.productivity_service - INFO - 25180 - Computing summary metrics
+2026-06-10 16:33:12,926 - services.Productivity.productivity_service - INFO - 25180 - Summary computed: score=0.00
+2026-06-10 16:33:12,926 - routers.Productivity.productivity_router - INFO - 25180 - Summary metrics retrieved
+2026-06-10 16:33:59,797 - routers.Productivity.productivity_router - INFO - 25180 - GET /productivity/employee/2
+2026-06-10 16:33:59,824 - routers.Productivity.productivity_router - INFO - 25180 - Retrieved 0 productivity records for employee 2
+2026-06-10 16:34:10,211 - routers.Productivity.productivity_router - INFO - 25180 - GET /productivity/employee/2
+2026-06-10 16:34:10,214 - routers.Productivity.productivity_router - INFO - 25180 - Retrieved 0 productivity records for employee 2
