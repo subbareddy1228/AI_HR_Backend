@@ -105,7 +105,7 @@ from routers.CRM import contacts, company, deals, leads, pipelines, activities, 
 from routers.onboarding.admin_candidates import router as admin_candidates_router
 from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address, background_verification
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
-from routers.Company_Settings import currency, financial_year, localization, policy,company_profile
+from routers.Company_Settings import currency, financial_year, localization, policy,company_profile,notification_preference,location,data_privacy
 
 from routers.Payroll import salary_structure, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
@@ -271,6 +271,9 @@ app.include_router(financial_year.router)
 app.include_router(localization.router)
 app.include_router(policy.router)
 app.include_router(company_profile.router)
+app.include_router(notification_preference.router)
+app.include_router(location.router)
+app.include_router(data_privacy.router)
 
 #HR Operations - Assets Management
 app.include_router(assets.router)
