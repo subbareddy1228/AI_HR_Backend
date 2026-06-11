@@ -103,7 +103,7 @@ from routers.HR_Automation.attendance.routers import attendance, leave
 from routers.AI_Interview_Bot.routes import interviews
 from routers.CRM import contacts, company, deals, leads, pipelines, activities, analytics,projects, clients, tasks
 from routers.onboarding.admin_candidates import router as admin_candidates_router
-from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address, background_verification, probation_management
+from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address, background_verification, probation_management, induction
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile,notification_preference,location,data_privacy
 
@@ -265,6 +265,7 @@ app.include_router(personal_info.router)
 app.include_router(address.router)
 app.include_router(background_verification.router)
 app.include_router(probation_management.router) 
+app.include_router(induction.router)
 
 # Company Settings - Currency Management
 app.include_router(currency.router) 
