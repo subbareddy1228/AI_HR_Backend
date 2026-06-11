@@ -1,0 +1,125 @@
+
+from __future__ import annotations
+from typing import List, Optional
+import logging
+
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
+from model.Company_Settings.location import CompanyLocation
+from schema.Company_Settings.location import (
+    CompanyLocationCreate,
+    CompanyLocationUpdate,
+)
+
+logger = logging.getLogger(__name__)
+
+
+def get_all_locations(db: Session, tenant_id: int) -> List[CompanyLocation]:
+    return (
+        db.query(CompanyLocation)
+        .filter(
+            CompanyLocation.tenant_id == tenant_id,
+            CompanyLocation.is_active.is_(True),
+        )
+        .order_by(CompanyLocation.is_default.desc(), CompanyLocation.name)
+        .all()
+    )
+
+
+def get_location(db: Session, tenant_id: int, location_id: int) -> CompanyLocation:
+    return _get_or_404(db, tenant_id, location_id)
+
+
+def create_location(
+    db:        Session,
+    tenant_id: int,
+    data:      CompanyLocationCreate,
+    actor_id:  Optional[int] = None,
+) -> CompanyLocation:
+    
+    if data.is_default:
+        _clear_default(db, tenant_id)
+
+    location = CompanyLocation(
+        tenant_id  = tenant_id,
+        updated_by = actor_id,
+        **data.model_dump(),
+    )
+    db.add(location)
+    db.commit()
+    db.refresh(location)
+    return location
+
+
+def update_location(
+    db:          Session,
+    tenant_id:   int,
+    location_id: int,
+    data:        CompanyLocationUpdate,
+    actor_id:    Optional[int] = None,
+) -> CompanyLocation:
+    location = _get_or_404(db, tenant_id, location_id)
+
+    if data.is_default:
+        _clear_default(db, tenant_id)
+
+    for field, value in data.model_dump(exclude_none=True).items():
+        setattr(location, field, value)
+
+    location.updated_by = actor_id
+    db.commit()
+    db.refresh(location)
+    return location
+
+
+def delete_location(
+    db: Session, tenant_id: int, location_id: int, actor_id: Optional[int] = None
+) -> None:
+    location = _get_or_404(db, tenant_id, location_id)
+    if location.is_default:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete the default location. Set another location as default first.",
+        )
+    location.is_active  = False
+    location.updated_by = actor_id
+    db.commit()
+
+
+def set_default_location(
+    db: Session, tenant_id: int, location_id: int, actor_id: Optional[int] = None
+) -> CompanyLocation:
+    location = _get_or_404(db, tenant_id, location_id)
+    _clear_default(db, tenant_id)
+    location.is_default  = True
+    location.updated_by  = actor_id
+    db.commit()
+    db.refresh(location)
+    return location
+
+
+def _get_or_404(db: Session, tenant_id: int, location_id: int) -> CompanyLocation:
+    loc = (
+        db.query(CompanyLocation)
+        .filter(
+            CompanyLocation.id        == location_id,
+            CompanyLocation.tenant_id == tenant_id,
+            CompanyLocation.is_active.is_(True),
+        )
+        .first()
+    )
+    if not loc:
+        raise HTTPException(status_code=404, detail="Location not found")
+    return loc
+
+
+def _clear_default(db: Session, tenant_id: int) -> None:
+    (
+        db.query(CompanyLocation)
+        .filter(
+            CompanyLocation.tenant_id == tenant_id,
+            CompanyLocation.is_default.is_(True),
+        )
+        .update({"is_default": False}, synchronize_session="fetch")
+    )

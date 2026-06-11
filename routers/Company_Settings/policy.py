@@ -1,73 +1,122 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
-from sqlalchemy.orm import Session
-from datetime import date
+
+from __future__ import annotations
 from typing import Optional
 
-from core.dependencies import get_db
-from core.config import settings
-from utils.file_utils import save_file
-from model.Company_Settings.policy import Policy
-from schema.Company_Settings.policy import PolicyResponse
+from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi.responses import FileResponse
+from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/policies", tags=["Policies"])
+from core.database import get_db
+from core.dependencies import get_current_user, require_roles
+from model.models import User
+from schema.Company_Settings.policy import (
+    PolicyCreate,
+    PolicyUpdate,
+    PolicyResponse,
+    PolicyListResponse,
+)
+from services.Company_Settings.policy_service import (
+    get_all_policies,
+    get_policy,
+    create_policy,
+    update_policy,
+    delete_policy,
+    download_policy_document,
+)
+
+router = APIRouter(
+    prefix="/company-settings/policies",
+    tags=["Company Settings – Policies"],
+)
 
 
-@router.post("/", response_model=PolicyResponse)
-def add_policy(
-    title: str = Form(...),
-    category: str = Form(...),
-    version: str = Form(...),
-    effective_date: date = Form(...),
-    description: Optional[str] = Form(None),
-    document: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
+@router.get("/", response_model=PolicyListResponse)
+def list_policies(
+    category:     Optional[str] = None,
+    status_filter: Optional[str] = None,
+    current_user: User    = Depends(get_current_user),
+    db:           Session = Depends(get_db),
 ):
-    document_path = save_file(document, settings.UPLOAD_DIR) if document else None
+    policies = get_all_policies(db, current_user.tenant_id, category, status_filter)
+    return PolicyListResponse(policies=policies, total=len(policies))
 
-    policy = Policy(
-        title=title,
-        category=category,
-        version=version,
-        effective_date=effective_date,
-        description=description,
-        document_path=document_path,
-        status="Active"
+
+@router.get("/{policy_id}", response_model=PolicyResponse)
+def read_policy(
+    policy_id:    int,
+    current_user: User    = Depends(get_current_user),
+    db:           Session = Depends(get_db),
+):
+    return get_policy(db, current_user.tenant_id, policy_id)
+
+
+@router.get("/{policy_id}/download")
+def download_policy(
+    policy_id:    int,
+    current_user: User    = Depends(get_current_user),
+    db:           Session = Depends(get_db),
+):
+    """Stream the policy document file for download."""
+    policy  = get_policy(db, current_user.tenant_id, policy_id)
+    path    = download_policy_document(db, current_user.tenant_id, policy_id)
+    return FileResponse(
+        path        = path,
+        filename    = policy.document_original_name or "policy_document",
+        media_type  = "application/octet-stream",
     )
 
-    db.add(policy)
-    db.commit()
-    db.refresh(policy)
-    return policy
+
+@router.post("/", response_model=PolicyResponse, status_code=status.HTTP_201_CREATED)
+def add_policy(
+    title:          str           = Form(...),
+    category:       str           = Form(...),
+    version:        str           = Form(...),
+    effective_date: str           = Form(...),
+    description:    Optional[str] = Form(None),
+    document:       Optional[UploadFile] = File(None),
+    current_user:   User          = Depends(require_roles(["admin", "hr_admin"])),
+    db:             Session       = Depends(get_db),
+):
+    from datetime import date
+    data = PolicyCreate(
+        title          = title,
+        category       = category,
+        version        = version,
+        effective_date = date.fromisoformat(effective_date),
+        description    = description,
+    )
+    return create_policy(db, current_user.tenant_id, data, document, current_user.id)
 
 
 @router.put("/{policy_id}", response_model=PolicyResponse)
-def update_policy(
-    policy_id: int,
-    title: Optional[str] = Form(None),
-    category: Optional[str] = Form(None),
-    version: Optional[str] = Form(None),
-    effective_date: Optional[date] = Form(None),
-    description: Optional[str] = Form(None),
-    document: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
+def edit_policy(
+    policy_id:      int,
+    title:          Optional[str] = Form(None),
+    category:       Optional[str] = Form(None),
+    version:        Optional[str] = Form(None),
+    effective_date: Optional[str] = Form(None),
+    description:    Optional[str] = Form(None),
+    status:         Optional[str] = Form(None),
+    document:       Optional[UploadFile] = File(None),
+    current_user:   User          = Depends(require_roles(["admin", "hr_admin"])),
+    db:             Session       = Depends(get_db),
 ):
-    policy = db.query(Policy).filter(Policy.id == policy_id).first()
-    if not policy:
-        raise HTTPException(status_code=404, detail="Policy not found")
+    from datetime import date
+    data = PolicyUpdate(
+        title          = title,
+        category       = category,
+        version        = version,
+        effective_date = date.fromisoformat(effective_date) if effective_date else None,
+        description    = description,
+        status         = status,
+    )
+    return update_policy(db, current_user.tenant_id, policy_id, data, document, current_user.id)
 
-    if title is not None:
-        policy.title = title
-    if category is not None:
-        policy.category = category
-    if version is not None:
-        policy.version = version
-    if effective_date is not None:
-        policy.effective_date = effective_date
-    if description is not None:
-        policy.description = description
-    if document:
-        policy.document_path = save_file(document, settings.UPLOAD_DIR)
 
-    db.commit()
-    db.refresh(policy)
-    return policy
+@router.delete("/{policy_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_policy(
+    policy_id:    int,
+    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    db:           Session = Depends(get_db),
+):
+    delete_policy(db, current_user.tenant_id, policy_id, current_user.id)
