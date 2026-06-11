@@ -45,7 +45,7 @@ from services.Forms_Workflows.custom_form_service import (
 
 router = APIRouter(
     prefix="/custom-forms",
-    tags=["Forms & Workflows – Custom Form Builder"],
+    tags=["Forms & Workflows - Custom Form Builder"],
 )
 
 
