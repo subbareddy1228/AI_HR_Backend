@@ -592,7 +592,7 @@ from routers.admin_users.send_assessment_email import router as email_router
 from routers.offers.offer_template_router import router as offer_template_router
 from routers.offers.offer_tracking_router import router as offer_tracking_router
 from routers.HR_Automation.Onboarding.routers import candidates as onboard_candidates, uploads
-from routers.HR_Automation.attendance import attendance_capture, daily_punches, daily_attendance, monthly_attendance, shift_management, manual_attendance, leave_correction, work_hour_rule, leave_management, regularization
+from routers.HR_Automation.attendance import attendance_capture, daily_punches, daily_attendance, monthly_attendance, shift_management, manual_attendance, leave_correction, work_hour_rule, leave_management, regularization, holiday_calendar
 from routers.AI_Interview_Bot.routes import interviews
 from routers.CRM import contacts, company, deals, leads, pipelines, activities, analytics, projects, clients, tasks
 from routers.onboarding.admin_candidates import router as admin_candidates_router
@@ -712,6 +712,7 @@ app.include_router(work_hour_rule.router)
 app.include_router(shift_management.router)
 app.include_router(leave_management.router)
 app.include_router(regularization.router)
+app.include_router(holiday_calendar.router)
 
 app.include_router(documents_router, prefix="/api/documents")
 app.include_router(signatures_router, prefix="/api/signatures")

@@ -115,3 +115,32 @@ def _seed_leave_types(db: Session):
 
     db.commit()
     logger.info("Seeded %d default leave types.", len(DEFAULT_LEAVE_TYPES))
+
+
+def seed_regularization():
+    """
+    Seeds 2 default auto-reject rules on startup.
+    Matches the component's initialSettings.autoRejectRules:
+      Missing Punch → 7 days
+      Forgot Punch  → 5 days
+    Safe to call multiple times — skips if rules already exist.
+    """
+    db: Session = SessionLocal()
+    try:
+        from services.HR_Automation.regularization import seed_auto_reject_rules
+        seed_auto_reject_rules(db)
+    except Exception as exc:
+        logger.error("Regularization seed failed: %s", exc)
+    finally:
+        db.close()
+
+
+def seed_holiday_calendar():
+    db: Session = SessionLocal()
+    try:
+        from services.HR_Automation.holiday_calendar_service import seed_holiday_defaults
+        seed_holiday_defaults(db)
+    except Exception as exc:
+        logger.error("Holiday calendar seed failed: %s", exc)
+    finally:
+        db.close()
