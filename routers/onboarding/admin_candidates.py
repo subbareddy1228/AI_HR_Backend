@@ -1,9 +1,8 @@
-# routers/admin_candidates.py
-
 print("admin_candidates router loaded")
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from uuid import uuid4
 from datetime import datetime, timedelta
 
@@ -12,50 +11,41 @@ from fastapi_mail import FastMail, MessageSchema, MessageType
 from core.database import get_db
 from core.mail import mail_config
 from model.onboarding.candidate import Candidate
-from schema.onboarding.candidate import CandidateCreate
+from schema.onboarding.candidate import (
+    CandidateCreate,
+    CandidateUpdate,
+    CandidateOut,
+    PaginatedCandidates,
+    compute_credits,
+)
 
 router = APIRouter(
     prefix="/api/onboarding-forms/candidates",
-    tags=["Onboarding Candidates"]
+    tags=["Onboarding Forms"],
 )
 
 
-async def send_invite_email(
-    email: str,
-    name: str,
-    onboarding_link: str,
-    expiry: datetime
-):
+
+
+async def _send_invite_email(email: str, name: str, link: str, expiry: datetime):
+    
     html_body = f"""
-    <div style="font-family: Arial, sans-serif; line-height:1.6; color:#333;">
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
         <p>Hello <b>{name}</b>,</p>
-
+        <p>Welcome to <b>Levitica Technologies Private Limited</b>.</p>
+        <p>We have initiated your onboarding process.</p>
+        <p>Click the button below to complete your onboarding form:</p>
         <p>
-            Welcome to <b>Levitica Technologies Private Limited</b>.
-        </p>
-
-        <p>
-            We have initiated your onboarding process.
-        </p>
-
-        <p>
-            Click the button below to complete your onboarding form:
-        </p>
-
-        <p>
-            <a href="{onboarding_link}"
-               style="background:#2563eb;color:#fff;
-               padding:10px 18px;text-decoration:none;
-               border-radius:6px;display:inline-block;">
+            <a href="{link}"
+               style="background:#2563eb;color:#fff;padding:10px 18px;
+                      text-decoration:none;border-radius:6px;display:inline-block;">
                Complete Onboarding
             </a>
         </p>
-
         <p style="margin-top:12px;">
             <b>Note:</b> This link is valid till
             <b>{expiry.strftime("%d-%b-%Y")}</b>.
         </p>
-
         <br/>
         <p>
             Best Regards,<br/>
@@ -64,30 +54,91 @@ async def send_invite_email(
         </p>
     </div>
     """
-
     message = MessageSchema(
         subject="Self-Onboarding Initiated",
         recipients=[email],
         body=html_body,
-        subtype=MessageType.html
+        subtype=MessageType.html,
     )
-
     await FastMail(mail_config).send_message(message)
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+def _get_or_404(db: Session, candidate_id: int) -> Candidate:
+    candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Onboarding form not found")
+    return candidate
+
+
+
+
+@router.get("/", response_model=PaginatedCandidates)
+def list_candidates(
+    status:   str | None = Query(default=None, description="Filter by status: SENT, SUBMITTED, APPROVED, REJECTED"),
+    search:   str | None = Query(default=None, description="Search by name, email, or mobile"),
+    page:     int        = Query(default=1,    ge=1),
+    per_page: int        = Query(default=10,   ge=1, le=100),
+    db: Session          = Depends(get_db),
+):
+    
+    q = db.query(Candidate)
+
+    
+    if status and status.upper() != "ALL":
+        q = q.filter(Candidate.status == status.upper())
+
+    
+    if search:
+        term = f"%{search}%"
+        q = q.filter(
+            or_(
+                Candidate.full_name.ilike(term),
+                Candidate.email.ilike(term),
+                Candidate.mobile.ilike(term),
+            )
+        )
+
+    total = q.count()
+    candidates = (
+        q.order_by(Candidate.created_at.desc())
+         .offset((page - 1) * per_page)
+         .limit(per_page)
+         .all()
+    )
+
+    return PaginatedCandidates(
+        total=total,
+        page=page,
+        per_page=per_page,
+        results=candidates,
+    )
+
+
+
+
+@router.get("/{candidate_id}", response_model=CandidateOut)
+def get_candidate(candidate_id: int, db: Session = Depends(get_db)):
+    
+    return _get_or_404(db, candidate_id)
+
+
+
+
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=CandidateOut)
 async def invite_candidate(
     payload: CandidateCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
+  
     if not payload.email and not payload.mobile:
         raise HTTPException(
             status_code=400,
-            detail="Either email or mobile is required"
+            detail="Either email or mobile is required",
         )
 
-    token = str(uuid4())
+    token  = str(uuid4())
     expiry = datetime.utcnow() + timedelta(days=3)
+    credits = compute_credits(payload.verification_options)
 
     candidate = Candidate(
         full_name=payload.full_name,
@@ -95,7 +146,9 @@ async def invite_candidate(
         mobile=payload.mobile,
         invite_token=token,
         token_expires_at=expiry,
-        status="SENT"
+        status="SENT",
+        verification_options=payload.verification_options,
+        credits_used=credits,
     )
 
     db.add(candidate)
@@ -106,71 +159,107 @@ async def invite_candidate(
 
     if payload.email:
         try:
-            await send_invite_email(
+            await _send_invite_email(
                 email=payload.email,
                 name=payload.full_name,
-                onboarding_link=onboarding_link,
-                expiry=expiry
+                link=onboarding_link,
+                expiry=expiry,
             )
-        except Exception as e:
-            print("❌ Email failed:", e)
+        except Exception as exc:
+            print("❌ Email failed:", exc)
 
-    return {
-        "id": candidate.id,
-        "full_name": candidate.full_name,
-        "status": candidate.status,
-        "onboarding_link": onboarding_link,
-        "expires_at": expiry
-    }
+    return candidate
 
 
-@router.get("/")
-def list_candidates(db: Session = Depends(get_db)):
-    return (
-        db.query(Candidate)
-        .order_by(Candidate.created_at.desc())
-        .all()
-    )
 
 
-@router.put("/{candidate_id}/approve")
+@router.put("/{candidate_id}", response_model=CandidateOut)
+def update_candidate(
+    candidate_id: int,
+    payload: CandidateUpdate,
+    db: Session = Depends(get_db),
+):
+    candidate = _get_or_404(db, candidate_id)
+
+    if payload.full_name is not None:
+        candidate.full_name = payload.full_name
+
+    if payload.email is not None:
+        candidate.email = payload.email
+
+    if payload.mobile is not None:
+        candidate.mobile = payload.mobile
+
+    if payload.verification_options is not None:
+        candidate.verification_options = payload.verification_options
+        candidate.credits_used = compute_credits(payload.verification_options)
+
+    candidate.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(candidate)
+
+    return candidate
+
+
+
+
+@router.put("/{candidate_id}/approve", response_model=CandidateOut)
 def approve_candidate(
     candidate_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    candidate = db.query(Candidate).filter(
-        Candidate.id == candidate_id
-    ).first()
+    candidate = _get_or_404(db, candidate_id)
 
-    if not candidate:
-        raise HTTPException(404, "Candidate not found")
+    if candidate.status not in ("SUBMITTED", "SENT"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot approve a form with status '{candidate.status}'",
+        )
+
+    candidate.status     = "APPROVED"
+    candidate.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(candidate)
+
+    return candidate
+
+
+
+
+@router.put("/{candidate_id}/reject", response_model=CandidateOut)
+def reject_candidate(
+    candidate_id: int,
+    db: Session = Depends(get_db),
+):
+    candidate = _get_or_404(db, candidate_id)
 
     if candidate.status != "SUBMITTED":
         raise HTTPException(
-            400,
-            f"Cannot approve candidate with status {candidate.status}"
+            status_code=400,
+            detail=f"Cannot reject a form with status '{candidate.status}'",
         )
 
-    candidate.status = "APPROVED"
+    candidate.status     = "REJECTED"
+    candidate.updated_at = datetime.utcnow()
     db.commit()
+    db.refresh(candidate)
 
-    return {
-        "id": candidate.id,
-        "status": candidate.status
-    }
+    return candidate
 
 
-@router.delete("/{candidate_id}", status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/{candidate_id}")
 def delete_candidate(
     candidate_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    candidate = db.query(Candidate).filter(
-        Candidate.id == candidate_id
-    ).first()
-
-    if not candidate:
-        raise HTTPException(404, "Candidate not found")
+    candidate = _get_or_404(db, candidate_id)
 
     db.delete(candidate)
     db.commit()
+
+    return {
+        "message": f"Onboarding form for '{candidate.full_name}' has been permanently deleted.",
+        "deleted_id": candidate_id,
+    }
