@@ -12,7 +12,7 @@ import services.HR_Operations.promotions_service as svc
 from schema.HR_Operations.promotion import (
     
     CareerPageSummarySchema,
-   
+    
     ProbationKPISchema,
     ProbationRowSchema,
     ProbationDetailSchema,
@@ -25,7 +25,7 @@ from schema.HR_Operations.promotion import (
     ConfirmationRowSchema,
     ConfirmationActionSchema,
     ConfirmationBulkSchema,
-   
+    
     PromotionKPISchema,
     PromotionRowSchema,
     PromotionCreateSchema,
@@ -41,7 +41,6 @@ from schema.HR_Operations.promotion import (
 )
 
 router = APIRouter(prefix="/career", tags=["Promotions & Career"])
-
 
 
 
@@ -99,7 +98,7 @@ def complete_milestone(payload: ProbationMilestoneUpdateSchema, db: Session = De
 
 @router.post("/probation/bulk-action")
 def probation_bulk(payload: ProbationBulkActionSchema, db: Session = Depends(get_db)):
-    
+   
     return svc.probation_bulk_action(db, payload)
 
 
@@ -107,7 +106,7 @@ def probation_bulk(payload: ProbationBulkActionSchema, db: Session = Depends(get
 
 @router.get("/confirmation/kpi", response_model=ConfirmationKPISchema)
 def confirmation_kpi(db: Session = Depends(get_db)):
-    
+   
     return svc.get_confirmation_kpi(db)
 
 
@@ -121,6 +120,7 @@ def list_confirmations(
     limit:      int           = Query(10, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
+    
     return svc.list_confirmations(db, search, department, location, status, skip, limit)
 
 
@@ -162,6 +162,7 @@ def list_promotions(
     limit:      int           = Query(10, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
+   
     return svc.list_promotions(db, search, department, location, status, skip, limit)
 
 
@@ -202,10 +203,9 @@ def promotion_bulk(payload: PromotionBulkActionSchema, db: Session = Depends(get
 
 
 
-
 @router.get("/buddy/kpi", response_model=BuddyKPISchema)
 def buddy_kpi(db: Session = Depends(get_db)):
-   
+    
     return svc.get_buddy_kpi(db)
 
 
