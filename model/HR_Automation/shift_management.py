@@ -103,7 +103,7 @@ class ShiftMaster(Base):
     created_at            = Column(DateTime(timezone=True), server_default=func.now())
     updated_at            = Column(DateTime(timezone=True), server_default=func.now(),
                                    onupdate=func.now())
-    created_by            = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by            = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
 
     # Relationships
     break_times           = relationship("ShiftBreakTime", back_populates="shift",
@@ -157,7 +157,7 @@ class ShiftAssignment(Base):
     start_date  = Column(Date,    nullable=False)
     end_date    = Column(Date,    nullable=True)     # NULL = ongoing
     is_active   = Column(Boolean, default=True)
-    assigned_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    assigned_by = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     assigned_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at  = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -192,11 +192,11 @@ class ShiftRoster(Base):
     status           = Column(SAEnum(RosterStatusEnum), default=RosterStatusEnum.draft)
     is_published     = Column(Boolean, default=False)
     published_at     = Column(DateTime(timezone=True), nullable=True)
-    published_by     = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    published_by     = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     rotation_pattern = Column(SAEnum(RotationPatternEnum), nullable=True)
     rotation_shifts  = Column(JSONB, default=[])    # list of shift IDs involved
     created_at       = Column(DateTime(timezone=True), server_default=func.now())
-    created_by       = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by       = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
 
     shift            = relationship("ShiftMaster")
     days             = relationship("ShiftRosterDay", back_populates="roster",
@@ -255,9 +255,9 @@ class ShiftSwapRequest(Base):
     reason              = Column(Text,    default="")
     status              = Column(SAEnum(SwapStatusEnum), default=SwapStatusEnum.pending, index=True)
     requested_at        = Column(DateTime(timezone=True), server_default=func.now())
-    approved_by         = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    approved_by         = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     approved_at         = Column(DateTime(timezone=True), nullable=True)
-    rejected_by         = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    rejected_by         = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     rejected_at         = Column(DateTime(timezone=True), nullable=True)
     rejection_reason    = Column(Text,    nullable=True)
 
@@ -302,7 +302,7 @@ class FlexibleArrangement(Base):
 
     is_active           = Column(Boolean, default=True)
     created_at          = Column(DateTime(timezone=True), server_default=func.now())
-    created_by          = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by          = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
 
     employee            = relationship("Employee")
 
@@ -406,7 +406,7 @@ class WorkHourRules(Base):
     break_config                    = Column(JSONB,    default=[])  # list of break dicts
 
     updated_at  = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    updated_by  = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    updated_by  = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
 
 
 # ─────────────────────────────────────────────────────────

@@ -1,20 +1,29 @@
 """
 schemas/attendance.py
-Pydantic v2 request / response schemas — matches the FastAPI + PostgreSQL stack.
+Pydantic v2 request / response schemas — Attendance Capture module.
+
+CHANGES FROM ORIGINAL:
+- SyncLogOut: added device_name field
+- AttendanceSettingsOut / AttendanceSettingsUpdate: added 6 Field Employee Settings fields
+- Added FieldEmployeeOut, FieldEmployeeCreate, FieldLocationUpdate, FieldReportCreate
+- Added WFHRequestCreate, WFHRequestOut, WFHDecision
+- Added GPSStatistics, WebCurrentStatus, PunchStatistics
+- Added SettingsExportData
 """
 
 from __future__ import annotations
 from datetime import datetime, date, time
 from decimal import Decimal
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, IPvAnyAddress, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator
 
 from model.HR_Automation.attendance_capture import (
     DeviceTypeEnum, DeviceStatusEnum, VendorEnum,
     PunchTypeEnum, CaptureMethodEnum, AttendanceStatusEnum,
     SyncStatusEnum, SyncTypeEnum, OfflineStatusEnum,
+    FieldEmployeeStatusEnum, WFHStatusEnum,
 )
 
 
@@ -25,7 +34,7 @@ from model.HR_Automation.attendance_capture import (
 class DeviceCreate(BaseModel):
     vendor:      VendorEnum
     model_name:  str        = Field(..., max_length=100)
-    ip_address:  str        = Field(..., description="Device LAN IP, e.g. 192.168.1.100")
+    ip_address:  str        = Field(..., description="Device LAN IP e.g. 192.168.1.100")
     device_type: DeviceTypeEnum
     sdk_port:    int        = Field(4370, ge=1, le=65535)
     comm_key:    str        = Field("0", max_length=50)
@@ -44,6 +53,7 @@ class DeviceUpdate(BaseModel):
 class SyncLogOut(BaseModel):
     id:             int
     device_id:      int
+    device_name:    str = ""          # ADDED: join from BiometricDevice.model_name
     sync_type:      SyncTypeEnum
     status:         SyncStatusEnum
     records_synced: int
@@ -67,7 +77,6 @@ class DeviceOut(BaseModel):
     auto_sync:      bool
     is_active:      bool
     created_at:     datetime
-    # aggregates (populated by service)
     total_punches:  int = 0
     check_ins:      int = 0
     check_outs:     int = 0
@@ -115,22 +124,21 @@ class GeoLocationOut(BaseModel):
 # ─────────────────────────────────────────────────────────
 
 class BiometricPunchIn(BaseModel):
-    """Simulate / receive a biometric punch from device or UI."""
-    employee_id:       str         = Field(..., description="Employee ID, e.g. EMP001")
+    employee_id:       str
     punch_type:        PunchTypeEnum
     device_id:         int
-    punch_time:        Optional[datetime] = None   # defaults to now server-side
-    device_user_id:    str         = ""
-    is_offline_record: bool        = False
+    punch_time:        Optional[datetime] = None
+    device_user_id:    str  = ""
+    is_offline_record: bool = False
 
 
 class GPSPunchIn(BaseModel):
-    employee_id: str
-    punch_type:  PunchTypeEnum = Field(..., description="check_in or check_out")
-    latitude:    Decimal       = Field(..., ge=-90, le=90)
-    longitude:   Decimal       = Field(..., ge=-180, le=180)
+    employee_id:  str
+    punch_type:   PunchTypeEnum
+    latitude:     Decimal = Field(..., ge=-90, le=90)
+    longitude:    Decimal = Field(..., ge=-180, le=180)
     gps_accuracy: Optional[float] = None
-    punch_time:  Optional[datetime] = None
+    punch_time:   Optional[datetime] = None
 
     @field_validator("punch_type")
     @classmethod
@@ -144,28 +152,40 @@ class WebPunchIn(BaseModel):
     employee_id: str
     punch_type:  PunchTypeEnum
     punch_time:  Optional[datetime] = None
-    # selfie handled as UploadFile in the router
 
 
 class PunchOut(BaseModel):
-    id:                 UUID
-    employee_id:        str
-    punch_time:         datetime
-    punch_type:         PunchTypeEnum
-    capture_method:     CaptureMethodEnum
+    id:                  UUID
+    employee_id:         str
+    punch_time:          datetime
+    punch_type:          PunchTypeEnum
+    capture_method:      CaptureMethodEnum
     biometric_device_id: Optional[int]
-    geo_location_id:    Optional[int]
-    latitude:           Optional[Decimal]
-    longitude:          Optional[Decimal]
-    is_within_geofence: Optional[bool]
-    ip_address:         Optional[str]
-    is_whitelisted_ip:  Optional[bool]
-    is_offline_record:  bool
-    is_valid:           bool
-    notes:              str
-    created_at:         datetime
+    geo_location_id:     Optional[int]
+    latitude:            Optional[Decimal]
+    longitude:           Optional[Decimal]
+    is_within_geofence:  Optional[bool]
+    ip_address:          Optional[str]
+    is_whitelisted_ip:   Optional[bool]
+    is_offline_record:   bool
+    is_valid:            bool
+    notes:               str
+    created_at:          datetime
 
     model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────────────────
+# PUNCH STATISTICS
+# ─────────────────────────────────────────────────────────
+
+class PunchStatistics(BaseModel):
+    total_punches: int
+    check_ins:     int
+    check_outs:    int
+    by_method:     Dict[str, int]
+    date_from:     Optional[date]
+    date_to:       Optional[date]
 
 
 # ─────────────────────────────────────────────────────────
@@ -196,8 +216,8 @@ class AttendanceRecordOut(BaseModel):
 
 
 class AttendanceRecordWithEmployee(AttendanceRecordOut):
-    employee_name:  str = ""
-    department:     str = ""
+    employee_name: str = ""
+    department:    str = ""
 
 
 # ─────────────────────────────────────────────────────────
@@ -205,13 +225,13 @@ class AttendanceRecordWithEmployee(AttendanceRecordOut):
 # ─────────────────────────────────────────────────────────
 
 class AttendanceDashboard(BaseModel):
-    total_records:   int
-    present_today:   int
-    late_arrivals:   int
-    overtime_hours:  Decimal
-    absent_today:    int
-    on_leave_today:  int
-    device_status:   DeviceStatusDashboard
+    total_records:  int
+    present_today:  int
+    late_arrivals:  int
+    overtime_hours: Decimal
+    absent_today:   int
+    on_leave_today: int
+    device_status:  DeviceStatusDashboard
 
 
 # ─────────────────────────────────────────────────────────
@@ -303,6 +323,13 @@ class AttendanceSettingsOut(BaseModel):
     half_day_threshold_hours:         Decimal
     short_leave_threshold_hours:      Decimal
     auto_sync_enabled:                bool
+    # ADDED: Field Employee Settings section
+    enable_field_tracking:            bool
+    require_daily_reports:            bool
+    auto_location_updates:            bool
+    location_update_interval:         str
+    max_field_radius_km:              int
+    report_deadline:                  time
     updated_at:                       datetime
 
     model_config = {"from_attributes": True}
@@ -337,6 +364,108 @@ class AttendanceSettingsUpdate(BaseModel):
     half_day_threshold_hours:         Optional[Decimal] = None
     short_leave_threshold_hours:      Optional[Decimal] = None
     auto_sync_enabled:                Optional[bool]    = None
+    # ADDED: Field Employee Settings
+    enable_field_tracking:            Optional[bool]    = None
+    require_daily_reports:            Optional[bool]    = None
+    auto_location_updates:            Optional[bool]    = None
+    location_update_interval:         Optional[str]     = None
+    max_field_radius_km:              Optional[int]     = None
+    report_deadline:                  Optional[time]    = None
+
+
+# ─────────────────────────────────────────────────────────
+# NEW: FIELD EMPLOYEE SCHEMAS
+# ─────────────────────────────────────────────────────────
+
+class FieldEmployeeCreate(BaseModel):
+    employee_id: str = Field(..., description="Employee ID e.g. FE001")
+    location:    str = ""
+
+
+class FieldEmployeeOut(BaseModel):
+    id:            int
+    employee_id:   str
+    location:      str
+    latitude:      Optional[Decimal]
+    longitude:     Optional[Decimal]
+    status:        FieldEmployeeStatusEnum
+    last_activity: Optional[datetime]
+    is_active:     bool
+
+    model_config = {"from_attributes": True}
+
+
+class FieldLocationUpdate(BaseModel):
+    latitude:  Decimal = Field(..., ge=-90, le=90)
+    longitude: Decimal = Field(..., ge=-180, le=180)
+    location:  str     = ""
+
+
+class FieldReportCreate(BaseModel):
+    report_text: str
+    location:    str            = ""
+    date:        Optional[date] = None
+
+
+# ─────────────────────────────────────────────────────────
+# NEW: WFH REQUEST SCHEMAS
+# ─────────────────────────────────────────────────────────
+
+class WFHRequestCreate(BaseModel):
+    employee_id: str
+    date:        date
+    reason:      str = ""
+
+
+class WFHRequestOut(BaseModel):
+    id:          int
+    employee_id: str
+    date:        date
+    reason:      str
+    status:      WFHStatusEnum
+    approved_by: Optional[int]
+    approved_at: Optional[datetime]
+    created_at:  datetime
+
+    model_config = {"from_attributes": True}
+
+
+class WFHDecision(BaseModel):
+    approved: bool
+    remarks:  str = ""
+
+
+# ─────────────────────────────────────────────────────────
+# NEW: GPS STATISTICS
+# ─────────────────────────────────────────────────────────
+
+class GPSStatistics(BaseModel):
+    today_checkins:    int
+    this_week_records: int
+    pending_offline:   int
+    avg_hours_today:   Decimal
+
+
+# ─────────────────────────────────────────────────────────
+# NEW: WEB CURRENT STATUS
+# ─────────────────────────────────────────────────────────
+
+class WebCurrentStatus(BaseModel):
+    employee_id:     str
+    ip_address:      str
+    is_whitelisted:  bool
+    current_status:  str            # "Ready" | "Checked In" | "Checked Out"
+    last_punch_type: Optional[str]
+    last_punch_time: Optional[datetime]
+
+
+# ─────────────────────────────────────────────────────────
+# NEW: SETTINGS EXPORT
+# ─────────────────────────────────────────────────────────
+
+class SettingsExportData(BaseModel):
+    exported_at: datetime
+    settings:    Dict[str, Any]
 
 
 # ─────────────────────────────────────────────────────────
@@ -346,8 +475,9 @@ class AttendanceSettingsUpdate(BaseModel):
 class MessageResponse(BaseModel):
     message: str
 
+
 class PaginatedResponse(BaseModel):
-    total:   int
-    page:    int
-    size:    int
-    items:   list
+    total: int
+    page:  int
+    size:  int
+    items: list

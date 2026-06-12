@@ -74,7 +74,7 @@ class ManualAttendanceRecord(Base):
     is_saved    = Column(Boolean, default=False)
 
     # Audit
-    saved_by    = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    saved_by    = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     created_at  = Column(DateTime(timezone=True), server_default=func.now())
     updated_at  = Column(DateTime(timezone=True), server_default=func.now(),
                          onupdate=func.now())
@@ -111,7 +111,7 @@ class ManualAttendanceImport(Base):
     failed_rows  = Column(Integer,  default=0)
     error_log    = Column(JSONB,    default=[])   # [{row, employee_id, error}]
     status       = Column(SAEnum(ImportStatusEnum), default=ImportStatusEnum.success)
-    uploaded_by  = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    uploaded_by  = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     created_at   = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (

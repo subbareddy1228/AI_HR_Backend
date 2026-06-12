@@ -113,7 +113,7 @@ class LeaveType(Base):
 
     created_at  = Column(DateTime(timezone=True), server_default=func.now())
     updated_at  = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    created_by  = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by  = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
 
     balances     = relationship("LeaveBalance",     back_populates="leave_type")
     applications = relationship("LeaveApplication", back_populates="leave_type")
@@ -167,7 +167,7 @@ class LeaveAdjustment(Base):
     amount          = Column(Float, nullable=False)
     reason          = Column(Text, default="")
     effective_date  = Column(Date, nullable=False)
-    approved_by     = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    approved_by     = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -206,7 +206,7 @@ class LeaveApplication(Base):
     current_balance  = Column(Float, default=0.0)
 
     approved_at      = Column(DateTime(timezone=True), nullable=True)
-    approved_by      = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    approved_by      = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     rejected_at      = Column(DateTime(timezone=True), nullable=True)
     rejection_reason = Column(Text, nullable=True)
     withdrawn_at     = Column(DateTime(timezone=True), nullable=True)
@@ -243,7 +243,7 @@ class CompOff(Base):
     status       = Column(SAEnum(CompOffStatusEnum), default=CompOffStatusEnum.available, index=True)
     applied      = Column(Boolean, default=False)
     created_at   = Column(DateTime(timezone=True), server_default=func.now())
-    created_by   = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by   = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
 
     employee     = relationship("Employee")
 
@@ -263,7 +263,7 @@ class LeavePlanningCampaign(Base):
     target_department  = Column(String(100), default="All")
     message            = Column(Text, default="")
     status             = Column(SAEnum(CampaignStatusEnum), default=CampaignStatusEnum.active)
-    created_by         = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by         = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     created_at         = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -281,5 +281,5 @@ class ApprovalDelegation(Base):
     end_date       = Column(Date, nullable=False)
     reason         = Column(Text, default="")
     is_active      = Column(Boolean, default=True, index=True)
-    created_by     = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by     = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     created_at     = Column(DateTime(timezone=True), server_default=func.now())

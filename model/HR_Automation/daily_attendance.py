@@ -151,7 +151,7 @@ class AttendancePunchEntry(Base):
     punch_type      = Column(SAEnum(PunchTypeEnum), default=PunchTypeEnum.manual)
     remarks         = Column(Text, default="")
     is_manual       = Column(Boolean, default=False)   # added via modal
-    added_by        = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    added_by        = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 
     daily_record    = relationship("DailyAttendanceRecord", back_populates="punches")
