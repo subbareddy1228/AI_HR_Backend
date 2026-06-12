@@ -1,40 +1,3 @@
-"""
-Notice Period Tracking & Management — FastAPI Router
-=====================================================
-All endpoints are grouped under /hr-ops/notice-period.
-
-Sub-resources
-  POST   /                         – Submit resignation / create notice
-  GET    /                         – List all (with filters)
-  GET    /dashboard                – Dashboard stats + countdown tracker
-  GET    /{notice_id}              – Get single record
-  PATCH  /{notice_id}              – Update notice record
-  DELETE /{notice_id}              – Delete (non-SERVING only)
-
-  POST   /buyout                   – New buyout request
-  GET    /buyout                   – List buyout requests
-  PATCH  /buyout/{buyout_id}/approve – Manager/HR/Finance approval step
-
-  POST   /waiver                   – New waiver request
-  GET    /waiver                   – List waiver requests
-  PATCH  /waiver/{waiver_id}/approve – Manager/HR/Director approval step
-
-  POST   /counter-offer            – Create counter offer
-  GET    /counter-offer            – List counter offers
-  PATCH  /counter-offer/{offer_id}/respond – Employee response
-
-  POST   /extension                – Request extension
-  GET    /extension                – List extensions
-  PATCH  /extension/{ext_id}/approve – Approve / reject extension
-
-  GET    /{notice_id}/workflow     – Full workflow timeline
-  POST   /workflow                 – Add workflow step
-
-  POST   /calc/lwd                 – Last Working Day calculator
-  POST   /calc/buyout              – Buyout amount calculator
-  POST   /calc/waiver              – Waiver eligibility calculator
-  POST   /calc/shortfall           – Shortfall amount calculator
-"""
 
 from typing import List, Optional
 
@@ -79,10 +42,6 @@ router = APIRouter(
     tags=["HR Ops – Notice Period Tracking"],
 )
 
-
-# ============================================================
-# Core Notice Period
-# ============================================================
 
 @router.post(
     "/",
@@ -152,10 +111,6 @@ def delete_notice_period(notice_id: int, db: Session = Depends(get_db)):
     svc.delete_notice_period(db, notice_id)
 
 
-# ============================================================
-# Buyout Requests
-# ============================================================
-
 @router.post(
     "/buyout",
     response_model=BuyoutRequestResponse,
@@ -189,11 +144,6 @@ def approve_buyout(
     db:        Session = Depends(get_db),
 ):
     return svc.process_buyout_approval(db, buyout_id, payload)
-
-
-# ============================================================
-# Waiver Requests
-# ============================================================
 
 @router.post(
     "/waiver",
@@ -230,10 +180,6 @@ def approve_waiver(
     return svc.process_waiver_approval(db, waiver_id, payload)
 
 
-# ============================================================
-# Counter Offers
-# ============================================================
-
 @router.post(
     "/counter-offer",
     response_model=CounterOfferResponse,
@@ -269,10 +215,6 @@ def respond_to_counter_offer(
     return svc.respond_to_counter_offer(db, offer_id, payload)
 
 
-# ============================================================
-# Extension Requests
-# ============================================================
-
 @router.post(
     "/extension",
     response_model=ExtensionRequestResponse,
@@ -307,11 +249,6 @@ def approve_extension(
 ):
     return svc.process_extension_approval(db, extension_id, payload)
 
-
-# ============================================================
-# Workflow Timeline
-# ============================================================
-
 @router.get(
     "/{notice_id}/workflow",
     response_model=List[WorkflowStepResponse],
@@ -330,10 +267,6 @@ def get_workflow(notice_id: int, db: Session = Depends(get_db)):
 def add_workflow_step(payload: WorkflowStepCreate, db: Session = Depends(get_db)):
     return svc.add_workflow_step(db, payload)
 
-
-# ============================================================
-# Calculators  (stateless but logged)
-# ============================================================
 
 @router.post(
     "/calc/lwd",

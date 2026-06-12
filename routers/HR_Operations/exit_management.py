@@ -1,57 +1,4 @@
-# routers/HR_Operations/exit_management.py
-"""
-Exit Management & Clearance — FastAPI Router
 
-Base prefix : /hr-ops/exit
-Tags        : Exit Management
-
-Route map:
-  ── Exit Cases ──────────────────────────────────────────────────────────
-  GET    /kpi                           KPI summary cards
-  GET    /                              Paginated list (filters + search)
-  POST   /                              Initiate new exit case
-  GET    /{exit_case_id}               Full detail (all nested objects)
-  PATCH  /{exit_case_id}               Update exit case fields
-  POST   /{exit_case_id}/close         Close + auto-create alumni record
-  POST   /{exit_case_id}/cancel        Cancel exit case
-  DELETE /{exit_case_id}               Hard delete (initiated/cancelled only)
-  GET    /export                        CSV export
-
-  ── Clearance ───────────────────────────────────────────────────────────
-  GET    /{exit_case_id}/clearance                List clearance items
-  PATCH  /clearance/{item_id}                     Update single item
-  PATCH  /clearance/bulk-update                   Bulk status update
-
-  ── Exit Interview ──────────────────────────────────────────────────────
-  POST   /{exit_case_id}/interview                Create interview
-  GET    /{exit_case_id}/interview                Get interview
-  PATCH  /interview/{interview_id}                Update interview
-
-  ── Settlement ──────────────────────────────────────────────────────────
-  GET    /settlements                             Paginated list
-  GET    /settlements/export                      CSV export
-  POST   /settlements/calculate                   Auto-calculate (dry-run)
-  POST   /settlements                             Create settlement
-  GET    /settlements/{settlement_id}             Get settlement
-  PATCH  /settlements/{settlement_id}             Update settlement
-  POST   /settlements/{settlement_id}/approve     Approve
-  POST   /settlements/{settlement_id}/mark-paid   Mark as paid
-
-  ── Alumni ──────────────────────────────────────────────────────────────
-  GET    /alumni                                  Paginated alumni list
-  POST   /alumni                                  Manually create alumni record
-  GET    /alumni/{alumni_id}                      Get alumni record
-  PATCH  /alumni/{alumni_id}                      Update alumni record
-
-  ── Trends ──────────────────────────────────────────────────────────────
-  GET    /trends                                  Trend analysis (modal data)
-
-  ── Templates ───────────────────────────────────────────────────────────
-  GET    /clearance-templates                     List templates
-  POST   /clearance-templates                     Create template
-  PATCH  /clearance-templates/{template_id}       Update template
-  DELETE /clearance-templates/{template_id}       Delete template
-"""
 
 from __future__ import annotations
 
@@ -68,10 +15,6 @@ import services.HR_Operations.exit_management_service as svc
 
 router = APIRouter(prefix="/hr-ops/exit", tags=["Exit Management"])
 
-
-# ===========================================================================
-# EXIT CASES
-# ===========================================================================
 
 @router.get("/kpi", response_model=schemas.ExitKPISummary, summary="Exit Management KPI Summary")
 def get_kpi(db: Session = Depends(get_db)):
@@ -144,7 +87,7 @@ def initiate_exit(
     summary="Get Exit Case Detail",
 )
 def get_exit_case(exit_case_id: int, db: Session = Depends(get_db)):
-    """Full detail including clearance items, interview, settlement, alumni, documents."""
+  
     return svc.get_exit_case_detail(db, exit_case_id)
 
 

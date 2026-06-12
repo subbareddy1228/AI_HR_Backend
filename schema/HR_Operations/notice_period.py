@@ -1,9 +1,4 @@
-"""
-Notice Period Tracking & Management — Pydantic Schemas
-=======================================================
-Request / Response DTOs for all six sub-resources plus
-the calculator payloads and the dashboard summary.
-"""
+
 
 from __future__ import annotations
 
@@ -23,18 +18,11 @@ from model.HR_Operations.notice_period import (
 )
 
 
-# ============================================================
-# Shared helpers
-# ============================================================
-
 class _TimestampMixin(BaseModel):
     created_at: datetime
     updated_at: datetime
 
 
-# ============================================================
-# NoticePeriod
-# ============================================================
 
 class NoticePeriodCreate(BaseModel):
     employee_id:          int
@@ -49,7 +37,7 @@ class NoticePeriodCreate(BaseModel):
 
     @model_validator(mode="after")
     def set_notice_end_date(self) -> "NoticePeriodCreate":
-        # notice_end_date is computed — kept here for documentation
+ 
         return self
 
 
@@ -68,7 +56,7 @@ class NoticePeriodUpdate(BaseModel):
 
 
 class NoticePeriodSummary(BaseModel):
-    """Lightweight list-item response."""
+
     id:                   int
     employee_id:          int
     employee_name:        Optional[str]  = None
@@ -86,7 +74,7 @@ class NoticePeriodSummary(BaseModel):
 
 
 class NoticePeriodResponse(NoticePeriodSummary, _TimestampMixin):
-    """Full record returned on create / get-by-id."""
+
     resignation_reason:   Optional[ResignationReason]
     resignation_letter:   Optional[str]
     actual_lwd:           Optional[date]
@@ -99,10 +87,6 @@ class NoticePeriodResponse(NoticePeriodSummary, _TimestampMixin):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ============================================================
-# Buyout Request
-# ============================================================
-
 class BuyoutRequestCreate(BaseModel):
     employee_id:     int
     notice_period_id: int
@@ -114,12 +98,12 @@ class BuyoutRequestCreate(BaseModel):
 
     @model_validator(mode="after")
     def compute_buyout_amount(self) -> "BuyoutRequestCreate":
-        # Stored on model, surfaced here for transparency
+
         return self
 
 
 class BuyoutApprovalUpdate(BaseModel):
-    """Used by Manager / HR / Finance to update their leg of approval."""
+
     approver_role:    str  = Field(..., pattern="^(MANAGER|HR|FINANCE)$")
     approval_status:  ApprovalStatus
     rejection_reason: Optional[str] = None
@@ -147,10 +131,6 @@ class BuyoutRequestResponse(_TimestampMixin):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ============================================================
-# Waiver Request
-# ============================================================
-
 class WaiverRequestCreate(BaseModel):
     employee_id:      int
     notice_period_id: int
@@ -163,7 +143,7 @@ class WaiverRequestCreate(BaseModel):
     @field_validator("document_urls", mode="before")
     @classmethod
     def serialise_docs(cls, v: Any) -> Optional[str]:
-        # Accept list; stored as JSON string in DB
+
         if isinstance(v, list):
             return json.dumps(v)
         return v
@@ -206,10 +186,6 @@ class WaiverRequestResponse(_TimestampMixin):
         return v
 
 
-# ============================================================
-# Counter Offer
-# ============================================================
-
 class CounterOfferCreate(BaseModel):
     employee_id:           int
     notice_period_id:      int
@@ -224,7 +200,7 @@ class CounterOfferCreate(BaseModel):
 
 
 class CounterOfferResponseUpdate(BaseModel):
-    """Employee accepts or rejects the counter offer."""
+
     status:            CounterOfferStatus
     employee_response: Optional[str] = None
 
@@ -248,10 +224,6 @@ class CounterOfferResponse(_TimestampMixin):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ============================================================
-# Extension Request
-# ============================================================
 
 class ExtensionRequestCreate(BaseModel):
     employee_id:      int
@@ -288,10 +260,6 @@ class ExtensionRequestResponse(_TimestampMixin):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ============================================================
-# Workflow
-# ============================================================
-
 class WorkflowStepCreate(BaseModel):
     notice_period_id: int
     employee_id:      int
@@ -314,9 +282,6 @@ class WorkflowStepResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ============================================================
-# Calculators
-# ============================================================
 
 class LWDCalculatorRequest(BaseModel):
     resignation_date:  date
@@ -365,18 +330,13 @@ class ShortfallCalculatorResponse(BaseModel):
     shortfall_days:       int
     shortfall_amount:     Decimal
 
-
-# ============================================================
-# Dashboard / Summary
-# ============================================================
-
 class DashboardStats(BaseModel):
     active_cases:          int
     pending_approvals:     int
     retention_successes:   int
     cases_this_week:       int
-    ai_time_saved_hours:   int       # static / configurable
-    prediction_accuracy:   float     # 0.0–1.0
+    ai_time_saved_hours:   int       
+    prediction_accuracy:   float     
 
 
 class CountdownTrackerItem(BaseModel):
@@ -389,7 +349,7 @@ class CountdownTrackerItem(BaseModel):
     notice_start_date: date
     notice_end_date:  date
     status:           NoticeStatus
-    pending_actions:  List[str]      # e.g. ["Counter Offer", "Manager Ack Pending"]
+    pending_actions:  List[str]      
 
     model_config = ConfigDict(from_attributes=True)
 

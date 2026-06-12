@@ -1,15 +1,3 @@
-"""
-Notice Period Tracking & Management — SQLAlchemy Models
-========================================================
-Covers the complete resignation lifecycle:
-  • NoticePeriod          – master record per resignation
-  • NoticeBuyoutRequest   – buyout (pay-in-lieu) requests
-  • NoticeWaiverRequest   – waiver / reduction requests
-  • NoticeCounterOffer    – retention counter-offer tracking
-  • NoticeExtensionRequest– extension requests
-  • NoticeResignationWorkflow – step-by-step workflow state
-  • NoticeCalculation     – audit log for each calculator run
-"""
 
 from __future__ import annotations
 
@@ -35,10 +23,6 @@ from sqlalchemy.orm import relationship
 
 from core.database import Base
 
-
-# ---------------------------------------------------------------------------
-# Enumerations
-# ---------------------------------------------------------------------------
 
 class NoticeStatus(str, enum.Enum):
     SERVING       = "SERVING"
@@ -89,15 +73,8 @@ class CounterOfferStatus(str, enum.Enum):
     EXPIRED  = "EXPIRED"
 
 
-# ---------------------------------------------------------------------------
-# Core Models
-# ---------------------------------------------------------------------------
-
 class NoticePeriod(Base):
-    """
-    Master record for each resignation / notice-period event.
-    One record per resignation; updated as state progresses.
-    """
+
     __tablename__ = "notice_periods"
     __table_args__ = (
         CheckConstraint("notice_period_days > 0", name="ck_notice_period_days_positive"),
@@ -111,41 +88,35 @@ class NoticePeriod(Base):
     id                   = Column(Integer, primary_key=True, index=True)
     employee_id          = Column(Integer, ForeignKey("employees.id", ondelete="RESTRICT"), nullable=False, index=True)
 
-    # Resignation details
     resignation_date     = Column(Date, nullable=False)
     resignation_reason   = Column(Enum(ResignationReason), nullable=True)
-    resignation_letter   = Column(Text, nullable=True)          # stored text or file path
+    resignation_letter   = Column(Text, nullable=True)         
 
-    # Notice period window
     notice_start_date    = Column(Date, nullable=False)
-    notice_end_date      = Column(Date, nullable=False)         # calculated LWD
-    notice_period_days   = Column(Integer, nullable=False)       # contractual days
-    actual_lwd           = Column(Date, nullable=True)           # confirmed last working day
+    notice_end_date      = Column(Date, nullable=False)      
+    notice_period_days   = Column(Integer, nullable=False)       
+    actual_lwd           = Column(Date, nullable=True)           
 
-    # Serving progress (computed daily by background job or on GET)
     serving_days         = Column(Integer, nullable=True, default=0)
     days_remaining       = Column(Integer, nullable=True)
 
-    # Flags
     manager_acknowledged = Column(Boolean, nullable=False, default=False)
     hr_reviewed          = Column(Boolean, nullable=False, default=False)
 
-    # Financial
-    monthly_salary       = Column(Numeric(14, 2), nullable=True)   # for buyout calc
+    monthly_salary       = Column(Numeric(14, 2), nullable=True)  
     buyout_amount        = Column(Numeric(14, 2), nullable=True)
 
-    # Status
     status               = Column(
         Enum(NoticeStatus), nullable=False, default=NoticeStatus.SERVING, index=True
     )
     remarks              = Column(Text, nullable=True)
 
-    # Audit
+
     created_by           = Column(Integer, ForeignKey("employees.id"), nullable=True)
     created_at           = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at           = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    # Relationships
+
     buyout_requests    = relationship("NoticeBuyoutRequest",    back_populates="notice_period", cascade="all, delete-orphan")
     waiver_requests    = relationship("NoticeWaiverRequest",    back_populates="notice_period", cascade="all, delete-orphan")
     counter_offers     = relationship("NoticeCounterOffer",     back_populates="notice_period", cascade="all, delete-orphan")
@@ -154,12 +125,8 @@ class NoticePeriod(Base):
     calculations       = relationship("NoticeCalculation",      back_populates="notice_period", cascade="all, delete-orphan")
 
 
-# ---------------------------------------------------------------------------
-
 class NoticeBuyoutRequest(Base):
-    """
-    Pay-in-lieu of notice: employee/company wants to end earlier by paying out.
-    """
+
     __tablename__ = "notice_buyout_requests"
     __table_args__ = (
         CheckConstraint("days_to_buyout > 0", name="ck_buyout_days_positive"),
@@ -180,7 +147,7 @@ class NoticeBuyoutRequest(Base):
     approved_by      = Column(Integer, ForeignKey("employees.id"), nullable=True)
     approved_at      = Column(DateTime, nullable=True)
 
-    # Approval chain: Manager → HR → Finance
+
     manager_status   = Column(Enum(ApprovalStatus), default=ApprovalStatus.PENDING)
     hr_status        = Column(Enum(ApprovalStatus), default=ApprovalStatus.PENDING)
     finance_status   = Column(Enum(ApprovalStatus), default=ApprovalStatus.PENDING)
@@ -194,13 +161,8 @@ class NoticeBuyoutRequest(Base):
     notice_period    = relationship("NoticePeriod", back_populates="buyout_requests")
 
 
-# ---------------------------------------------------------------------------
-
 class NoticeWaiverRequest(Base):
-    """
-    Employee requests a full or partial waiver of notice period.
-    Supporting documents can be referenced via document_urls (JSON list).
-    """
+
     __tablename__ = "notice_waiver_requests"
     __table_args__ = (
         CheckConstraint("waiver_days > 0", name="ck_waiver_days_positive"),
@@ -219,7 +181,6 @@ class NoticeWaiverRequest(Base):
     approved_by      = Column(Integer, ForeignKey("employees.id"), nullable=True)
     approved_at      = Column(DateTime, nullable=True)
 
-    # Approval chain: Manager → HR → Director
     manager_status   = Column(Enum(ApprovalStatus), default=ApprovalStatus.PENDING)
     hr_status        = Column(Enum(ApprovalStatus), default=ApprovalStatus.PENDING)
     director_status  = Column(Enum(ApprovalStatus), default=ApprovalStatus.PENDING)
@@ -233,12 +194,8 @@ class NoticeWaiverRequest(Base):
     notice_period    = relationship("NoticePeriod", back_populates="waiver_requests")
 
 
-# ---------------------------------------------------------------------------
-
 class NoticeCounterOffer(Base):
-    """
-    HR / management sends a retention counter-offer to the resigning employee.
-    """
+
     __tablename__ = "notice_counter_offers"
     __table_args__ = (
         CheckConstraint("hike_percentage >= 0", name="ck_counter_hike_positive"),
@@ -270,12 +227,8 @@ class NoticeCounterOffer(Base):
     notice_period          = relationship("NoticePeriod", back_populates="counter_offers")
 
 
-# ---------------------------------------------------------------------------
-
 class NoticeExtensionRequest(Base):
-    """
-    Either party (employee or company) requests extension of the notice period.
-    """
+
     __tablename__ = "notice_extension_requests"
     __table_args__ = (
         CheckConstraint("extension_days > 0", name="ck_extension_days_positive"),
@@ -303,13 +256,8 @@ class NoticeExtensionRequest(Base):
     notice_period       = relationship("NoticePeriod", back_populates="extension_requests")
 
 
-# ---------------------------------------------------------------------------
-
 class NoticeResignationWorkflow(Base):
-    """
-    Step-by-step audit trail of the resignation workflow.
-    Each row = one step transition with actor, timestamp, and comments.
-    """
+
     __tablename__ = "notice_resignation_workflow"
 
     id               = Column(Integer, primary_key=True, index=True)
@@ -327,13 +275,8 @@ class NoticeResignationWorkflow(Base):
     notice_period    = relationship("NoticePeriod", back_populates="workflow_steps")
 
 
-# ---------------------------------------------------------------------------
-
 class NoticeCalculation(Base):
-    """
-    Immutable audit log for every calculator run (LWD / Buyout / Waiver / Shortfall).
-    Useful for payroll reconciliation.
-    """
+
     __tablename__ = "notice_calculations"
 
     id               = Column(Integer, primary_key=True, index=True)

@@ -1,8 +1,3 @@
-"""
-Notice Period Tracking & Management — Service Layer
-====================================================
-All business logic lives here; routers are kept thin.
-"""
 
 from __future__ import annotations
 
@@ -54,10 +49,6 @@ from schema.HR_Operations.notice_period import (
 )
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def _not_found(entity: str, id_: int) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -66,7 +57,6 @@ def _not_found(entity: str, id_: int) -> HTTPException:
 
 
 def _compute_lwd(start: date, notice_days: int) -> date:
-    """Last Working Day = start + notice_days (calendar days)."""
     return start + timedelta(days=notice_days)
 
 
@@ -95,15 +85,9 @@ def _record_calculation(
         calculated_by=calculated_by,
     )
     db.add(log)
-    # intentionally not committing here — caller commits
-
-
-# ---------------------------------------------------------------------------
-# NoticePeriod CRUD
-# ---------------------------------------------------------------------------
 
 def create_notice_period(db: Session, payload: NoticePeriodCreate) -> NoticePeriod:
-    # Guard: only one SERVING notice per employee
+
     existing = db.execute(
         select(NoticePeriod).where(
             and_(
@@ -139,7 +123,6 @@ def create_notice_period(db: Session, payload: NoticePeriodCreate) -> NoticePeri
     db.add(record)
     db.flush()
 
-    # Seed first workflow step
     _add_workflow_step_internal(
         db=db,
         notice_period_id=record.id,
@@ -174,7 +157,7 @@ def get_notice_period(db: Session, notice_id: int) -> NoticePeriod:
     record = db.get(NoticePeriod, notice_id)
     if not record:
         raise _not_found("NoticePeriod", notice_id)
-    # Refresh computed fields
+
     record.days_remaining = _compute_days_remaining(record.notice_end_date)
     record.serving_days   = (date.today() - record.notice_start_date).days
     db.commit()
@@ -189,7 +172,7 @@ def update_notice_period(db: Session, notice_id: int, payload: NoticePeriodUpdat
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(record, field, value)
 
-    # Recompute days remaining if status or LWD changed
+
     if payload.actual_lwd:
         record.days_remaining = _compute_days_remaining(payload.actual_lwd)
     else:
@@ -212,10 +195,6 @@ def delete_notice_period(db: Session, notice_id: int) -> None:
     db.delete(record)
     db.commit()
 
-
-# ---------------------------------------------------------------------------
-# Buyout Requests
-# ---------------------------------------------------------------------------
 
 def create_buyout_request(db: Session, payload: BuyoutRequestCreate) -> NoticeBuyoutRequest:
     notice = db.get(NoticePeriod, payload.notice_period_id)
@@ -266,14 +245,14 @@ def process_buyout_approval(
     if payload.remarks:
         record.remarks = payload.remarks
 
-    # Compute aggregate approval status
+
     all_statuses = [record.manager_status, record.hr_status, record.finance_status]
     if any(s == ApprovalStatus.REJECTED for s in all_statuses):
         record.approval_status = ApprovalStatus.REJECTED
     elif all(s == ApprovalStatus.APPROVED for s in all_statuses):
         record.approval_status = ApprovalStatus.APPROVED
         record.approved_at     = datetime.utcnow()
-        # Update master record
+ 
         notice = db.get(NoticePeriod, record.notice_period_id)
         if notice:
             notice.status        = NoticeStatus.BUYOUT
@@ -293,10 +272,6 @@ def list_buyout_requests(db: Session, notice_period_id: Optional[int] = None) ->
         q = q.where(NoticeBuyoutRequest.notice_period_id == notice_period_id)
     return db.execute(q.order_by(NoticeBuyoutRequest.created_at.desc())).scalars().all()
 
-
-# ---------------------------------------------------------------------------
-# Waiver Requests
-# ---------------------------------------------------------------------------
 
 def create_waiver_request(db: Session, payload: WaiverRequestCreate) -> NoticeWaiverRequest:
     notice = db.get(NoticePeriod, payload.notice_period_id)
@@ -345,7 +320,7 @@ def process_waiver_approval(
     elif all(s == ApprovalStatus.APPROVED for s in all_statuses):
         record.approval_status = ApprovalStatus.APPROVED
         record.approved_at     = datetime.utcnow()
-        # Shorten notice end date
+
         notice = db.get(NoticePeriod, record.notice_period_id)
         if notice:
             notice.notice_end_date  = notice.notice_end_date - timedelta(days=record.waiver_days)
@@ -366,10 +341,6 @@ def list_waiver_requests(db: Session, notice_period_id: Optional[int] = None) ->
         q = q.where(NoticeWaiverRequest.notice_period_id == notice_period_id)
     return db.execute(q.order_by(NoticeWaiverRequest.created_at.desc())).scalars().all()
 
-
-# ---------------------------------------------------------------------------
-# Counter Offers
-# ---------------------------------------------------------------------------
 
 def create_counter_offer(db: Session, payload: CounterOfferCreate) -> NoticeCounterOffer:
     notice = db.get(NoticePeriod, payload.notice_period_id)
@@ -397,7 +368,6 @@ def create_counter_offer(db: Session, payload: CounterOfferCreate) -> NoticeCoun
     )
     db.add(record)
 
-    # Advance workflow
     _add_workflow_step_internal(
         db=db,
         notice_period_id=notice.id,
@@ -447,10 +417,6 @@ def list_counter_offers(db: Session, notice_period_id: Optional[int] = None) -> 
         q = q.where(NoticeCounterOffer.notice_period_id == notice_period_id)
     return db.execute(q.order_by(NoticeCounterOffer.created_at.desc())).scalars().all()
 
-
-# ---------------------------------------------------------------------------
-# Extension Requests
-# ---------------------------------------------------------------------------
 
 def create_extension_request(db: Session, payload: ExtensionRequestCreate) -> NoticeExtensionRequest:
     notice = db.get(NoticePeriod, payload.notice_period_id)
@@ -508,10 +474,6 @@ def list_extension_requests(db: Session, notice_period_id: Optional[int] = None)
     return db.execute(q.order_by(NoticeExtensionRequest.created_at.desc())).scalars().all()
 
 
-# ---------------------------------------------------------------------------
-# Workflow
-# ---------------------------------------------------------------------------
-
 def _add_workflow_step_internal(
     db: Session,
     notice_period_id: int,
@@ -520,7 +482,7 @@ def _add_workflow_step_internal(
     performed_by: Optional[int],
     comments: Optional[str],
 ) -> NoticeResignationWorkflow:
-    # Mark previous current step as done
+
     db.execute(
         select(NoticeResignationWorkflow)
         .where(
@@ -576,10 +538,6 @@ def get_workflow(db: Session, notice_period_id: int) -> List[NoticeResignationWo
         .all()
     )
 
-
-# ---------------------------------------------------------------------------
-# Calculators
-# ---------------------------------------------------------------------------
 
 def calc_lwd(db: Session, payload: LWDCalculatorRequest, calculated_by: Optional[int] = None) -> LWDCalculatorResponse:
     lwd = _compute_lwd(payload.resignation_date, payload.notice_period_days)
@@ -660,10 +618,6 @@ def calc_shortfall(db: Session, payload: ShortfallCalculatorRequest, calculated_
     return result
 
 
-# ---------------------------------------------------------------------------
-# Dashboard
-# ---------------------------------------------------------------------------
-
 def get_dashboard(db: Session) -> DashboardResponse:
     today     = date.today()
     week_ago  = today - timedelta(days=7)
@@ -692,7 +646,7 @@ def get_dashboard(db: Session) -> DashboardResponse:
         )
     ).scalar_one()
 
-    # Countdown tracker — active cases ordered by days remaining
+
     active_notices: List[NoticePeriod] = (
         db.execute(
             select(NoticePeriod)
@@ -712,7 +666,7 @@ def get_dashboard(db: Session) -> DashboardResponse:
             CountdownTrackerItem(
                 notice_period_id=n.id,
                 employee_id=n.employee_id,
-                employee_name=f"Employee {n.employee_id}",   # enriched by join in production
+                employee_name=f"Employee {n.employee_id}",   
                 employee_code=None,
                 department=None,
                 days_left=days_left,
@@ -728,7 +682,7 @@ def get_dashboard(db: Session) -> DashboardResponse:
         pending_approvals=pending_approvals,
         retention_successes=retention_successes,
         cases_this_week=cases_this_week,
-        ai_time_saved_hours=42,       # configurable KPI
+        ai_time_saved_hours=42,       
         prediction_accuracy=0.95,
     )
 
