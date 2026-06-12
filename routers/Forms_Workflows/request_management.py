@@ -585,7 +585,7 @@ def close_request(
     summary="List all comments on a request",
 )
 def list_comments(request_id: int, db: Session = Depends(get_db)):
-    _get_or_404(request_id, db)   # ensure request exists
+    _get_or_404(request_id, db)   
     rows = db.execute(
         select(RequestComment)
         .where(RequestComment.request_id == request_id)
