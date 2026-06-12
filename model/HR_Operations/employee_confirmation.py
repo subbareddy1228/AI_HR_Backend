@@ -11,8 +11,8 @@ class EmployeeConfirmation(Base):
     probation_start_date = Column(Date, nullable=False)
     probation_end_date = Column(Date, nullable=False)
     confirmation_date = Column(Date, nullable=True)
-    performance_rating = Column(String(20), nullable=True)   # EXCELLENT | GOOD | SATISFACTORY | POOR
-    status = Column(String(50), nullable=False, server_default="PENDING")  # PENDING | CONFIRMED | EXTENDED | TERMINATED
+    performance_rating = Column(String(20), nullable=True)   
+    status = Column(String(50), nullable=False, server_default="PENDING")  
     extended_till = Column(Date, nullable=True)
     remarks = Column(Text, nullable=True)
     reviewed_by = Column(Integer, ForeignKey("employees.id"), nullable=True)
