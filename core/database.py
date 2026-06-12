@@ -7,7 +7,7 @@ from core.config import settings
 # ----------------------------
 # Database URL
 # ----------------------------
-DATABASE_URL = settings.DATABASE_URL
+DATABASE_URL = "postgresql://postgres:admin123@localhost:5432/hrms"
 
 # ----------------------------
 # Engine (SYNC ONLY)

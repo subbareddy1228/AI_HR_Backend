@@ -121,3 +121,40 @@ class FnFSettlement(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     resignation: Optional[Resignation] = Relationship(back_populates="fnf_settlements")
+    """
+ADD THIS TO: model/HR_Operations/exit_management.py
+New table: Alumni
+"""
+
+from datetime import datetime, date
+from typing import Optional
+from sqlmodel import SQLModel, Field
+
+
+class Alumni(SQLModel, table=True):
+    __tablename__ = "alumni"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    employee_id: int = Field(index=True)
+    employee_code: str = Field(index=True)   # e.g. ALM001
+    name: str
+    department: str
+    designation: Optional[str] = None
+    exit_date: date
+    exit_reason: Optional[str] = None        # resignation / termination / retirement
+
+    # Alumni tracking fields
+    rehire_eligible: bool = Field(default=False)
+    boomerang: bool = Field(default=False)   # willing to return / has returned
+    engagement_level: str = Field(default="medium")  # high / medium / low
+
+    # Contact info
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin: Optional[str] = None
+    notes: Optional[str] = None
+
+    created_by: Optional[int] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    is_deleted: bool = Field(default=False)

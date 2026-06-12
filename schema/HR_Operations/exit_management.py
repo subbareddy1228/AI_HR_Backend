@@ -380,3 +380,120 @@ class ExitAnalyticsResponse(BaseModel):
     sentiment_breakdown: dict           # {"positive": N, "neutral": N, "negative": N}
     avg_scores: dict                    # avg per exit interview dimension
     department_attrition: List[dict]    # [{"department": "...", "count": N}]
+    """
+ADD THESE TO BOTTOM OF: schema/HR_Operations/exit_management.py
+New schemas for: Alumni, Employee Exits Report, Exit Trends
+"""
+
+from datetime import datetime, date
+from typing import Optional, List
+from pydantic import BaseModel, Field
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  ALUMNI
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class AlumniCreate(BaseModel):
+    employee_id: int
+    employee_code: str                      # e.g. ALM001
+    name: str
+    department: str
+    designation: Optional[str] = None
+    exit_date: date
+    exit_reason: Optional[str] = None       # resignation / termination / retirement
+    rehire_eligible: bool = False
+    boomerang: bool = False                 # willing to return
+    engagement_level: str = "medium"       # high / medium / low
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin: Optional[str] = None
+    notes: Optional[str] = None
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "employee_id": 5,
+                "employee_code": "ALM001",
+                "name": "Rahul Verma",
+                "department": "Engineering",
+                "designation": "Senior Developer",
+                "exit_date": "2023-12-15",
+                "exit_reason": "resignation",
+                "rehire_eligible": True,
+                "boomerang": True,
+                "engagement_level": "high"
+            }
+        }
+    }
+
+
+class AlumniUpdate(BaseModel):
+    rehire_eligible: Optional[bool] = None
+    boomerang: Optional[bool] = None
+    engagement_level: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AlumniResponse(BaseModel):
+    id: int
+    employee_id: int
+    employee_code: str
+    name: str
+    department: str
+    designation: Optional[str] = None
+    exit_date: date
+    exit_reason: Optional[str] = None
+    rehire_eligible: bool
+    boomerang: bool
+    engagement_level: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  EMPLOYEE EXITS REPORT
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class EmployeeExitRecord(BaseModel):
+    sn: int
+    employee_id: int
+    employee_code: str
+    name: str
+    location: Optional[str] = None
+    department: str
+    designation: Optional[str] = None
+    joining_date: Optional[date] = None
+    exit_date: Optional[date] = None
+    exit_reason: Optional[str] = None      # resignation / termination / retirement
+
+
+class EmployeeExitsReportResponse(BaseModel):
+    total: int
+    exits: List[EmployeeExitRecord]
+    filters_applied: dict                  # echo back applied filters
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  EXIT TRENDS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class ExitTrendsResponse(BaseModel):
+    period: str
+    department: Optional[str] = None
+    exit_rate_pct: float                   # e.g. 12.5
+    avg_tenure_years: float                # e.g. 2.8
+    top_exit_reason: str                   # e.g. "Better Opportunity"
+    monthly_exits: List[dict]              # [{"month": "2024-01", "count": N}]
+    department_breakdown: List[dict]       # [{"department": "...", "count": N, "pct": N}]
+    reason_breakdown: List[dict]           # [{"reason": "...", "count": N}]
+    total_exits_in_period: int
