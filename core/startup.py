@@ -46,7 +46,7 @@ def _seed_leave_types(db: Session):
     Insert the 6 default leave types if the table is empty.
     Called at startup — NOT inside list/get/create endpoints.
     """
-    from models.leave_management import LeaveType
+    from model.HR_Automation.leave_management import LeaveType
 
     if db.query(LeaveType).count() > 0:
         logger.info("Leave types already seeded — skipping.")
@@ -142,5 +142,16 @@ def seed_holiday_calendar():
         seed_holiday_defaults(db)
     except Exception as exc:
         logger.error("Holiday calendar seed failed: %s", exc)
+    finally:
+        db.close()
+
+
+def seed_attendance_reports():
+    db: Session = SessionLocal()
+    try:
+        from services.HR_Automation.attendance_reports_service import seed_reports_defaults
+        seed_reports_defaults(db)
+    except Exception as exc:
+        logger.error("Attendance reports seed failed: %s", exc)
     finally:
         db.close()
