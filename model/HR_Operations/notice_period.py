@@ -138,10 +138,10 @@ class NoticeBuyoutRequest(Base):
     employee_id      = Column(Integer, ForeignKey("employees.id", ondelete="RESTRICT"), nullable=False, index=True)
 
     requested_date   = Column(Date, nullable=False)
-    days_to_buyout   = Column(Integer, nullable=False)           # remaining notice days to buy out
+    days_to_buyout   = Column(Integer, nullable=False)        
     monthly_salary   = Column(Numeric(14, 2), nullable=False)
-    buyout_amount    = Column(Numeric(14, 2), nullable=False)    # = (monthly_salary / 30) * days_to_buyout
-    requested_lwd    = Column(Date, nullable=False)              # desired last working day
+    buyout_amount    = Column(Numeric(14, 2), nullable=False)   
+    requested_lwd    = Column(Date, nullable=False)            
 
     approval_status  = Column(Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.PENDING, index=True)
     approved_by      = Column(Integer, ForeignKey("employees.id"), nullable=True)
@@ -173,9 +173,9 @@ class NoticeWaiverRequest(Base):
     employee_id      = Column(Integer, ForeignKey("employees.id", ondelete="RESTRICT"), nullable=False, index=True)
 
     requested_date   = Column(Date, nullable=False)
-    waiver_days      = Column(Integer, nullable=False)           # days to be waived
+    waiver_days      = Column(Integer, nullable=False)          
     reason           = Column(Text, nullable=False)
-    document_urls    = Column(Text, nullable=True)               # JSON-encoded list of file paths/URLs
+    document_urls    = Column(Text, nullable=True)               
 
     approval_status  = Column(Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.PENDING, index=True)
     approved_by      = Column(Integer, ForeignKey("employees.id"), nullable=True)
@@ -208,10 +208,10 @@ class NoticeCounterOffer(Base):
 
     current_salary         = Column(Numeric(14, 2), nullable=False)
     offered_salary         = Column(Numeric(14, 2), nullable=False)
-    hike_percentage        = Column(Numeric(5, 2), nullable=True)   # auto-computed
-    additional_benefits    = Column(Text, nullable=True)             # JSON or plain text
+    hike_percentage        = Column(Numeric(5, 2), nullable=True) 
+    additional_benefits    = Column(Text, nullable=True)             
     role_change            = Column(String(200), nullable=True)
-    retention_probability  = Column(Integer, nullable=True)          # 0–100, AI-predicted
+    retention_probability  = Column(Integer, nullable=True)          
 
     offer_date             = Column(Date, nullable=False)
     expiry_date            = Column(Date, nullable=True)
@@ -238,10 +238,9 @@ class NoticeExtensionRequest(Base):
     notice_period_id    = Column(Integer, ForeignKey("notice_periods.id", ondelete="CASCADE"), nullable=False, index=True)
     employee_id         = Column(Integer, ForeignKey("employees.id", ondelete="RESTRICT"), nullable=False, index=True)
 
-    requested_by        = Column(String(20), nullable=False)     # "EMPLOYEE" | "COMPANY"
-    requested_date      = Column(Date, nullable=False)
+    requested_by        = Column(String(20), nullable=False)     
     extension_days      = Column(Integer, nullable=False)
-    new_end_date        = Column(Date, nullable=False)           # original LWD + extension_days
+    new_end_date        = Column(Date, nullable=False)       
     reason              = Column(Text, nullable=False)
 
     approval_status     = Column(Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.PENDING, index=True)
