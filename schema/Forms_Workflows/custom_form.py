@@ -1,183 +1,107 @@
-# schema/Forms_Workflows/custom_form.py
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, Any, List
+from typing import Optional, Any
 from datetime import datetime
 
 
-# ── Field Definition ──────────────────────────────────────────────────────────
-class FormFieldDefinition(BaseModel):
-    field_id:      str
-    label:         str
-    field_type:    str          # text/number/email/phone/date/dropdown/multi_select/radio
-                                # checkbox/file_upload/signature/rich_text/rating/section
-    placeholder:   Optional[str]       = None
-    is_required:   bool                = False
-    options:       Optional[List[str]] = None   # for dropdown/radio/multi_select
-    default_value: Optional[Any]       = None
-    order:         int                 = 0
-    width:         Optional[str]       = "full"  # full/half
-    help_text:     Optional[str]       = None
-    validation:    Optional[Any]       = None    # {min, max, pattern, etc.}
+# ─────────────────────────────────────────────────────────────────────────────
+# CustomForm – Base
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CustomFormBase(BaseModel):
+    """
+    Shared fields used by Create and Response.
+
+    Form Configuration tab (Image 2):
+      form_name     →  "Form Title" text input
+      form_category →  "Form Category" dropdown  (General …)
+      description   →  "Form Description" textarea
+      fields_schema →  Full canvas JSON  (pages → fields → config +
+                        Advanced Settings block)
+      is_active     →  Publish / unpublish state
+      created_by    →  Builder's email / id
+    """
+    form_name:     str
+    form_category: Optional[str] = None
+    description:   Optional[str] = None
+    fields_schema: Optional[Any] = None
+    is_active:     bool          = True
+    created_by:    Optional[str] = None
 
 
-# ── Section Definition ────────────────────────────────────────────────────────
-class FormSectionDefinition(BaseModel):
-    section_id:  str
-    title:       Optional[str]                   = None
-    description: Optional[str]                   = None
-    fields:      List[FormFieldDefinition]        = []
-    order:       int                             = 0
+# ─────────────────────────────────────────────────────────────────────────────
+# CustomForm – Create  →  POST /custom-forms/
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CustomFormCreate(CustomFormBase):
+    """Payload to save a new form definition from the Form Builder canvas."""
+    pass
 
 
-# ── Page Definition ───────────────────────────────────────────────────────────
-class FormPageDefinition(BaseModel):
-    page_id:     str
-    title:       Optional[str]                   = None
-    description: Optional[str]                   = None
-    sections:    List[FormSectionDefinition]      = []
-    order:       int                             = 0
-
-
-# ── Form Config ───────────────────────────────────────────────────────────────
-class FormConfig(BaseModel):
-    allow_multiple_submissions: bool         = False
-    require_approval:           bool         = False
-    approver_role:              Optional[str] = None
-    show_progress_bar:          bool         = True
-    allow_save_draft:           bool         = True
-    prepopulate_fields:         Optional[List[str]] = None
-
-
-# ── CRUD Schemas ──────────────────────────────────────────────────────────────
-class CustomFormCreate(BaseModel):
-    form_name:                 str
-    form_category:             Optional[str]                 = None
-    description:               Optional[str]                 = None
-    pages:                     Optional[List[FormPageDefinition]] = None
-    fields_schema:             Optional[List[FormFieldDefinition]] = None
-    prepopulate_fields:        Optional[List[str]]            = None
-    allow_multiple_submissions: bool                          = False
-    require_approval:          bool                           = False
-    approver_role:             Optional[str]                  = None
-    show_progress_bar:         bool                           = True
-    allow_save_draft:          bool                           = True
-    is_active:                 bool                           = True
-    is_published:              bool                           = False
-    created_by:                Optional[str]                  = None
-
+# ─────────────────────────────────────────────────────────────────────────────
+# CustomForm – Update  →  PUT /custom-forms/{form_id}
+# ─────────────────────────────────────────────────────────────────────────────
 
 class CustomFormUpdate(BaseModel):
-    form_name:                 Optional[str]                 = None
-    form_category:             Optional[str]                 = None
-    description:               Optional[str]                 = None
-    pages:                     Optional[List[FormPageDefinition]] = None
-    fields_schema:             Optional[List[FormFieldDefinition]] = None
-    prepopulate_fields:        Optional[List[str]]            = None
-    allow_multiple_submissions: Optional[bool]                = None
-    require_approval:          Optional[bool]                 = None
-    approver_role:             Optional[str]                  = None
-    show_progress_bar:         Optional[bool]                 = None
-    allow_save_draft:          Optional[bool]                 = None
-    is_active:                 Optional[bool]                 = None
-    is_published:              Optional[bool]                 = None
+    """
+    All fields optional — send only what changed.
+    Triggered on every Save / Publish / canvas edit from the builder.
+    """
+    form_name:     Optional[str]  = None
+    form_category: Optional[str]  = None
+    description:   Optional[str]  = None
+    fields_schema: Optional[Any]  = None
+    is_active:     Optional[bool] = None
 
 
-class CustomFormResponse(BaseModel):
-    id:                        int
-    form_name:                 str
-    form_category:             Optional[str]  = None
-    description:               Optional[str]  = None
-    pages:                     Optional[Any]  = None
-    fields_schema:             Optional[Any]  = None
-    prepopulate_fields:        Optional[Any]  = None
-    allow_multiple_submissions: bool
-    require_approval:          bool
-    approver_role:             Optional[str]  = None
-    show_progress_bar:         bool
-    allow_save_draft:          bool
-    status:                    str
-    is_active:                 bool
-    is_published:              bool
-    version:                   int
-    created_by:                Optional[str]  = None
-    created_at:                datetime
-    updated_at:                datetime
+# ─────────────────────────────────────────────────────────────────────────────
+# CustomForm – Response  →  GET endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CustomFormResponse(CustomFormBase):
+    """Full form definition returned to the client, including audit timestamps."""
+    id:         int
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class CustomFormSummary(BaseModel):
-    id:           int
-    form_name:    str
-    form_category: Optional[str] = None
-    status:       str
-    is_active:    bool
-    is_published: bool
-    version:      int
-    created_by:   Optional[str]  = None
-    created_at:   datetime
+# ─────────────────────────────────────────────────────────────────────────────
+# FormSubmission – Base
+# ─────────────────────────────────────────────────────────────────────────────
 
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ── Submission Schemas ────────────────────────────────────────────────────────
-class FormSubmissionCreate(BaseModel):
-    employee_id:    Optional[int]  = None
-    employee_name:  Optional[str]  = None
-    employee_email: Optional[str]  = None
-    department:     Optional[str]  = None
-    submitted_by:   Optional[str]  = None
-    form_data:      Optional[Any]  = None
-    page_data:      Optional[Any]  = None
-    status:         str            = "Submitted"
-
-
-class FormSubmissionUpdate(BaseModel):
+class FormSubmissionBase(BaseModel):
+    """
+    Shared fields for a submitted form response:
+      form_id      →  which CustomForm was filled
+      employee_id  →  who filled it
+      submitted_by →  display name / email
+      form_data    →  { "field_id": "answer_value", … }
+      status       →  Submitted | Reviewed | Processed
+    """
+    form_id:      int
+    employee_id:  int
+    submitted_by: Optional[str] = None
     form_data:    Optional[Any] = None
-    page_data:    Optional[Any] = None
-    status:       Optional[str] = None
-    reviewed_by:  Optional[str] = None
-    review_notes: Optional[str] = None
+    status:       Optional[str] = "Submitted"
 
 
-class FormSubmissionResponse(BaseModel):
-    id:             int
-    form_id:        int
-    form_version:   Optional[int]  = None
-    employee_id:    Optional[int]  = None
-    employee_name:  Optional[str]  = None
-    employee_email: Optional[str]  = None
-    department:     Optional[str]  = None
-    submitted_by:   Optional[str]  = None
-    form_data:      Optional[Any]  = None
-    page_data:      Optional[Any]  = None
-    status:         str
-    reviewed_by:    Optional[str]  = None
-    review_notes:   Optional[str]  = None
-    submitted_at:   datetime
-    reviewed_at:    Optional[datetime] = None
+# ─────────────────────────────────────────────────────────────────────────────
+# FormSubmission – Create  →  POST /custom-forms/{form_id}/submit
+# ─────────────────────────────────────────────────────────────────────────────
+
+class FormSubmissionCreate(FormSubmissionBase):
+    """Payload when an employee submits a filled form."""
+    pass
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FormSubmission – Response  →  GET endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+class FormSubmissionResponse(FormSubmissionBase):
+    """Full submission record returned to the client."""
+    id:           int
+    submitted_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-
-
-# ── Version History Schema ────────────────────────────────────────────────────
-class FormVersionResponse(BaseModel):
-    id:             int
-    form_id:        int
-    version_number: int
-    pages:          Optional[Any] = None
-    fields_schema:  Optional[Any] = None
-    changed_by:     Optional[str] = None
-    change_notes:   Optional[str] = None
-    created_at:     datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ── Dashboard Stats ───────────────────────────────────────────────────────────
-class FormDashboardStats(BaseModel):
-    total_forms:      int
-    draft_forms:      int
-    published_forms:  int
-    archived_forms:   int
-    total_submissions: int

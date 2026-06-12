@@ -1,6 +1,6 @@
+# routers/Forms_Workflows/approvals.py
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime, date
 
@@ -18,15 +18,41 @@ router = APIRouter(prefix="/api/approvals", tags=["Approvals Dashboard"])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  INTERNAL — auto-mark SLA breached
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _check_sla_breaches(db: Session):
+    now = datetime.utcnow()
+    breached = (
+        db.query(ApprovalRequest)
+        .filter(
+            ApprovalRequest.sla_due_date < now,
+            ApprovalRequest.sla_breached == False,
+            ApprovalRequest.status == "Pending",
+        )
+        .all()
+    )
+    for r in breached:
+        r.sla_breached = True
+    if breached:
+        db.commit()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  DASHBOARD STATS
-#  GET /api/approvals/dashboard/stats
-#  Powers the 4 stat cards: Total, Pending, Approved, Rejected
+#  Powers 4 stat cards in BOTH views:
+#
+#  Employee View (John Smith):
+#    Total=3, Pending=1, Approved=1 (Last: Feb 28 2024), Rejected=1 (1 of 3 = 33%)
+#
+#  Manager View (Approver):
+#    Total=0, Pending=0, Approved=0, Rejected=0
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/dashboard/stats", response_model=ApprovalDashboardStats)
 def get_dashboard_stats(
-    employee_name: Optional[str] = Query(None, description="Filter by employee (Employee View)"),
-    assigned_to: Optional[str] = Query(None, description="Filter by manager (Manager View)"),
+    employee_name: Optional[str] = Query(None, description="Employee View — filter by employee name"),
+    assigned_to:   Optional[str] = Query(None, description="Manager View — filter by approver"),
     db: Session = Depends(get_db),
 ):
     q = db.query(ApprovalRequest)
@@ -36,10 +62,10 @@ def get_dashboard_stats(
         q = q.filter(ApprovalRequest.assigned_to == assigned_to)
 
     all_records = q.all()
-    total       = len(all_records)
-    pending     = sum(1 for r in all_records if r.status == "Pending")
-    approved    = sum(1 for r in all_records if r.status == "Approved")
-    rejected    = sum(1 for r in all_records if r.status == "Rejected")
+    total    = len(all_records)
+    pending  = sum(1 for r in all_records if r.status == "Pending")
+    approved = sum(1 for r in all_records if r.status == "Approved")
+    rejected = sum(1 for r in all_records if r.status == "Rejected")
 
     last_approved = (
         db.query(ApprovalRequest)
@@ -51,40 +77,47 @@ def get_dashboard_stats(
     rejection_rate = round((rejected / total) * 100, 1) if total > 0 else 0.0
 
     return ApprovalDashboardStats(
-        total_requests=total,
-        pending=pending,
-        approved=approved,
-        rejected=rejected,
-        last_approved_date=last_approved.action_taken_at if last_approved else None,
-        rejection_rate=rejection_rate,
+        total_requests     = total,
+        pending            = pending,
+        approved           = approved,
+        rejected           = rejected,
+        last_approved_date = last_approved.action_taken_at if last_approved else None,
+        rejection_rate     = rejection_rate,
     )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  LIST REQUESTS (with filters)
-#  GET /api/approvals/
-#  Supports: status, type, priority, date range, search, employee/manager view
+#  LIST REQUESTS
+#
+#  Employee View filters: Status / Type / Priority / Date Range / Search
+#  Manager View filters:  Status / Type / Priority / Employee / Date Range / Search
+#
+#  Table columns: Request Details / Status / Priority / SLA Status / Submitted / Actions
+#  Shows: title, description, reference_type tag, date range, assigned_to name
+#  Status badge: Pending (yellow) / Approved (green) / Rejected (red)
+#  SLA Status: "SLA Breached" red badge with due date
+#  Actions: 👁 view, ✕ cancel
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/", response_model=List[ApprovalRequestResponse])
 def list_approval_requests(
-    # View mode
-    employee_name: Optional[str] = Query(None, description="Employee View — filter by employee"),
-    assigned_to: Optional[str]   = Query(None, description="Manager View — filter by assignee"),
+    # View mode — passed by frontend based on active tab
+    employee_name:  Optional[str]  = Query(None, description="Employee View filter"),
+    assigned_to:    Optional[str]  = Query(None, description="Manager View filter"),
 
-    # Filters visible in UI
-    status:         Optional[str]  = Query(None, description="All Status / Pending / Approved / Rejected / Cancelled"),
-    reference_type: Optional[str]  = Query(None, description="All Types / leave / expense / transfer / promotion / exit"),
-    priority:       Optional[str]  = Query(None, description="All Priorities / Low / Medium / High / Critical"),
-    date_from:      Optional[date] = Query(None, description="Date range from"),
-    date_to:        Optional[date] = Query(None, description="Date range to"),
-    search:         Optional[str]  = Query(None, description="Search by title or description"),
+    # Filters in UI
+    status:         Optional[str]  = Query(None, description="Pending/Approved/Rejected/Cancelled/Escalated"),
+    reference_type: Optional[str]  = Query(None, description="All Types/leave/expense/transfer/promotion/exit"),
+    priority:       Optional[str]  = Query(None, description="All Priorities/Low/Medium/High/Critical"),
+    date_from:      Optional[date] = Query(None),
+    date_to:        Optional[date] = Query(None),
+    search:         Optional[str]  = Query(None, description="Search requests..."),
 
+    # Pagination
     skip:  int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
 ):
-    # Auto-check SLA breach before returning
     _check_sla_breaches(db)
 
     q = db.query(ApprovalRequest)
@@ -113,7 +146,7 @@ def list_approval_requests(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  GET SINGLE REQUEST
+#  GET SINGLE — 👁 View button in Actions column
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/{approval_id}", response_model=ApprovalRequestResponse)
@@ -125,19 +158,16 @@ def get_approval_request(approval_id: int, db: Session = Depends(get_db)):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  CREATE NEW REQUEST
-#  POST /api/approvals/
-#  Triggered by "New Request" button in UI
+#  CREATE — "New Request" button (Employee View only)
+#  Note: Manager View does NOT show New Request button
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("/", response_model=ApprovalRequestResponse, status_code=201)
 def create_approval_request(payload: ApprovalRequestCreate, db: Session = Depends(get_db)):
-    record = ApprovalRequest(**payload.model_dump())
-
-    # Auto-set SLA breach flag
+    data = payload.model_dump()
+    record = ApprovalRequest(**data)
     if record.sla_due_date and datetime.utcnow() > record.sla_due_date:
         record.sla_breached = True
-
     db.add(record)
     db.commit()
     db.refresh(record)
@@ -145,7 +175,7 @@ def create_approval_request(payload: ApprovalRequestCreate, db: Session = Depend
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  UPDATE REQUEST
+#  UPDATE
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.put("/{approval_id}", response_model=ApprovalRequestResponse)
@@ -164,8 +194,7 @@ def update_approval_request(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  APPROVE
-#  POST /api/approvals/{id}/approve
+#  APPROVE — Manager View action
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("/{approval_id}/approve", response_model=ApprovalRequestResponse)
@@ -176,20 +205,19 @@ def approve_request(
     if not record:
         raise HTTPException(status_code=404, detail="Approval request not found")
     if record.status != "Pending":
-        raise HTTPException(status_code=400, detail=f"Cannot approve — request is already '{record.status}'")
-    record.status         = "Approved"
-    record.action_by      = payload.action_by
-    record.comments       = payload.comments
+        raise HTTPException(status_code=400, detail=f"Cannot approve — request is '{record.status}'")
+    record.status          = "Approved"
+    record.action_by       = payload.action_by
+    record.comments        = payload.comments
     record.action_taken_at = datetime.utcnow()
-    record.updated_at     = datetime.utcnow()
+    record.updated_at      = datetime.utcnow()
     db.commit()
     db.refresh(record)
     return record
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  REJECT
-#  POST /api/approvals/{id}/reject
+#  REJECT — Manager View action
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("/{approval_id}/reject", response_model=ApprovalRequestResponse)
@@ -200,7 +228,7 @@ def reject_request(
     if not record:
         raise HTTPException(status_code=404, detail="Approval request not found")
     if record.status != "Pending":
-        raise HTTPException(status_code=400, detail=f"Cannot reject — request is already '{record.status}'")
+        raise HTTPException(status_code=400, detail=f"Cannot reject — request is '{record.status}'")
     record.status          = "Rejected"
     record.action_by       = payload.action_by
     record.comments        = payload.comments
@@ -212,8 +240,7 @@ def reject_request(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  CANCEL (the X button in Actions column)
-#  POST /api/approvals/{id}/cancel
+#  CANCEL — ✕ button in Actions column
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("/{approval_id}/cancel", response_model=ApprovalRequestResponse)
@@ -232,7 +259,6 @@ def cancel_request(approval_id: int, db: Session = Depends(get_db)):
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  ESCALATE
-#  POST /api/approvals/{id}/escalate
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("/{approval_id}/escalate", response_model=ApprovalRequestResponse)
@@ -253,6 +279,73 @@ def escalate_request(
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  SWITCH EMPLOYEE / SWITCH MANAGER
+#  Powers "Switch Employee" dropdown (Employee View)
+#  and "Switch Manager" dropdown (Manager View)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.patch("/{approval_id}/reassign", response_model=ApprovalRequestResponse)
+def reassign_request(
+    approval_id:  int,
+    assigned_to:  Optional[str] = Query(None, description="New manager/approver"),
+    employee_name: Optional[str] = Query(None, description="Switch to different employee"),
+    db: Session = Depends(get_db),
+):
+    record = db.query(ApprovalRequest).filter(ApprovalRequest.id == approval_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Approval request not found")
+    if assigned_to:
+        record.assigned_to = assigned_to
+    if employee_name:
+        record.employee_name = employee_name
+    record.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(record)
+    return record
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  DATA EXPORT — "Data" button in UI
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/export/data")
+def export_data(
+    employee_name: Optional[str] = Query(None),
+    assigned_to:   Optional[str] = Query(None),
+    status:        Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Returns all approval data for export (Data button)."""
+    q = db.query(ApprovalRequest)
+    if employee_name:
+        q = q.filter(ApprovalRequest.employee_name == employee_name)
+    if assigned_to:
+        q = q.filter(ApprovalRequest.assigned_to == assigned_to)
+    if status:
+        q = q.filter(ApprovalRequest.status == status)
+    records = q.order_by(ApprovalRequest.created_at.desc()).all()
+    return {
+        "total": len(records),
+        "data": [
+            {
+                "id":             r.id,
+                "title":          r.title,
+                "reference_type": r.reference_type,
+                "employee_name":  r.employee_name,
+                "assigned_to":    r.assigned_to,
+                "status":         r.status,
+                "priority":       r.priority,
+                "sla_breached":   r.sla_breached,
+                "start_date":     str(r.start_date) if r.start_date else None,
+                "end_date":       str(r.end_date) if r.end_date else None,
+                "created_at":     str(r.created_at),
+            }
+            for r in records
+        ],
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  DELETE
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -263,24 +356,3 @@ def delete_approval_request(approval_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Approval request not found")
     db.delete(record)
     db.commit()
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  INTERNAL — auto-mark SLA breached
-# ══════════════════════════════════════════════════════════════════════════════
-
-def _check_sla_breaches(db: Session):
-    now = datetime.utcnow()
-    breached = (
-        db.query(ApprovalRequest)
-        .filter(
-            ApprovalRequest.sla_due_date < now,
-            ApprovalRequest.sla_breached == False,
-            ApprovalRequest.status == "Pending",
-        )
-        .all()
-    )
-    for r in breached:
-        r.sla_breached = True
-    if breached:
-        db.commit()
