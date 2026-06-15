@@ -1,68 +1,315 @@
-
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
-from datetime import date, datetime
-from decimal import Decimal
-
-
-class SalaryStructureBase(BaseModel):
-    structure_name: str
-    basic_percent: Optional[float] = 40.0
-    hra_percent: Optional[float] = 20.0
-    special_allowance_percent: Optional[float] = 20.0
-    pf_employee_percent: Optional[float] = 12.0
-    pf_employer_percent: Optional[float] = 12.0
-    esi_employee_percent: Optional[float] = 0.75
-    esi_employer_percent: Optional[float] = 3.25
-    professional_tax_monthly: Optional[Decimal] = Decimal("200.00")
-    tds_percent: Optional[float] = 0.0
-    is_active: Optional[bool] = True
+# from pydantic import BaseModel, Field, validator
+# from typing import Optional, List
+# from datetime import datetime
+# from enum import Enum
 
 
-class SalaryStructureCreate(SalaryStructureBase):
+# class ComponentType(str, Enum):
+#     EARNING = "earning"
+#     DEDUCTION = "deduction"
+#     STATUTORY = "statutory"
+
+
+# class CalculationType(str, Enum):
+#     FIXED = "fixed"
+#     PERCENTAGE = "percentage"
+#     FORMULA = "formula"
+
+
+# # ─────────────────────────────────────────────
+# # Salary Component Schemas
+# # ─────────────────────────────────────────────
+
+# class SalaryComponentBase(BaseModel):
+#     name: str = Field(..., max_length=100)
+#     code: str = Field(..., max_length=20)
+#     component_type: ComponentType
+#     calculation_type: CalculationType = CalculationType.FIXED
+#     value: float = Field(default=0.0, ge=0)
+#     formula: Optional[str] = None
+#     depends_on: Optional[str] = None
+#     is_taxable: bool = False
+#     is_active: bool = True
+#     sequence: int = Field(default=1, ge=1)
+
+
+# class SalaryComponentCreate(SalaryComponentBase):
+#     pass
+
+
+# class SalaryComponentUpdate(BaseModel):
+#     name: Optional[str] = Field(None, max_length=100)
+#     calculation_type: Optional[CalculationType] = None
+#     value: Optional[float] = Field(None, ge=0)
+#     formula: Optional[str] = None
+#     depends_on: Optional[str] = None
+#     is_taxable: Optional[bool] = None
+#     is_active: Optional[bool] = None
+#     sequence: Optional[int] = Field(None, ge=1)
+
+
+# class SalaryComponentResponse(SalaryComponentBase):
+#     id: int
+#     structure_id: int
+#     created_at: datetime
+#     updated_at: Optional[datetime] = None
+
+#     model_config = {"from_attributes": True}
+
+
+# # ─────────────────────────────────────────────
+# # Salary Structure Schemas
+# # ─────────────────────────────────────────────
+
+# class SalaryStructureBase(BaseModel):
+#     name: str = Field(..., max_length=100)
+#     description: Optional[str] = None
+#     is_active: bool = True
+
+
+# class SalaryStructureCreate(SalaryStructureBase):
+#     components: Optional[List[SalaryComponentCreate]] = []
+
+
+# class SalaryStructureUpdate(BaseModel):
+#     name: Optional[str] = Field(None, max_length=100)
+#     description: Optional[str] = None
+#     is_active: Optional[bool] = None
+
+
+# class SalaryStructureResponse(SalaryStructureBase):
+#     id: int
+#     components: List[SalaryComponentResponse] = []
+#     created_at: datetime
+#     updated_at: Optional[datetime] = None
+
+#     model_config = {"from_attributes": True}
+
+
+# class SalaryStructureListResponse(SalaryStructureBase):
+#     id: int
+#     created_at: datetime
+
+#     model_config = {"from_attributes": True}
+
+
+# # ─────────────────────────────────────────────
+# # Employee Salary Structure Schemas
+# # ─────────────────────────────────────────────
+
+# class EmployeeSalaryStructureBase(BaseModel):
+#     employee_id: int
+#     structure_id: int
+#     ctc: float = Field(..., gt=0)
+#     basic_salary: float = Field(..., gt=0)
+#     effective_from: datetime
+#     effective_to: Optional[datetime] = None
+#     is_active: bool = True
+
+#     @validator("basic_salary")
+#     def basic_must_be_less_than_ctc(cls, v, values):
+#         if "ctc" in values and v > values["ctc"]:
+#             raise ValueError("basic_salary cannot exceed CTC")
+#         return v
+
+
+# class EmployeeSalaryStructureCreate(EmployeeSalaryStructureBase):
+#     pass
+
+
+# class EmployeeSalaryStructureUpdate(BaseModel):
+#     ctc: Optional[float] = Field(None, gt=0)
+#     basic_salary: Optional[float] = Field(None, gt=0)
+#     effective_from: Optional[datetime] = None
+#     effective_to: Optional[datetime] = None
+#     is_active: Optional[bool] = None
+
+
+# class EmployeeSalaryStructureResponse(EmployeeSalaryStructureBase):
+#     id: int
+#     created_at: datetime
+#     updated_at: Optional[datetime] = None
+
+#     model_config = {"from_attributes": True}
+
+
+# # ─────────────────────────────────────────────
+# # Salary Breakdown (computed response)
+# # ─────────────────────────────────────────────
+
+# class ComponentBreakdown(BaseModel):
+#     code: str
+#     name: str
+#     component_type: ComponentType
+#     amount: float
+#     is_taxable: bool
+
+
+# class SalaryBreakdownResponse(BaseModel):
+#     employee_id: int
+#     structure_name: str
+#     ctc: float
+#     basic_salary: float
+#     gross_earnings: float
+#     total_deductions: float
+#     net_salary: float
+#     components: List[ComponentBreakdown]
+
+
+
+from pydantic import BaseModel, Field, validator
+from typing import Optional, List
+from datetime import datetime
+from enum import Enum
+
+
+class ComponentType(str, Enum):
+    EARNING = "earning"
+    DEDUCTION = "deduction"
+    STATUTORY = "statutory"
+
+
+class CalculationType(str, Enum):
+    FIXED = "fixed"
+    PERCENTAGE = "percentage"
+    FORMULA = "formula"
+
+
+# ─────────────────────────────────────────────
+# Salary Component Schemas
+# ─────────────────────────────────────────────
+
+class SalaryComponentBase(BaseModel):
+    name: str = Field(..., max_length=100)
+    code: str = Field(..., max_length=20)
+    component_type: ComponentType
+    calculation_type: CalculationType = CalculationType.FIXED
+    value: float = Field(default=0.0, ge=0)
+    formula: Optional[str] = None
+    depends_on: Optional[str] = None
+    is_taxable: bool = False
+    is_active: bool = True
+    sequence: int = Field(default=1, ge=1)
+
+
+class SalaryComponentCreate(SalaryComponentBase):
     pass
 
 
+class SalaryComponentUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=100)
+    calculation_type: Optional[CalculationType] = None
+    value: Optional[float] = Field(None, ge=0)
+    formula: Optional[str] = None
+    depends_on: Optional[str] = None
+    is_taxable: Optional[bool] = None
+    is_active: Optional[bool] = None
+    sequence: Optional[int] = Field(None, ge=1)
+
+
+class SalaryComponentResponse(SalaryComponentBase):
+    id: int
+    structure_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────
+# Salary Structure Schemas
+# ─────────────────────────────────────────────
+
+class SalaryStructureBase(BaseModel):
+    name: str = Field(..., max_length=100)
+    description: Optional[str] = None
+    is_active: bool = True
+
+
+class SalaryStructureCreate(SalaryStructureBase):
+    components: Optional[List[SalaryComponentCreate]] = []
+
+
 class SalaryStructureUpdate(BaseModel):
-    structure_name: Optional[str] = None
-    basic_percent: Optional[float] = None
-    hra_percent: Optional[float] = None
-    special_allowance_percent: Optional[float] = None
-    pf_employee_percent: Optional[float] = None
-    pf_employer_percent: Optional[float] = None
-    esi_employee_percent: Optional[float] = None
-    esi_employer_percent: Optional[float] = None
-    professional_tax_monthly: Optional[Decimal] = None
-    tds_percent: Optional[float] = None
+    name: Optional[str] = Field(None, max_length=100)
+    description: Optional[str] = None
     is_active: Optional[bool] = None
 
 
 class SalaryStructureResponse(SalaryStructureBase):
     id: int
-    created_at: Optional[datetime] = None
+    components: List[SalaryComponentResponse] = []
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = {"from_attributes": True}
 
 
-class EmployeeSalaryMappingBase(BaseModel):
+class SalaryStructureListResponse(SalaryStructureBase):
+    id: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────
+# Employee Salary Structure Schemas
+# ─────────────────────────────────────────────
+
+class EmployeeSalaryStructureBase(BaseModel):
     employee_id: int
-    salary_structure_id: int
-    annual_ctc: Decimal
-    effective_from: date
+    structure_id: int
+    ctc: float = Field(..., gt=0)
+    basic_salary: float = Field(..., gt=0)
+    effective_from: datetime
+    effective_to: Optional[datetime] = None
+    is_active: bool = True
+
+    @validator("basic_salary")
+    def basic_must_be_less_than_ctc(cls, v, values):
+        if "ctc" in values and v > values["ctc"]:
+            raise ValueError("basic_salary cannot exceed CTC")
+        return v
 
 
-class EmployeeSalaryMappingCreate(EmployeeSalaryMappingBase):
+class EmployeeSalaryStructureCreate(EmployeeSalaryStructureBase):
     pass
 
 
-class EmployeeSalaryMappingUpdate(BaseModel):
-    salary_structure_id: Optional[int] = None
-    annual_ctc: Optional[Decimal] = None
-    effective_from: Optional[date] = None
+class EmployeeSalaryStructureUpdate(BaseModel):
+    ctc: Optional[float] = Field(None, gt=0)
+    basic_salary: Optional[float] = Field(None, gt=0)
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    is_active: Optional[bool] = None
 
 
-class EmployeeSalaryMappingResponse(EmployeeSalaryMappingBase):
+class EmployeeSalaryStructureResponse(EmployeeSalaryStructureBase):
     id: int
-    created_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────
+# Salary Breakdown (computed response)
+# ─────────────────────────────────────────────
+
+class ComponentBreakdown(BaseModel):
+    code: str
+    name: str
+    component_type: ComponentType
+    amount: float
+    is_taxable: bool
+
+
+class SalaryBreakdownResponse(BaseModel):
+    employee_id: int
+    structure_name: str
+    ctc: float
+    basic_salary: float
+    gross_earnings: float
+    total_deductions: float
+    net_salary: float
+    components: List[ComponentBreakdown]

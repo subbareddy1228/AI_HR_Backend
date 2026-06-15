@@ -16,8 +16,6 @@ import model.Employee_Management.employee_master
 import model.Employee_Management.employee_document
 import model.Productivity
 from sqladmin import Admin, ModelView
- 
-
 # CREATE FASTAPI APP  (THIS MUST COME FIRST)
 
 app = FastAPI(title="AI Recruitment HR Platform")
@@ -405,4 +403,4 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.get("/api/test")
 def test_api():
     return {"message": "Backend is working correctly!"}
- 
+
