@@ -1,4 +1,4 @@
-# main.py
+﻿# main.py
 import os
 import base64
 from fastapi import FastAPI, Request
@@ -73,7 +73,7 @@ app = FastAPI(title="AI Recruitment HR Platform")
  
 
 # IMPORT ROUTERS
-
+from routers.Forms_Workflows import custom_form_builder, workflow_engine, request_management, surveys, approvals
 from routers.admin_users.auth import router as auth_router
 from routers.jobs import router as jobs_router
 from routers.admin_users.admin import router as admin_router, compat_router as admin_compat_router
@@ -357,6 +357,8 @@ app.include_router(workflow_engine.router, prefix="/api/forms", tags=["Forms & W
 app.include_router(request_management.router, prefix="/api/forms", tags=["Forms & Workflows"])
 app.include_router(surveys.router, prefix="/api/forms", tags=["Forms & Workflows"])
 app.include_router(approvals.router, prefix="/api/forms", tags=["Forms & Workflows"])
+
+
 
 # Candidate Auth
 app.include_router(candidate_auth_router, prefix="/api/candidate", tags=["Candidate Auth"])
