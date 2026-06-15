@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from schema import schemas
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from model.models import AttendanceRecord
+# from model.models import AttendanceRecord
+from model.HR_Automation.attendance_capture import AttendanceRecord
 import model
 
 

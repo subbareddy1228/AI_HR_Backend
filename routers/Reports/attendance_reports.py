@@ -6,7 +6,9 @@ from datetime import date, datetime, timedelta
 
 from core.database import get_db
 from core.dependencies import get_current_user
-from model.models import User, AttendanceRecord as Attendance, LeaveRequest
+# from model.models import User, AttendanceRecord as Attendance, LeaveRequest
+from model.models import User, LeaveRequest
+from model.HR_Automation.attendance_capture import AttendanceRecord as Attendance
 from model.onboarding.employee import Employee
 from model.HR_Automation.shift import Shift
 from model.HR_Automation.work_hour_rule import WorkHourRule
