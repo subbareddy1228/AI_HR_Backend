@@ -1,7 +1,3 @@
-"""
-services/Payroll/salary_service.py
-Business logic for all three Salary Structure Management tabs.
-"""
 
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, func
@@ -24,12 +20,8 @@ from schema.Payroll.salary_structure import (
 )
 
 
-# ═══════════════════════════════════════════════
-# Dashboard
-# ═══════════════════════════════════════════════
-
 def get_salary_structure_dashboard(db: Session) -> SalaryStructureDashboard:
-    """Returns the aggregate stats shown at the top of the page."""
+
 
     def _count(model, **filters):
         q = select(func.count()).select_from(model)
@@ -49,10 +41,6 @@ def get_salary_structure_dashboard(db: Session) -> SalaryStructureDashboard:
         inactive_components=_count(SalaryComponent, is_active=False),
     )
 
-
-# ═══════════════════════════════════════════════
-# 1. Components Master
-# ═══════════════════════════════════════════════
 
 def get_components_master(db: Session) -> ComponentsMasterResponse:
     """Returns all components grouped for the Components Master tab."""
@@ -123,14 +111,10 @@ def update_component(
 
 def delete_component(db: Session, component_id: int) -> None:
     obj = get_component(db, component_id)
-    # Soft-delete: keep history intact
+
     obj.is_active = False
     db.commit()
 
-
-# ═══════════════════════════════════════════════
-# 2. Structure Templates
-# ═══════════════════════════════════════════════
 
 def get_templates_overview(
     db: Session,
@@ -236,10 +220,6 @@ def delete_template(db: Session, template_id: int) -> None:
     db.commit()
 
 
-# ═══════════════════════════════════════════════
-# 3. Structure Assignments
-# ═══════════════════════════════════════════════
-
 def list_assignments(
     db: Session,
     department: Optional[str] = None,
@@ -255,10 +235,7 @@ def list_assignments(
 def create_or_update_assignment(
     db: Session, payload: StructureAssignmentCreate
 ) -> StructureAssignment:
-    """
-    Upsert logic: if an active (effective_to=None) assignment exists for the
-    employee, close it and create a new one (history-preserving approach).
-    """
+
     existing = db.execute(
         select(StructureAssignment)
         .where(
@@ -277,7 +254,6 @@ def create_or_update_assignment(
     db.commit()
     db.refresh(obj)
 
-    # Update template employee count
     _refresh_employee_count(db, payload.template_id)
     return obj
 
@@ -317,10 +293,6 @@ def delete_assignment(db: Session, assignment_id: int) -> None:
     db.delete(obj)
     db.commit()
 
-
-# ═══════════════════════════════════════════════
-# 4. Legacy helpers (backward-compat)
-# ═══════════════════════════════════════════════
 
 def create_salary_structure(db: Session, payload: SalaryStructureCreate) -> SalaryStructure:
     existing = db.execute(
@@ -399,10 +371,6 @@ def get_employee_salary_mapping(db: Session, employee_id: int) -> EmployeeSalary
         )
     return obj
 
-
-# ═══════════════════════════════════════════════
-# Internal helpers
-# ═══════════════════════════════════════════════
 
 def _assert_unique_component(db: Session, code: str, name: str) -> None:
     dup = db.execute(

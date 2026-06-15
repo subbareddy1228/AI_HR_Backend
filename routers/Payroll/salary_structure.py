@@ -1,38 +1,3 @@
-"""
-routers/Payroll/salary_structure.py
-REST API for the full Salary Structure Management module.
-
-Tabs covered:
-  GET  /api/payroll/salary-structures/dashboard              → page stats
-  ── Components Master ──────────────────────────────────────
-  GET  /api/payroll/salary-structures/components             → grouped master view
-  POST /api/payroll/salary-structures/components             → add component
-  GET  /api/payroll/salary-structures/components/{id}
-  PUT  /api/payroll/salary-structures/components/{id}
-  DELETE /api/payroll/salary-structures/components/{id}      → soft-delete
-  ── Structure Templates ────────────────────────────────────
-  GET  /api/payroll/salary-structures/templates              → filterable list
-  POST /api/payroll/salary-structures/templates              → create template
-  GET  /api/payroll/salary-structures/templates/{id}
-  PUT  /api/payroll/salary-structures/templates/{id}
-  POST /api/payroll/salary-structures/templates/{id}/activate
-  POST /api/payroll/salary-structures/templates/{id}/deactivate
-  DELETE /api/payroll/salary-structures/templates/{id}
-  ── Structure Assignment ───────────────────────────────────
-  GET  /api/payroll/salary-structures/assignments            → assignment table
-  POST /api/payroll/salary-structures/assignments            → assign / re-assign
-  GET  /api/payroll/salary-structures/assignments/employee/{employee_id}
-  PUT  /api/payroll/salary-structures/assignments/{id}
-  DELETE /api/payroll/salary-structures/assignments/{id}
-  ── Legacy (backward-compat) ───────────────────────────────
-  POST   /api/payroll/salary-structures/
-  GET    /api/payroll/salary-structures/
-  GET    /api/payroll/salary-structures/{id}
-  PUT    /api/payroll/salary-structures/{id}
-  DELETE /api/payroll/salary-structures/{id}
-  GET    /api/payroll/salary-structures/employee/{employee_id}
-  POST   /api/payroll/salary-structures/assign
-"""
 
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
@@ -41,18 +6,14 @@ from typing import Optional, List
 from core.database import get_db
 import services.Payroll.salary_service as svc
 from schema.Payroll.salary_structure import (
-    # Components
+
     SalaryComponentCreate, SalaryComponentUpdate, SalaryComponentResponse,
     ComponentsMasterResponse,
-    # Templates
     SalaryStructureTemplateCreate, SalaryStructureTemplateUpdate,
     SalaryStructureTemplateResponse, StructureTemplatesOverview,
-    # Assignments
     StructureAssignmentCreate, StructureAssignmentUpdate,
     StructureAssignmentResponse,
-    # Dashboard
     SalaryStructureDashboard,
-    # Legacy
     SalaryStructureCreate, SalaryStructureUpdate, SalaryStructureResponse,
     EmployeeSalaryMappingCreate, EmployeeSalaryMappingResponse,
 )
@@ -60,11 +21,10 @@ from schema.Payroll.salary_structure import (
 router = APIRouter(prefix="/salary-structures", tags=["Payroll - Salary Structure"])
 
 
-# ─── Dashboard ───────────────────────────────
 
 @router.get("/dashboard", response_model=SalaryStructureDashboard)
 def get_dashboard(db: Session = Depends(get_db)):
-    """Aggregate stats displayed at the top of the Salary Structure Management page."""
+
     return svc.get_salary_structure_dashboard(db)
 
 
@@ -72,7 +32,7 @@ def get_dashboard(db: Session = Depends(get_db)):
 
 @router.get("/components", response_model=ComponentsMasterResponse)
 def get_components_master(db: Session = Depends(get_db)):
-    """All components grouped by category for the Components Master tab."""
+   
     return svc.get_components_master(db)
 
 
@@ -116,7 +76,6 @@ def delete_component(component_id: int, db: Session = Depends(get_db)):
     svc.delete_component(db, component_id)
 
 
-# ─── Structure Templates ─────────────────────
 
 @router.get("/templates", response_model=StructureTemplatesOverview)
 def list_templates(
@@ -171,8 +130,6 @@ def delete_template(template_id: int, db: Session = Depends(get_db)):
     svc.delete_template(db, template_id)
 
 
-# ─── Structure Assignment ────────────────────
-
 @router.get("/assignments", response_model=List[StructureAssignmentResponse])
 def list_assignments(
     department: Optional[str] = Query(None),
@@ -180,7 +137,7 @@ def list_assignments(
     template_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
-    """Returns the assignment table rows."""
+
     return svc.list_assignments(db, department=department,
                                 grade=grade, template_id=template_id)
 
@@ -218,8 +175,6 @@ def update_assignment(
 def delete_assignment(assignment_id: int, db: Session = Depends(get_db)):
     svc.delete_assignment(db, assignment_id)
 
-
-# ─── Legacy endpoints (backward-compat) ──────
 
 @router.post("/", response_model=SalaryStructureResponse, status_code=status.HTTP_201_CREATED)
 def create_salary_structure(payload: SalaryStructureCreate, db: Session = Depends(get_db)):

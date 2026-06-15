@@ -1,7 +1,4 @@
-"""
-schema/Payroll/salary_structure.py
-Pydantic v2 schemas matching the updated model.
-"""
+
 
 from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
@@ -10,7 +7,6 @@ from decimal import Decimal
 from enum import Enum
 
 
-# ─── Enums (mirrors model) ───────────────────
 
 class ComponentCategory(str, Enum):
     EARNINGS = "earnings"
@@ -48,10 +44,6 @@ class AllocationSource(str, Enum):
     CUSTOM    = "custom"
     PROMOTION = "promotion"
 
-
-# ─────────────────────────────────────────────
-# 1. Salary Component schemas
-# ─────────────────────────────────────────────
 
 class SalaryComponentBase(BaseModel):
     component_name:     str
@@ -102,14 +94,12 @@ class SalaryComponentResponse(SalaryComponentBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Grouped response for the Components Master tab
 class ComponentsMasterResponse(BaseModel):
     earnings:               List[SalaryComponentResponse]
     deductions:             List[SalaryComponentResponse]
     employer_contributions: List[SalaryComponentResponse]
     reimbursements:         List[SalaryComponentResponse]
 
-    # Stats shown at the top
     total_components:    int
     active_components:   int
     taxable_components:  int
@@ -117,10 +107,6 @@ class ComponentsMasterResponse(BaseModel):
     fixed_components:    int
     variable_components: int
 
-
-# ─────────────────────────────────────────────
-# 2. Structure Component Line schemas
-# ─────────────────────────────────────────────
 
 class StructureComponentLineBase(BaseModel):
     component_id:         int
@@ -142,10 +128,6 @@ class StructureComponentLineResponse(StructureComponentLineBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ─────────────────────────────────────────────
-# 3. Salary Structure Template schemas
-# ─────────────────────────────────────────────
 
 class SalaryStructureTemplateBase(BaseModel):
     template_name:  str
@@ -197,7 +179,6 @@ class SalaryStructureTemplateResponse(SalaryStructureTemplateBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Grouped response for the Structure Templates tab
 class StructureTemplatesOverview(BaseModel):
     total_structures:   int
     active_structures:  int
@@ -206,9 +187,6 @@ class StructureTemplatesOverview(BaseModel):
     templates:          List[SalaryStructureTemplateResponse]
 
 
-# ─────────────────────────────────────────────
-# 4. Structure Assignment schemas
-# ─────────────────────────────────────────────
 
 class StructureAssignmentBase(BaseModel):
     employee_id:       int
@@ -243,7 +221,7 @@ class StructureAssignmentResponse(StructureAssignmentBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Detailed response joining employee + template info (for the Assignment table)
+
 class StructureAssignmentDetail(BaseModel):
     id:              int
     employee_id:     int
@@ -263,7 +241,6 @@ class StructureAssignmentDetail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Dashboard stats shown at top of Salary Structure Management page
 class SalaryStructureDashboard(BaseModel):
     total_structures:   int
     active_structures:  int
@@ -276,9 +253,6 @@ class SalaryStructureDashboard(BaseModel):
     inactive_components: int
 
 
-# ─────────────────────────────────────────────
-# 5. Legacy schemas (backward-compat)
-# ─────────────────────────────────────────────
 
 class SalaryStructureBase(BaseModel):
     structure_name:             str
