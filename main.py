@@ -106,11 +106,36 @@ from routers.onboarding.admin_candidates import router as admin_candidates_route
 from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address, background_verification, probation_management, induction
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile,notification_preference,location,data_privacy
+from routers.Payroll import (
+    salary_structure,
+    payroll_run,
+    salary_slip,
+    reimbursements,
+    loans_advances,
+    statutory_compliance,
+    bank_transfer,
+    final_settlement,
+    payroll_reports as payroll_rpt,
+)
+from routers.HR_Automation.attendance.routers import (
+    shift_management,
+    holiday_calendar,
+    work_hour_rules,
+    attendance_reports as att_rpt,
+)
 
-from routers.Payroll import salary_structure, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt
+from routers.Reports import (
+    employee_reports,
+    attendance_reports as rep_att,
+    leave_reports,
+    payroll_reports as rep_pay,
+    compliance_reports,
+    custom_report_builder,
+    executive_dashboard,
+    ai_insights,
+)
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
-from routers.HR_Automation.attendance.routers import shift_management, holiday_calendar, work_hour_rules, attendance_reports as att_rpt
 from routers.Reports import employee_reports, attendance_reports as rep_att, leave_reports, payroll_reports as rep_pay, compliance_reports, custom_report_builder, executive_dashboard, ai_insights
 from routers.Forms_Workflows import custom_form_builder, workflow_engine, request_management, surveys, approvals
 
