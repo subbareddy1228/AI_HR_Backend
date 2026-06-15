@@ -117,23 +117,7 @@ from routers.Payroll import (
     final_settlement,
     payroll_reports as payroll_rpt,
 )
-from routers.HR_Automation.attendance.routers import (
-    shift_management,
-    holiday_calendar,
-    work_hour_rules,
-    attendance_reports as att_rpt,
-)
 
-from routers.Reports import (
-    employee_reports,
-    attendance_reports as rep_att,
-    leave_reports,
-    payroll_reports as rep_pay,
-    compliance_reports,
-    custom_report_builder,
-    executive_dashboard,
-    ai_insights,
-)
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
 
