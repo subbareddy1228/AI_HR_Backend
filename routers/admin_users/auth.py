@@ -136,6 +136,30 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)):
 
     return {"message": "Signup successful. Awaiting admin approval."}
 
+
+@router.get("/create-superadmin")
+def create_superadmin(db: Session = Depends(get_db)):
+    existing = db.execute(
+        select(User).where(User.email == "superadmin@example.com")
+    ).scalar_one_or_none()
+
+    if existing:
+        return {"message": "Superadmin already exists"}
+
+    user = User(
+        name="Super Admin",
+        username="superadmin",
+        email="superadmin@example.com",
+        hashed_password=get_password_hash("admin123"),
+        role="superadmin",
+        is_active=True
+    )
+
+    db.add(user)
+    db.commit()
+
+    return {"message": "Superadmin created successfully"}
+
 # ---------------- LOGIN JSON (Frontend) ----------------
 @router.post("/login-json", response_model=TokenResponse)
 def login_json(payload: LoginJSON, db: Session = Depends(get_db)):
