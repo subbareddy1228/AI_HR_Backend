@@ -17,8 +17,9 @@ from model.Payroll.salary_slip                   import SalarySlip
 from model.Payroll.loan_advance                  import LoanAdvance
 from model.Payroll.reimbursement                 import Reimbursement
 from model.HR_Operations.hr_helpdesk             import HRHelpdesk
-from model.models                                import AttendanceRecord, LeaveRequest, LeaveStatus
-
+# from model.models import AttendanceRecord, LeaveRequest, LeaveStatus
+from model.HR_Automation.attendance_capture import AttendanceRecord
+from model.models import LeaveRequest, LeaveStatus
 router = APIRouter(prefix="/self-service", tags=["Employee Self Service"])
 
 

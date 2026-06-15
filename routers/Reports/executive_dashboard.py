@@ -6,7 +6,9 @@ from datetime import date, datetime
 
 from core.database import get_db
 from model.onboarding.employee import Employee
-from model.models import AttendanceRecord as Attendance, LeaveRequest, LeaveStatus
+# from model.models import AttendanceRecord as Attendance, LeaveRequest, LeaveStatus
+from model.HR_Automation.attendance_capture import AttendanceRecord as Attendance
+from model.models import LeaveRequest, LeaveStatus
 from model.Payroll.payroll_run import PayrollRun
 from model.Reports.dashboard_metric import DashboardMetric, MetricStatus, MetricCategory
 from schema.Reports.dashboard_metric import (

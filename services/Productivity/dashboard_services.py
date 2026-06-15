@@ -6,7 +6,8 @@ from utils.productivity.logger import get_logger
 logger = get_logger(__name__)
 
 from model.onboarding.employee import Employee
-from model.models import AttendanceRecord as Attendance
+# from model.models import AttendanceRecord as Attendance
+from model.HR_Automation.attendance_capture import AttendanceRecord as Attendance
 from model.Employee_Management.org_hierarchy import Department
 from model.Productivity.productivity import Productivity
 

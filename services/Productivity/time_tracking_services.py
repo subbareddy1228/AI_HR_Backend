@@ -4,7 +4,8 @@ from utils.productivity.logger import get_logger
 from datetime import datetime, timedelta, timezone
 from datetime import date, timedelta
 
-from model.models import AttendanceRecord as Attendance
+# from model.models import AttendanceRecord as Attendance
+from model.HR_Automation.attendance_capture import AttendanceRecord
 from model.onboarding.employee import Employee
 from model.Productivity.productivity import Productivity
 from model.Productivity.task import ProductivityTask
