@@ -168,25 +168,29 @@ def on_startup():
     try:
         # Try to create default superadmin
         with Session(engine) as session:
-            superadmin = session.exec(select(User).where(User.role == "superadmin")).first()
+            existing = session.exec(
+                select(User).where(User.email == "superadmin@example.com")
+            ).first()
 
-            if not superadmin:
+            if not existing:
                 from passlib.context import CryptContext
                 pwd = CryptContext(schemes=["bcrypt"])
 
-                user = User(
+                admin = User(
                     name="Super Admin",
                     username="superadmin",
                     email="superadmin@example.com",
                     hashed_password=pwd.hash("admin123"),
                     role="superadmin",
-                    is_active=True,
+                    is_active=True
                 )
-                session.add(user)
+
+                session.add(admin)
                 session.commit()
-                print(" Default Super Admin created: superadmin / admin123")
+
+                print("SUPERADMIN CREATED")
             else:
-                print(" Super Admin already exists")
+                print("SUPERADMIN EXISTS")
     except Exception as e:
         print(f" Warning: Could not create default superadmin: {e}")
         print("  You may need to create it manually once the database is available.")
