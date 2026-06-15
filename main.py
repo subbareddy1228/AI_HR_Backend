@@ -852,12 +852,10 @@ from sqlmodel import SQLModel, Session, select
 from core.database import engine, Base
 from model.models import User
 from sqladmin import Admin, ModelView
-<<<<<<< HEAD
 
-=======
 from contextlib import asynccontextmanager
 from core.startup import on_startup, seed_regularization, seed_holiday_calendar, seed_attendance_reports
->>>>>>> 7fea338a53c1b0facf8db07a733686259880bb27
+
 
 # CREATE FASTAPI APP (THIS MUST COME FIRST)
 app = FastAPI(title="AI Recruitment HR Platform")
@@ -888,11 +886,9 @@ from routers.admin_users.send_assessment_email import router as email_router
 from routers.offers.offer_template_router import router as offer_template_router
 from routers.offers.offer_tracking_router import router as offer_tracking_router
 from routers.HR_Automation.Onboarding.routers import candidates as onboard_candidates, uploads
-<<<<<<< HEAD
-from routers.HR_Automation.attendance import attendance_capture, daily_punches, daily_attendance, monthly_attendance, shift
-=======
+
 from routers.HR_Automation.attendance import attendance_capture, daily_punches, daily_attendance, monthly_attendance, shift_management, manual_attendance, leave_correction, work_hour_rule, leave_management, regularization, holiday_calendar, attendance_reports
->>>>>>> 7fea338a53c1b0facf8db07a733686259880bb27
+
 from routers.AI_Interview_Bot.routes import interviews
 from routers.CRM import contacts, company, deals, leads, pipelines, activities, analytics, projects, clients, tasks
 from routers.onboarding.admin_candidates import router as admin_candidates_router
@@ -997,9 +993,6 @@ app.include_router(exam.router, prefix="/api/assessment/aptitude")
 app.include_router(aptitude_results.router, prefix="/api/assessment/aptitude")
 app.include_router(hiring_funnel_router, prefix="/api/hiring_funnel")
 app.include_router(time_hire_router, prefix="/api/time_to_hire")
-<<<<<<< HEAD
-app.include_router(shift.router, prefix="/attendance/shifts", tags=["Shift Management"])
-=======
 
 
 # Attendance 
@@ -1017,7 +1010,6 @@ app.include_router(holiday_calendar.router)
 app.include_router(attendance_reports.router)
 
 
->>>>>>> 7fea338a53c1b0facf8db07a733686259880bb27
 app.include_router(documents_router, prefix="/api/documents")
 app.include_router(signatures_router, prefix="/api/signatures")
 app.include_router(onboard_candidates.router, prefix="/api/candidates")
@@ -1098,9 +1090,6 @@ def test_api():
     return {"message": "Backend is working correctly!"}
 
 
-<<<<<<< HEAD
-=======
-
 
  # MAIN_PY_PATCH.py
 # Add these lines to your existing main.py
@@ -1128,4 +1117,4 @@ async def lifespan(app: FastAPI):
 
     yield
 
->>>>>>> 7fea338a53c1b0facf8db07a733686259880bb27
+
