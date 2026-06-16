@@ -1,13 +1,3 @@
-"""
-Payroll Processing Module — Model Layer
-Covers every section on the Payroll Processing configuration page:
-
-  1. PayrollConfig          — singleton company-level config (cycle, schedule, lock state)
-  2. CommissionConfig       — Sales/Commission Configuration section
-  3. StatutorySettings      — Statutory Compliance Settings section
-  4. PayrollComponent       — Salary Component Configuration table
-  5. PayrollLockLog         — Audit trail for every lock / unlock action
-"""
 
 from __future__ import annotations
 
@@ -32,10 +22,6 @@ from sqlalchemy import (
 from core.database import Base
 
 
-# ---------------------------------------------------------------------------
-# Enumerations
-# ---------------------------------------------------------------------------
-
 class CycleType(str, enum.Enum):
     MONTHLY     = "monthly"
     BI_WEEKLY   = "bi_weekly"
@@ -44,8 +30,8 @@ class CycleType(str, enum.Enum):
 
 
 class PayPeriod(str, enum.Enum):
-    STANDARD_MONTH   = "standard_month"      # 1st – last day
-    CUSTOM_DATE_RANGE = "custom_date_range"  # e.g. 26th prev – 25th current
+    STANDARD_MONTH   = "standard_month"      
+    CUSTOM_DATE_RANGE = "custom_date_range"  
     CALENDAR_MONTH   = "calendar_month"
 
 
@@ -69,43 +55,30 @@ class LockAction(str, enum.Enum):
     UNLOCK = "unlock"
 
 
-# ---------------------------------------------------------------------------
-# 1. Payroll Cycle Configuration  (one row per company — upsert pattern)
-# ---------------------------------------------------------------------------
-
 class PayrollConfig(Base):
-    """
-    Singleton configuration that controls the overall payroll processing cycle.
-    Sections:  Payroll Cycle Settings + Payroll Schedule + status banner.
-    """
+
     __tablename__ = "payroll_config"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # ---------- Payroll Cycle Settings ----------
     cycle_type  = Column(Enum(CycleType),  nullable=False, default=CycleType.MONTHLY)
     pay_period  = Column(Enum(PayPeriod),  nullable=False, default=PayPeriod.STANDARD_MONTH)
 
-    # For CUSTOM_DATE_RANGE pay period
-    period_start_day = Column(Integer, nullable=True)   # e.g. 26 (of previous month)
-    period_end_day   = Column(Integer, nullable=True)   # e.g. 25 (of current month)
+    period_start_day = Column(Integer, nullable=True)  
+    period_end_day   = Column(Integer, nullable=True)   
 
-    # ---------- Payroll Schedule ----------
-    processing_day = Column(Integer, nullable=False, default=25)   # day-of-month
-    payment_day    = Column(Integer, nullable=False, default=30)   # day-of-month
+    processing_day = Column(Integer, nullable=False, default=25)   
+    payment_day    = Column(Integer, nullable=False, default=30) 
 
-    # Off-cycle & advance scheduling flags
     enable_off_cycle_payroll        = Column(Boolean, default=True,  nullable=False)
     enable_advance_payroll_scheduling = Column(Boolean, default=False, nullable=False)
 
-    # ---------- Payroll Lock / Status Banner ----------
     payroll_status   = Column(Enum(PayrollStatus), nullable=False,
                               default=PayrollStatus.ACTIVE)
     locked_by        = Column(Integer, ForeignKey("employees.id"), nullable=True)
     locked_at        = Column(DateTime, nullable=True)
     lock_reason      = Column(String(500), nullable=True)
 
-    # ---------- Lifecycle ----------
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     updated_by = Column(Integer, ForeignKey("employees.id"), nullable=True)
@@ -114,15 +87,8 @@ class PayrollConfig(Base):
         return f"<PayrollConfig id={self.id} status={self.payroll_status} cycle={self.cycle_type}>"
 
 
-# ---------------------------------------------------------------------------
-# 2. Sales / Commission Configuration
-# ---------------------------------------------------------------------------
-
 class CommissionConfig(Base):
-    """
-    Sales / Commission Configuration section.
-    One active row per company (same singleton pattern as PayrollConfig).
-    """
+ 
     __tablename__ = "commission_config"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -132,7 +98,6 @@ class CommissionConfig(Base):
     bonus_threshold                = Column(Numeric(14, 2), nullable=True,
                                             default=100000)                       # in company currency
 
-    # Lifecycle
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     updated_by = Column(Integer, ForeignKey("employees.id"), nullable=True)
@@ -142,15 +107,8 @@ class CommissionConfig(Base):
                 f"rate={self.commission_rate_percent}%>")
 
 
-# ---------------------------------------------------------------------------
-# 3. Statutory Compliance Settings
-# ---------------------------------------------------------------------------
-
 class StatutorySettings(Base):
-    """
-    Statutory Compliance Settings section — four on/off toggles visible in the UI.
-    Singleton per company.
-    """
+
     __tablename__ = "statutory_settings"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -160,7 +118,6 @@ class StatutorySettings(Base):
     enable_esi_contribution  = Column(Boolean, default=True,  nullable=False)
     enable_tds_deduction     = Column(Boolean, default=True,  nullable=False)
 
-    # Lifecycle
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     updated_by = Column(Integer, ForeignKey("employees.id"), nullable=True)
@@ -172,20 +129,8 @@ class StatutorySettings(Base):
                 f"tds={self.enable_tds_deduction}>")
 
 
-# ---------------------------------------------------------------------------
-# 4. Salary Component Configuration  (the table at the bottom of the page)
-# ---------------------------------------------------------------------------
-
 class PayrollComponent(Base):
-    """
-    Salary Component Configuration table rows.
-    Each row maps directly to one line in the UI table:
-        Component Name | Type | Calculation | Value | Taxable | Actions
-    
-    NOTE: This is a *processing-level* component config (simpler, flat) that
-    complements the full Salary Structure module's SalaryComponent master.
-    It is the source of truth for the Payroll Processing page's component table.
-    """
+
     __tablename__ = "payroll_components"
 
     id             = Column(Integer, primary_key=True, index=True)
@@ -196,14 +141,12 @@ class PayrollComponent(Base):
     calculation_method = Column(Enum(CalculationMethod), nullable=False,
                                 default=CalculationMethod.PERCENTAGE)
 
-    # Value: percentage (0-100) OR flat monetary amount — interpreted by calculation_method
+   
     value     = Column(Float, nullable=False, default=0.0)
     is_taxable = Column(Boolean, default=False, nullable=False)
 
-    # Ordering in the table
     display_order = Column(Integer, default=0)
 
-    # Lifecycle
     is_active  = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -219,15 +162,8 @@ class PayrollComponent(Base):
                 f"| {self.component_type} | {self.calculation_method} | {self.value}>")
 
 
-# ---------------------------------------------------------------------------
-# 5. Payroll Lock Audit Log
-# ---------------------------------------------------------------------------
-
 class PayrollLockLog(Base):
-    """
-    Immutable audit trail for every Lock / Unlock action on payroll.
-    Created automatically by the service layer — never directly by the API.
-    """
+
     __tablename__ = "payroll_lock_logs"
 
     id         = Column(Integer, primary_key=True, index=True)
@@ -236,7 +172,6 @@ class PayrollLockLog(Base):
     actioned_by = Column(Integer, ForeignKey("employees.id"), nullable=True)
     actioned_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    # Snapshot of status before and after
     previous_status = Column(String(50), nullable=False)
     new_status      = Column(String(50), nullable=False)
 
