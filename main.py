@@ -104,18 +104,7 @@ from routers.onboarding.admin_candidates import router as admin_candidates_route
 from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address, background_verification, probation_management, induction
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile,notification_preference,location,data_privacy
-from routers.Payroll import (
-    salary_structure,
-    payroll_run,
-    salary_slip,
-    reimbursements,
-    loans_advances,
-    statutory_compliance,
-    bank_transfer,
-    final_settlement,
-    payroll_reports as payroll_rpt,
-)
-
+from routers.Payroll import salary_structure, payroll_processing, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
 
@@ -298,6 +287,7 @@ app.include_router(asset_insurance.router)
 # Payroll
 app.include_router(salary_structure.router, prefix="/api/payroll", tags=["Payroll"])
 app.include_router(payroll_run.router, prefix="/api/payroll", tags=["Payroll"])
+app.include_router(payroll_processing.router, prefix="/api/payroll", tags=["Payroll"])
 app.include_router(salary_slip.router, prefix="/api/payroll", tags=["Payroll"])
 app.include_router(reimbursements.router, prefix="/api/payroll", tags=["Payroll"])
 app.include_router(loans_advances.router, prefix="/api/payroll", tags=["Payroll"])
