@@ -10,8 +10,8 @@ from core.dependencies import get_current_user
 from model.models import User, LeaveRequest
 from model.HR_Automation.attendance_capture import AttendanceRecord as Attendance
 from model.onboarding.employee import Employee
-from model.HR_Automation.shift import Shift
-from model.HR_Automation.work_hour_rule import WorkHourRule
+from model.HR_Automation.shift_management import ShiftMaster
+from model.HR_Automation.work_hour_rule import WorkHourRuleConfig
 
 from schema.Reports.attendance_reports import (
     AttendanceReportStats,
