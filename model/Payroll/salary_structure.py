@@ -71,7 +71,7 @@ class SalaryComponent(Base):
     proof_required  = Column(Boolean, default=False)
     tax_exempt_upto = Column(Numeric(12, 2), nullable=True)
 
-    # Admin
+    
     is_active  = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

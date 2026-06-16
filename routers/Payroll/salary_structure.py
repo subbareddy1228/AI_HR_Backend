@@ -28,8 +28,6 @@ def get_dashboard(db: Session = Depends(get_db)):
     return svc.get_salary_structure_dashboard(db)
 
 
-# ─── Components Master ───────────────────────
-
 @router.get("/components", response_model=ComponentsMasterResponse)
 def get_components_master(db: Session = Depends(get_db)):
    
@@ -85,7 +83,7 @@ def list_templates(
     department: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
-    """Returns template cards grouped by status (Total / Active / Draft)."""
+    
     return svc.get_templates_overview(db, status=status, category=category,
                                       grade=grade, department=department)
 
@@ -150,7 +148,7 @@ def list_assignments(
 def assign_employee(
     payload: StructureAssignmentCreate, db: Session = Depends(get_db)
 ):
-    """Create or update (upsert) a structure assignment for an employee."""
+    
     return svc.create_or_update_assignment(db, payload)
 
 

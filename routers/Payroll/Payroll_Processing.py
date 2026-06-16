@@ -1,37 +1,3 @@
-"""
-Payroll Processing Module — Router Layer
-All endpoints for the Payroll Processing configuration page.
-
-Mount in main.py:
-    from routers.Payroll import payroll_processing
-    app.include_router(payroll_processing.router, prefix="/api/payroll", tags=["Payroll"])
-
-Full endpoint map:
-─────────────────────────────────────────────────────────────────
-  GET    /api/payroll/processing                 → full page data
-  ─── Payroll Config ──────────────────────────────────────────
-  GET    /api/payroll/processing/config          → get config
-  POST   /api/payroll/processing/config          → create/upsert
-  PATCH  /api/payroll/processing/config          → update fields
-  POST   /api/payroll/processing/config/lock     → lock payroll
-  POST   /api/payroll/processing/config/unlock   → unlock payroll
-  GET    /api/payroll/processing/config/lock-logs → audit trail
-  ─── Commission Config ───────────────────────────────────────
-  GET    /api/payroll/processing/commission      → get
-  POST   /api/payroll/processing/commission      → upsert
-  PATCH  /api/payroll/processing/commission      → update
-  ─── Statutory Settings ──────────────────────────────────────
-  GET    /api/payroll/processing/statutory       → get
-  POST   /api/payroll/processing/statutory       → upsert
-  PATCH  /api/payroll/processing/statutory       → update
-  ─── Components ──────────────────────────────────────────────
-  GET    /api/payroll/processing/components              → grouped list
-  GET    /api/payroll/processing/components/all          → flat list
-  POST   /api/payroll/processing/components              → add component
-  PATCH  /api/payroll/processing/components/{id}         → edit component
-  DELETE /api/payroll/processing/components/{id}         → soft-delete
-─────────────────────────────────────────────────────────────────
-"""
 
 from __future__ import annotations
 
@@ -71,10 +37,6 @@ from services.Payroll.Payroll_Processing import (
 router = APIRouter(prefix="/processing", tags=["Payroll Processing"])
 
 
-# ===========================================================================
-# Full page endpoint — single GET to hydrate the entire page
-# ===========================================================================
-
 @router.get(
     "",
     response_model=PayrollProcessingPageResponse,
@@ -87,10 +49,6 @@ router = APIRouter(prefix="/processing", tags=["Payroll Processing"])
 def get_full_processing_page(db: Session = Depends(get_db)) -> PayrollProcessingPageResponse:
     return PayrollProcessingPageService.get_full_page(db)
 
-
-# ===========================================================================
-# Payroll Config endpoints
-# ===========================================================================
 
 @router.get(
     "/config",
@@ -122,9 +80,6 @@ def update_payroll_config(
     payload: PayrollConfigUpdate, db: Session = Depends(get_db)
 ) -> PayrollConfigResponse:
     return PayrollConfigService.update(db, payload)
-
-
-# ── Lock / Unlock ──────────────────────────────────────────────────────────
 
 @router.post(
     "/config/lock",
@@ -173,11 +128,6 @@ def get_lock_audit_log(
 ) -> list[PayrollLockLogResponse]:
     return PayrollConfigService.get_lock_logs(db, limit)
 
-
-# ===========================================================================
-# Commission Config endpoints
-# ===========================================================================
-
 @router.get(
     "/commission",
     response_model=Optional[CommissionConfigResponse],
@@ -210,10 +160,6 @@ def update_commission_config(
     return CommissionConfigService.update(db, payload)
 
 
-# ===========================================================================
-# Statutory Settings endpoints
-# ===========================================================================
-
 @router.get(
     "/statutory",
     response_model=Optional[StatutorySettingsResponse],
@@ -245,10 +191,6 @@ def update_statutory_settings(
 ) -> StatutorySettingsResponse:
     return StatutorySettingsService.update(db, payload)
 
-
-# ===========================================================================
-# Payroll Components endpoints  (Salary Component Configuration table)
-# ===========================================================================
 
 @router.get(
     "/components",

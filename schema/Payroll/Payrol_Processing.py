@@ -1,7 +1,3 @@
-"""
-Payroll Processing Module — Schema Layer  (Pydantic v2)
-Request / Response models for every section on the Payroll Processing page.
-"""
 
 from __future__ import annotations
 
@@ -21,10 +17,6 @@ from model.Payroll.Payroll_Processing import (
 )
 
 
-# ===========================================================================
-# 1. Payroll Config  (Cycle Settings + Schedule + Status Banner)
-# ===========================================================================
-
 class PayrollConfigCreate(BaseModel):
     # Cycle Settings
     cycle_type:       CycleType = CycleType.MONTHLY
@@ -38,7 +30,7 @@ class PayrollConfigCreate(BaseModel):
     payment_day:    int = Field(30, ge=1, le=31,
                                 description="Day of month salaries are credited")
 
-    # Flags
+
     enable_off_cycle_payroll:         bool = True
     enable_advance_payroll_scheduling: bool = False
 
@@ -85,10 +77,6 @@ class PayrollConfigResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ===========================================================================
-# 2. Lock / Unlock Payroll
-# ===========================================================================
-
 class LockPayrollRequest(BaseModel):
     reason:      Optional[str] = Field(None, max_length=500)
     actioned_by: Optional[int] = Field(None, description="Employee ID performing the action")
@@ -115,10 +103,6 @@ class PayrollLockLogResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ===========================================================================
-# 3. Commission Config
-# ===========================================================================
 
 class CommissionConfigCreate(BaseModel):
     enable_commission_calculation: bool    = False
@@ -154,10 +138,6 @@ class CommissionConfigResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ===========================================================================
-# 4. Statutory Settings
-# ===========================================================================
-
 class StatutorySettingsCreate(BaseModel):
     enable_tax_calculation:  bool = True
     enable_epf_contribution: bool = True
@@ -185,10 +165,6 @@ class StatutorySettingsResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ===========================================================================
-# 5. Payroll Components  (Salary Component Configuration table)
-# ===========================================================================
 
 class PayrollComponentCreate(BaseModel):
     component_name:     str             = Field(..., min_length=2, max_length=255)
@@ -239,21 +215,14 @@ class PayrollComponentResponse(BaseModel):
 
 
 class ComponentsTableResponse(BaseModel):
-    """Groups components by type — mirrors the UI table structure."""
+
     earnings:   list[PayrollComponentResponse] = []
     deductions: list[PayrollComponentResponse] = []
     total:      int = 0
 
 
-# ===========================================================================
-# 6. Full Page Config  (single GET to hydrate the entire Payroll Processing page)
-# ===========================================================================
-
 class PayrollProcessingPageResponse(BaseModel):
-    """
-    One response object that delivers everything the frontend needs
-    to render the full Payroll Processing configuration page.
-    """
+
     config:     Optional[PayrollConfigResponse]     = None
     commission: Optional[CommissionConfigResponse]  = None
     statutory:  Optional[StatutorySettingsResponse] = None
