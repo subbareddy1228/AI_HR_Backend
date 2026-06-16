@@ -1,112 +1,180 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import select
-from typing import Optional
-from pydantic import BaseModel
-from decimal import Decimal
-from datetime import date
+from typing import List, Optional
 
 from core.database import get_db
-from model.Payroll.loan_advance import LoanAdvance
-from schema.Payroll.loan_advance import LoanAdvanceCreate, LoanAdvanceUpdate, LoanAdvanceResponse
+from schema.Payroll.loan_advance import (
+    LoanAdvanceCreate,
+    LoanAdvanceUpdate,
+    LoanAdvanceResponse,
+    LoanAdvanceDetailResponse,
+    LoanEMIScheduleResponse,
+    EMIPaymentRequest,
+    LoanDashboard,
+)
+#import services.Payroll.loan_advance as svc
 
-router = APIRouter(prefix="/loans", tags=["Payroll"])
-
-
-class LoanApprovalPayload(BaseModel):
-    approved_by: Optional[str] = None
-    approved_amount: Optional[Decimal] = None
-    emi_amount: Optional[Decimal] = None
-    total_installments: Optional[int] = None
-    start_date: Optional[date] = None
-
-
-class LoanRejectPayload(BaseModel):
-    approved_by: Optional[str] = None
-    reason: Optional[str] = None
+router = APIRouter(
+    prefix="/loans",
+    tags=["Payroll - Loans & Advances"],
+)
 
 
-@router.post("/", response_model=LoanAdvanceResponse, status_code=status.HTTP_201_CREATED)
-def create_loan(payload: LoanAdvanceCreate, db: Session = Depends(get_db)):
-    obj = LoanAdvance(**payload.model_dump())
-    db.add(obj)
-    db.commit()
-    db.refresh(obj)
-    return obj
+# ══════════════════════════════════════════════════════════════════════════════
+#  STATIC ROUTES — defined BEFORE /{loan_id} to avoid FastAPI int-cast errors
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+
+@router.get("/dashboard", response_model=LoanDashboard)
+def get_dashboard(db: Session = Depends(get_db)):
+    return svc.get_dashboard(db)
 
 
-@router.get("/", response_model=list[LoanAdvanceResponse])
-def list_loans(db: Session = Depends(get_db)):
-    return db.execute(select(LoanAdvance)).scalars().all()
+# ── Reports ───────────────────────────────────────────────────────────────────
+
+@router.get("/reports")
+def get_reports(db: Session = Depends(get_db)):
+    return svc.get_reports(db)
 
 
-@router.get("/employee/{employee_id}", response_model=list[LoanAdvanceResponse])
-def get_loans_by_employee(employee_id: int, db: Session = Depends(get_db)):
-    return db.execute(
-        select(LoanAdvance).where(LoanAdvance.employee_id == employee_id)
-    ).scalars().all()
+# ── Export ────────────────────────────────────────────────────────────────────
+
+@router.get("/export")
+def export_loans():
+    return {"message": "Export feature coming soon"}
 
 
-@router.get("/{loan_id}", response_model=LoanAdvanceResponse)
+# ── Filter / search ───────────────────────────────────────────────────────────
+
+@router.get("/filter", response_model=List[LoanAdvanceResponse])
+def filter_loans(
+    status: Optional[str]      = None,
+    loan_type: Optional[str]   = None,
+    employee_id: Optional[int] = None,
+    search: Optional[str]      = None,
+    db: Session = Depends(get_db),
+):
+    return svc.get_all(db, status=status, loan_type=loan_type,
+                       employee_id=employee_id, search=search)
+
+
+# ── Employee loan history ─────────────────────────────────────────────────────
+
+@router.get("/employee/{employee_id}", response_model=List[LoanAdvanceResponse])
+def get_employee_loans(
+    employee_id: int,
+    db: Session = Depends(get_db),
+):
+    return svc.get_by_employee(db, employee_id)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  CORE CRUD
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/", response_model=List[LoanAdvanceResponse])
+def get_all_loans(db: Session = Depends(get_db)):
+    return svc.get_all(db)
+
+
+@router.post(
+    "/",
+    response_model=LoanAdvanceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_loan(
+    payload: LoanAdvanceCreate,
+    db: Session = Depends(get_db),
+):
+    return svc.create(db, payload)
+
+
+@router.get("/{loan_id}", response_model=LoanAdvanceDetailResponse)
 def get_loan(loan_id: int, db: Session = Depends(get_db)):
-    obj = db.execute(select(LoanAdvance).where(LoanAdvance.id == loan_id)).scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="Loan/advance not found")
-    return obj
+    loan = svc.get_by_id(db, loan_id)
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan not found")
+    return loan
 
 
 @router.put("/{loan_id}", response_model=LoanAdvanceResponse)
-def update_loan(loan_id: int, payload: LoanAdvanceUpdate, db: Session = Depends(get_db)):
-    obj = db.execute(select(LoanAdvance).where(LoanAdvance.id == loan_id)).scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="Loan/advance not found")
-    for k, v in payload.model_dump(exclude_unset=True).items():
-        setattr(obj, k, v)
-    db.commit()
-    db.refresh(obj)
-    return obj
+def update_loan(
+    loan_id: int,
+    payload: LoanAdvanceUpdate,
+    db: Session = Depends(get_db),
+):
+    loan = svc.update(db, loan_id, payload)
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan not found")
+    return loan
 
 
-@router.patch("/{loan_id}/approve", response_model=LoanAdvanceResponse)
-def approve_loan(loan_id: int, payload: LoanApprovalPayload, db: Session = Depends(get_db)):
-    obj = db.execute(select(LoanAdvance).where(LoanAdvance.id == loan_id)).scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="Loan/advance not found")
-    obj.status = "Active"
-    if payload.approved_by:
-        obj.approved_by = payload.approved_by
-    if payload.approved_amount is not None:
-        obj.approved_amount = payload.approved_amount
-    if payload.emi_amount is not None:
-        obj.emi_amount = payload.emi_amount
-    if payload.total_installments is not None:
-        obj.total_installments = payload.total_installments
-    if payload.start_date is not None:
-        obj.start_date = payload.start_date
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.patch("/{loan_id}/reject", response_model=LoanAdvanceResponse)
-def reject_loan(loan_id: int, payload: LoanRejectPayload, db: Session = Depends(get_db)):
-    obj = db.execute(select(LoanAdvance).where(LoanAdvance.id == loan_id)).scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="Loan/advance not found")
-    obj.status = "Rejected"
-    if payload.approved_by:
-        obj.approved_by = payload.approved_by
-    if payload.reason:
-        obj.reason = payload.reason
-    db.commit()
-    db.refresh(obj)
-    return obj
-
-
-@router.delete("/{loan_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{loan_id}")
 def delete_loan(loan_id: int, db: Session = Depends(get_db)):
-    obj = db.execute(select(LoanAdvance).where(LoanAdvance.id == loan_id)).scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="Loan/advance not found")
-    db.delete(obj)
-    db.commit()
+    result = svc.delete(db, loan_id)
+    if result is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete an ACTIVE loan. Reject it first."
+        )
+    if result is False:
+        raise HTTPException(status_code=404, detail="Loan not found")
+    return {"message": "Loan deleted successfully"}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  WORKFLOW ACTIONS
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.put("/{loan_id}/approve")
+def approve_loan(
+    loan_id: int,
+    approved_by: Optional[str] = None,
+    remarks: Optional[str]     = None,
+    db: Session = Depends(get_db),
+):
+    loan, error = svc.approve(db, loan_id, approved_by, remarks)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"message": "Loan approved successfully"}
+
+
+@router.put("/{loan_id}/reject")
+def reject_loan(
+    loan_id: int,
+    approved_by: Optional[str] = None,
+    remarks: Optional[str]     = None,
+    db: Session = Depends(get_db),
+):
+    loan, error = svc.reject(db, loan_id, approved_by, remarks)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"message": "Loan rejected successfully"}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  EMI
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.get(
+    "/{loan_id}/emi-schedule",
+    response_model=List[LoanEMIScheduleResponse],
+)
+def get_emi_schedule(loan_id: int, db: Session = Depends(get_db)):
+    schedule = svc.get_emi_schedule(db, loan_id)
+    if schedule == [] and not svc.get_by_id(db, loan_id):
+        raise HTTPException(status_code=404, detail="Loan not found")
+    return schedule
+
+
+@router.put("/{loan_id}/pay-emi")
+def pay_emi(
+    loan_id: int,
+    payload: EMIPaymentRequest,
+    db: Session = Depends(get_db),
+):
+    loan, error = svc.pay_emi(db, loan_id, payload)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"message": "EMI payment recorded successfully"}
