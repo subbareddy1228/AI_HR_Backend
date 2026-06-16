@@ -29,7 +29,7 @@ from schema.HR_Automation.daily_punches import (
     SelfieModalOut, LocationModalOut, AllPunchesOut,
     ImportResultOut, FilterOptionsOut, MessageResponse,
 )
-from services.HR_Automation.daily_punches import (
+from services.HR_Automation.daily_punches_service import (
     DailyPunchService, PunchManagementService,
     PunchImportService, PunchExportService, SummaryService,
 )
