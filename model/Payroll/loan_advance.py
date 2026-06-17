@@ -1,22 +1,130 @@
+"""
+LoanAdvance Model — Payroll Management → Advances & Loan Management
 
-from sqlalchemy import Column, Integer, String, Date, DateTime, Numeric, Text, ForeignKey
+UI elements covered:
+  • Filter tabs        — All Loans / Pending / Active / Completed (derived from `status`)
+  • KPI cards          — Total Loans, Active Loans, Total Amount, Pending Amount
+  • Search & filters   — by employee name/ID/loan ID, loan type, status
+  • Table columns      — Employee Details, Designation, Department, Loan Type
+                          (+ interest %, deduction mode), Status (+ approval sub-badge),
+                          Issue Date (+ end date), Interest Method (+ rate),
+                          Amount Details (+ paid/pending), EMI & Tenure (+ next due),
+                          Actions (view/edit/approve/reject/delete)
+  • Apply for Loan modal — create request
+
+Status lifecycle:  PENDING → APPROVED → ACTIVE → COMPLETED
+                              └──────→ REJECTED
+                   ACTIVE   → DEFAULTED (optional, for overdue EMIs)
+"""
+
+from datetime import date, datetime
+
+from sqlalchemy import (
+    Boolean, Column, Date, DateTime, ForeignKey,
+    Integer, Numeric, String, Text, func,
+)
+from sqlalchemy.orm import relationship
+
 from core.database import Base
-from datetime import datetime
 
 
 class LoanAdvance(Base):
     __tablename__ = "loans_advances"
 
+    # ── Primary Key ───────────────────────────────────────────────────────────
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
-    loan_type = Column(String(50), nullable=False)  # Loan/Salary Advance
-    amount = Column(Numeric(10, 2), nullable=False)
-    approved_amount = Column(Numeric(10, 2), nullable=True)
-    emi_amount = Column(Numeric(10, 2), nullable=True)
-    total_installments = Column(Integer, nullable=True)
-    paid_installments = Column(Integer, default=0)
-    start_date = Column(Date, nullable=True)
-    status = Column(String(50), default="Pending")  # Pending/Approved/Rejected/Active/Closed
+
+    # ── Human-readable Loan ID shown in UI (LN001, LN002, ...) ────────────────
+    loan_code = Column(String(20), unique=True, nullable=False, index=True)
+
+    # ── Employee Reference ────────────────────────────────────────────────────
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False, index=True)
+
+    # ── Employee Snapshot (denormalised so historic loans display correctly
+    #     even if employee designation/department changes later) ──────────────
+    employee_code  = Column(String(50),  nullable=False)
+    employee_name  = Column(String(255), nullable=False)
+    designation    = Column(String(150), nullable=True)
+    department     = Column(String(150), nullable=True)
+
+    # ── Loan Classification ───────────────────────────────────────────────────
+    # Educational loan | Emergency loan | Festival advance | Vehicle loan |
+    # Salary advance | Personal loan | Medical advance | Other
+    loan_type = Column(String(50), nullable=False)
+
+    # ── Requested Amount ──────────────────────────────────────────────────────
+    amount = Column(Numeric(12, 2), nullable=False)
     reason = Column(Text, nullable=True)
-    approved_by = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # ── Interest Terms ────────────────────────────────────────────────────────
+    interest_rate   = Column(Numeric(5, 2), nullable=False, server_default="0")  # % per annum
+    # Reducing Balance | Flat Rate | No Interest / Interest Free
+    interest_method = Column(String(50), nullable=False, server_default="Interest Free")
+
+    # ── Repayment Mode ────────────────────────────────────────────────────────
+    # Payroll Deduction | Bank Transfer | Cash
+    repayment_mode = Column(String(50), nullable=False, server_default="Payroll Deduction")
+
+    # ── Approval ──────────────────────────────────────────────────────────────
+    # PENDING | APPROVED | REJECTED | ACTIVE | COMPLETED | DEFAULTED
+    status        = Column(String(20), nullable=False, server_default="PENDING", index=True)
+    approved_amount = Column(Numeric(12, 2), nullable=True)
+    approved_by     = Column(String(255), nullable=True)
+    approved_at     = Column(DateTime, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+
+    # ── EMI Schedule ──────────────────────────────────────────────────────────
+    emi_amount          = Column(Numeric(12, 2), nullable=True)
+    total_installments   = Column(Integer, nullable=True)   # tenure in months
+    paid_installments    = Column(Integer, nullable=False, server_default="0")
+
+    # ── Key Dates ─────────────────────────────────────────────────────────────
+    issue_date  = Column(Date, nullable=True)   # loan disbursed / EMI start
+    end_date    = Column(Date, nullable=True)   # expected closure date
+    next_due_date = Column(Date, nullable=True)
+    closed_date = Column(Date, nullable=True)   # actual closure date when COMPLETED
+
+    # ── Running Totals (kept in sync by service layer on each repayment) ──────
+    total_paid    = Column(Numeric(12, 2), nullable=False, server_default="0")
+    total_pending = Column(Numeric(12, 2), nullable=False, server_default="0")
+
+    # ── Audit ─────────────────────────────────────────────────────────────────
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(),
+                        onupdate=func.now())
+
+    # ── Relationships ─────────────────────────────────────────────────────────
+    repayments = relationship(
+        "LoanRepayment",
+        back_populates="loan",
+        cascade="all, delete-orphan",
+        order_by="LoanRepayment.installment_number",
+    )
+
+
+class LoanRepayment(Base):
+    """
+    Individual EMI / repayment entries — drives the 'Paid' / 'Pending' figures
+    and the 'Next due' date shown in the EMI & Tenure column.
+    """
+    __tablename__ = "loan_repayments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    loan_id = Column(Integer, ForeignKey("loans_advances.id", ondelete="CASCADE"),
+                     nullable=False, index=True)
+
+    installment_number = Column(Integer, nullable=False)
+    due_date            = Column(Date, nullable=False, index=True)
+    emi_amount           = Column(Numeric(12, 2), nullable=False)
+
+    # PENDING | PAID | OVERDUE | WAIVED
+    status      = Column(String(20), nullable=False, server_default="PENDING")
+    paid_amount = Column(Numeric(12, 2), nullable=True)
+    paid_date   = Column(Date, nullable=True)
+    payment_reference = Column(String(150), nullable=True)  # payroll run ref / transaction id
+
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(),
+                        onupdate=func.now())
+
+    loan = relationship("LoanAdvance", back_populates="repayments")
