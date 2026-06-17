@@ -42,7 +42,7 @@ class DataPrivacySetting(Base):
     created_at                      = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at                      = Column(DateTime, default=datetime.utcnow,
                                              onupdate=datetime.utcnow, nullable=False)
-    updated_by                      = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by                      = Column(Integer, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("tenant_id", name="uq_data_privacy_tenant"),

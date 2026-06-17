@@ -122,7 +122,7 @@ class ApprovalsDashboard(Base):
 
     workflow_instance_id  = Column(
         Integer,
-        ForeignKey("workflow_instances.id", ondelete="SET NULL"),
+        ForeignKey("workflow_engine_instances.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )

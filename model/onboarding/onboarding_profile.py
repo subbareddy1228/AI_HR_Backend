@@ -6,7 +6,7 @@ class OnboardingProfile(Base):
     __tablename__ = "onboarding_profiles"
 
     id = Column(Integer, primary_key=True)
-    candidate_id = Column(Integer, ForeignKey("onboarding_Forms.id"), unique=True)
+    candidate_id = Column(Integer, ForeignKey("onboarding_forms_candidates.id"), unique=True)
 
     data = Column(JSON, nullable=False)  # stores all steps
     progress = Column(Integer, default=0)  # 0–100 %
