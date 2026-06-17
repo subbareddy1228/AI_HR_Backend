@@ -68,7 +68,7 @@ DEFAULT_LEAVE_TYPES = [
 
 def _resolve_employee(db, employee_id: str) -> dict:
     try:
-        from models.employee import Employee
+        from model.onboarding.employee import Employee
         emp = db.query(Employee).filter_by(employee_id=employee_id).first()
         if emp:
             return {
@@ -297,7 +297,7 @@ class LeaveBalanceService:
     def run_auto_accrual(db: Session) -> dict:
         """Auto Accrual button — credits monthly accruals for all active employees."""
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             employees = db.query(Employee).filter_by(status="Active").all()
         except ImportError:
             return {"processed": 0, "skipped": 0, "message": "Employee model not found."}
@@ -694,7 +694,7 @@ class LeavePlanningService:
     @staticmethod
     def coverage(db: Session, start_date: date, end_date: date, department: Optional[str] = None) -> List[dict]:
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             q = db.query(Employee).filter_by(status="Active")
             all_employees = q.all()
         except ImportError:

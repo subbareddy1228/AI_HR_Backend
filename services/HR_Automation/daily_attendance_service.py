@@ -65,7 +65,7 @@ def _build_card(db: Session, record: DailyAttendanceRecord) -> dict:
     # Resolve employee name / designation
     emp_name, emp_code, designation = record.employee_id, record.employee_id, ""
     try:
-        from models.employee import Employee
+        from model.onboarding.employee import Employee
         emp = db.query(Employee).filter_by(employee_id=record.employee_id).first()
         if emp:
             emp_name    = emp.name
@@ -166,7 +166,7 @@ class DailyAttendanceService:
         if f.search:
             term = f"%{f.search.lower()}%"
             try:
-                from models.employee import Employee
+                from model.onboarding.employee import Employee
                 q = q.join(Employee,
                             Employee.employee_id == DailyAttendanceRecord.employee_id)
                 q = q.filter(or_(
@@ -195,7 +195,7 @@ class DailyAttendanceService:
 
         emp_name, emp_code = employee_id, employee_id
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             emp = db.query(Employee).filter_by(employee_id=employee_id).first()
             if emp:
                 emp_name = emp.name
@@ -252,7 +252,7 @@ class PunchManagementService:
             )
             # Pull org fields from Employee
             try:
-                from models.employee import Employee
+                from model.onboarding.employee import Employee
                 emp = db.query(Employee).filter_by(employee_id=employee_id).first()
                 if emp:
                     record.location      = getattr(emp, "location", "")

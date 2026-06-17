@@ -1,181 +1,215 @@
-# FILE 18 of 18 | routers/Payroll/payroll_reports.py
-# Router: Payroll Reports — prefix: /payroll-reports  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   GET /payroll-reports/summary                    — total gross/deductions/net grouped by dept
-#   GET /payroll-reports/employee/{employee_id}     — all payroll history for employee
-#   GET /payroll-reports/cost-breakdown/{run_id}    — full cost breakdown for a specific run
-
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
-from calendar import month_name
-
+from typing import List, Optional
+#from dependencies import get_db
 from core.database import get_db
-from model.Payroll.payroll_run import PayrollRun, PayrollRunDetail
-from model.Payroll.salary_slip import SalarySlip
 
-router = APIRouter(prefix="/payroll-reports", tags=["Payroll"])
+from schema.Payroll.payroll_reports import (
+    SummaryMetricOut, AIInsightOut,
+    StandardReportCreate, StandardReportUpdate, StandardReportOut,
+    GenerateStandardReportRequest, ScheduleStandardReportRequest,
+    ComplianceReportCreate, ComplianceReportOut,
+    AnalyticsDashboardOut, AnalyticsDataRequest,
+    GeneratedReportOut,
+    ScheduledReportCreate, ScheduledReportUpdate, ScheduledReportOut,
+    ReportConfigurationOut, ReportConfigurationUpdate,
+    ReportColumnDefinitionOut,
+    CustomReportCreate, CustomReportUpdate, CustomReportOut,
+    ExportConfigOut,
+)
+#from services.payroll_reports_service import PayrollReportsService
+
+router = APIRouter(
+    prefix="/payroll-reports",
+    tags=["Payroll Reports"],
+)
 
 
-@router.get("/summary")
-def payroll_summary(
-    year: int = Query(...),
-    month: int = Query(..., ge=1, le=12),
+# ── Dashboard (top summary cards + AI insights, shown on all tabs) ───────────
+
+@router.get("/summary", response_model=List[SummaryMetricOut])
+def get_summary_metrics(period: Optional[str] = None, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).get_summary_metrics(period)
+
+@router.get("/insights", response_model=List[AIInsightOut])
+def get_ai_insights(db: Session = Depends(get_db)):
+    return PayrollReportsService(db).get_ai_insights()
+
+@router.post("/insights/{insight_id}/dismiss")
+def dismiss_insight(insight_id: int, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).dismiss_insight(insight_id)
+
+
+# ── Tab 1: Standard Reports ───────────────────────────────────────────────────
+
+@router.get("/standard", response_model=List[StandardReportOut])
+def list_standard_reports(
+    search: Optional[str] = None,
+    department: Optional[str] = None,
+    frequency: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    run = db.execute(
-        select(PayrollRun).where(
-            PayrollRun.run_year == year,
-            PayrollRun.run_month == month,
-        )
-    ).scalar_one_or_none()
+    return PayrollReportsService(db).list_standard_reports(search, department, frequency)
 
-    if not run:
-        return {
-            "year": year,
-            "month": month,
-            "month_name": month_name[month],
-            "total_gross": 0,
-            "total_deductions": 0,
-            "total_net_pay": 0,
-            "department_breakdown": [],
-            "note": "No payroll run found for this period",
-        }
+@router.post("/standard", response_model=StandardReportOut, status_code=201)
+def create_standard_report(data: StandardReportCreate, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).create_standard_report(data)
 
-    details = db.execute(
-        select(PayrollRunDetail).where(PayrollRunDetail.payroll_run_id == run.id)
-    ).scalars().all()
+@router.put("/standard/{report_id}", response_model=StandardReportOut)
+def update_standard_report(report_id: int, data: StandardReportUpdate, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).update_standard_report(report_id, data)
 
-    dept_map: dict = {}
-    for d in details:
-        dept = d.department or "Unknown"
-        if dept not in dept_map:
-            dept_map[dept] = {
-                "department": dept,
-                "employee_count": 0,
-                "total_gross": 0.0,
-                "total_deductions": 0.0,
-                "total_net_pay": 0.0,
-            }
-        dept_map[dept]["employee_count"] += 1
-        dept_map[dept]["total_gross"] += float(d.gross_salary or 0)
-        dept_map[dept]["total_deductions"] += float(d.total_deductions or 0)
-        dept_map[dept]["total_net_pay"] += float(d.net_pay or 0)
+@router.delete("/standard/{report_id}", status_code=204)
+def delete_standard_report(report_id: int, db: Session = Depends(get_db)):
+    PayrollReportsService(db).delete_standard_report(report_id)
 
-    # Round for clean output
-    for v in dept_map.values():
-        v["total_gross"] = round(v["total_gross"], 2)
-        v["total_deductions"] = round(v["total_deductions"], 2)
-        v["total_net_pay"] = round(v["total_net_pay"], 2)
+@router.post("/standard/{report_id}/generate", response_model=GeneratedReportOut, status_code=201)
+def generate_standard_report(report_id: int, data: GenerateStandardReportRequest, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).generate_standard_report(report_id, data)
 
-    return {
-        "year": year,
-        "month": month,
-        "month_name": month_name[month],
-        "payroll_run_id": run.id,
-        "status": run.status,
-        "total_employees": run.total_employees,
-        "total_gross": float(run.total_gross or 0),
-        "total_deductions": float(run.total_deductions or 0),
-        "total_net_pay": float(run.total_net_pay or 0),
-        "department_breakdown": list(dept_map.values()),
-    }
+@router.post("/standard/{report_id}/schedule", response_model=ScheduledReportOut, status_code=201)
+def schedule_standard_report(report_id: int, data: ScheduleStandardReportRequest, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).schedule_standard_report(report_id, data)
+
+@router.get("/standard/export")
+def export_standard_reports(format: str = "excel", db: Session = Depends(get_db)):
+    file_path, filename = PayrollReportsService(db).export_standard_reports(format)
+    return FileResponse(file_path, filename=filename)
 
 
-@router.get("/employee/{employee_id}")
-def employee_payroll_history(employee_id: int, db: Session = Depends(get_db)):
-    # Pull from salary slips for full history
-    slips = db.execute(
-        select(SalarySlip)
-        .where(SalarySlip.employee_id == employee_id)
-        .order_by(SalarySlip.slip_year.desc(), SalarySlip.slip_month.desc())
-    ).scalars().all()
+# ── Tab 2: Compliance ─────────────────────────────────────────────────────────
 
-    # Also pull PayrollRunDetails to enrich with deduction breakdown
-    run_details = db.execute(
-        select(PayrollRunDetail).where(PayrollRunDetail.employee_id == employee_id)
-    ).scalars().all()
-    detail_index = {(d.payroll_run_id): d for d in run_details}
+@router.get("/compliance", response_model=List[ComplianceReportOut])
+def list_compliance_reports(type: Optional[str] = None, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).list_compliance_reports(type)
 
-    history = []
-    for s in slips:
-        detail = detail_index.get(s.payroll_run_id)
-        entry: dict = {
-            "slip_id": s.id,
-            "slip_month": s.slip_month,
-            "month_name": month_name[s.slip_month],
-            "slip_year": s.slip_year,
-            "gross_salary": float(s.gross_salary or 0),
-            "total_deductions": float(s.total_deductions or 0),
-            "net_pay": float(s.net_pay or 0),
-            "is_published": s.is_published,
-        }
-        if detail:
-            entry["days_worked"] = detail.days_worked
-            entry["days_absent"] = detail.days_absent
-            entry["basic"] = float(detail.basic or 0)
-            entry["hra"] = float(detail.hra or 0)
-            entry["pf_employee"] = float(detail.pf_employee or 0)
-            entry["tds"] = float(detail.tds or 0)
-        history.append(entry)
+@router.get("/compliance/overdue-count")
+def get_overdue_count(db: Session = Depends(get_db)):
+    return PayrollReportsService(db).get_overdue_compliance_count()
 
-    return {
-        "employee_id": employee_id,
-        "total_slips": len(history),
-        "history": history,
-    }
+@router.post("/compliance", response_model=ComplianceReportOut, status_code=201)
+def create_compliance_report(data: ComplianceReportCreate, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).create_compliance_report(data)
+
+@router.get("/compliance/{report_id}/download")
+def download_compliance_report(report_id: int, db: Session = Depends(get_db)):
+    file_path, filename = PayrollReportsService(db).get_compliance_file(report_id)
+    return FileResponse(file_path, filename=filename)
+
+@router.delete("/compliance/{report_id}", status_code=204)
+def delete_compliance_report(report_id: int, db: Session = Depends(get_db)):
+    PayrollReportsService(db).delete_compliance_report(report_id)
 
 
-@router.get("/cost-breakdown/{run_id}")
-def cost_breakdown(run_id: int, db: Session = Depends(get_db)):
-    run = db.execute(select(PayrollRun).where(PayrollRun.id == run_id)).scalar_one_or_none()
-    if not run:
-        raise HTTPException(status_code=404, detail="Payroll run not found")
+# ── Tab 3: Analytics ──────────────────────────────────────────────────────────
 
-    details = db.execute(
-        select(PayrollRunDetail).where(PayrollRunDetail.payroll_run_id == run_id)
-    ).scalars().all()
+@router.get("/analytics", response_model=List[AnalyticsDashboardOut])
+def list_analytics_dashboards(db: Session = Depends(get_db)):
+    return PayrollReportsService(db).list_analytics_dashboards()
 
-    total_basic = sum(float(d.basic or 0) for d in details)
-    total_hra = sum(float(d.hra or 0) for d in details)
-    total_special = sum(float(d.special_allowance or 0) for d in details)
-    total_pf = sum(float(d.pf_employee or 0) for d in details)
-    total_esi = sum(float(d.esi_employee or 0) for d in details)
-    total_pt = sum(float(d.professional_tax or 0) for d in details)
-    total_tds = sum(float(d.tds or 0) for d in details)
+@router.post("/analytics/{dashboard_id}/data")
+def get_analytics_data(dashboard_id: int, data: AnalyticsDataRequest, db: Session = Depends(get_db)):
+    """Returns chart-ready data points for a given analytics dashboard."""
+    return PayrollReportsService(db).get_analytics_data(dashboard_id, data)
 
-    return {
-        "payroll_run_id": run_id,
-        "run_month": run.run_month,
-        "month_name": month_name[run.run_month],
-        "run_year": run.run_year,
-        "status": run.status,
-        "total_employees": run.total_employees,
-        "earnings_breakdown": {
-            "total_basic": round(total_basic, 2),
-            "total_hra": round(total_hra, 2),
-            "total_special_allowance": round(total_special, 2),
-            "total_gross": float(run.total_gross or 0),
-        },
-        "deductions_breakdown": {
-            "total_pf_employee": round(total_pf, 2),
-            "total_esi_employee": round(total_esi, 2),
-            "total_professional_tax": round(total_pt, 2),
-            "total_tds": round(total_tds, 2),
-            "total_deductions": float(run.total_deductions or 0),
-        },
-        "total_net_pay": float(run.total_net_pay or 0),
-        "employee_details": [
-            {
-                "employee_id": d.employee_id,
-                "employee_code": d.employee_code,
-                "employee_name": d.employee_name,
-                "department": d.department,
-                "days_worked": d.days_worked,
-                "gross_salary": float(d.gross_salary or 0),
-                "total_deductions": float(d.total_deductions or 0),
-                "net_pay": float(d.net_pay or 0),
-            }
-            for d in details
-        ],
-    }
+
+# ── Tab 4: Generated ──────────────────────────────────────────────────────────
+
+@router.get("/generated", response_model=List[GeneratedReportOut])
+def list_generated_reports(db: Session = Depends(get_db)):
+    return PayrollReportsService(db).list_generated_reports()
+
+@router.get("/generated/{report_id}/download")
+def download_generated_report(report_id: int, db: Session = Depends(get_db)):
+    file_path, filename = PayrollReportsService(db).get_generated_report_file(report_id)
+    return FileResponse(file_path, filename=filename)
+
+@router.delete("/generated/{report_id}", status_code=204)
+def delete_generated_report(report_id: int, db: Session = Depends(get_db)):
+    PayrollReportsService(db).delete_generated_report(report_id)
+
+
+# ── Tab 5: Scheduled ──────────────────────────────────────────────────────────
+
+@router.get("/scheduled", response_model=List[ScheduledReportOut])
+def list_scheduled_reports(db: Session = Depends(get_db)):
+    return PayrollReportsService(db).list_scheduled_reports()
+
+@router.post("/scheduled", response_model=ScheduledReportOut, status_code=201)
+def create_scheduled_report(data: ScheduledReportCreate, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).create_scheduled_report(data)
+
+@router.put("/scheduled/{schedule_id}", response_model=ScheduledReportOut)
+def update_scheduled_report(schedule_id: int, data: ScheduledReportUpdate, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).update_scheduled_report(schedule_id, data)
+
+@router.post("/scheduled/{schedule_id}/pause")
+def pause_scheduled_report(schedule_id: int, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).pause_scheduled_report(schedule_id)
+
+@router.post("/scheduled/{schedule_id}/resume")
+def resume_scheduled_report(schedule_id: int, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).resume_scheduled_report(schedule_id)
+
+@router.delete("/scheduled/{schedule_id}", status_code=204)
+def delete_scheduled_report(schedule_id: int, db: Session = Depends(get_db)):
+    PayrollReportsService(db).delete_scheduled_report(schedule_id)
+
+
+# ── Tab 6: Configuration ──────────────────────────────────────────────────────
+
+@router.get("/configuration", response_model=ReportConfigurationOut)
+def get_configuration(db: Session = Depends(get_db)):
+    return PayrollReportsService(db).get_configuration()
+
+@router.put("/configuration", response_model=ReportConfigurationOut)
+def update_configuration(data: ReportConfigurationUpdate, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).update_configuration(data)
+
+@router.post("/configuration/reset", response_model=ReportConfigurationOut)
+def reset_configuration(db: Session = Depends(get_db)):
+    return PayrollReportsService(db).reset_configuration()
+
+@router.get("/configuration/export", response_model=ExportConfigOut)
+def export_configuration(db: Session = Depends(get_db)):
+    return PayrollReportsService(db).export_configuration()
+
+@router.get("/configuration/export/download")
+def download_configuration_export(db: Session = Depends(get_db)):
+    file_path, filename = PayrollReportsService(db).get_configuration_export_file()
+    return FileResponse(file_path, filename=filename)
+
+# Custom Reports listed under Configuration tab
+@router.get("/custom", response_model=List[CustomReportOut])
+def list_custom_reports(db: Session = Depends(get_db)):
+    return PayrollReportsService(db).list_custom_reports()
+
+@router.delete("/custom/{report_id}", status_code=204)
+def delete_custom_report(report_id: int, db: Session = Depends(get_db)):
+    PayrollReportsService(db).delete_custom_report(report_id)
+
+
+# ── Tab 7: Report Builder ─────────────────────────────────────────────────────
+
+@router.get("/builder/columns", response_model=List[ReportColumnDefinitionOut])
+def list_column_definitions(group: Optional[str] = None, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).list_column_definitions(group)
+
+@router.post("/builder", response_model=CustomReportOut, status_code=201)
+def create_custom_report(data: CustomReportCreate, db: Session = Depends(get_db)):
+    """Final 'Create Report' submission from the 4-step Report Builder wizard."""
+    return PayrollReportsService(db).create_custom_report(data)
+
+@router.get("/builder/{report_id}", response_model=CustomReportOut)
+def get_custom_report(report_id: int, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).get_custom_report(report_id)
+
+@router.put("/builder/{report_id}", response_model=CustomReportOut)
+def update_custom_report(report_id: int, data: CustomReportUpdate, db: Session = Depends(get_db)):
+    return PayrollReportsService(db).update_custom_report(report_id, data)
+
+@router.post("/builder/{report_id}/run", response_model=GeneratedReportOut, status_code=201)
+def run_custom_report(report_id: int, db: Session = Depends(get_db)):
+    """Generates output for a saved custom report on demand."""
+    return PayrollReportsService(db).run_custom_report(report_id)

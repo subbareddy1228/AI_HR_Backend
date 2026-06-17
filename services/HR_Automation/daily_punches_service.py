@@ -82,7 +82,7 @@ class DailyPunchService:
         Main query behind the Daily Punches table.
         Applies all 7 filter controls + pagination, returns structured rows.
         """
-        from models.daily_punches import DailyPunchSummary, EmployeePunch
+        from model.HR_Automation.daily_punches import DailyPunchSummary, EmployeePunch
 
         # ── Base query on summary rows ──
         q = db.query(DailyPunchSummary).filter(
@@ -133,7 +133,7 @@ class DailyPunchService:
             # Fetch employee info
             emp_name, emp_code, designation = s.employee_id, s.employee_id, ""
             try:
-                from models.employee import Employee
+                from model.onboarding.employee import Employee
                 emp = db.query(Employee).filter_by(employee_id=s.employee_id).first()
                 if emp:
                     emp_name    = emp.name
@@ -208,7 +208,7 @@ class DailyPunchService:
         )
         emp_name, emp_code = employee_id, employee_id
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             emp = db.query(Employee).filter_by(employee_id=employee_id).first()
             if emp:
                 emp_name = emp.name
@@ -239,7 +239,7 @@ class DailyPunchService:
         )
         emp_name, emp_code = employee_id, employee_id
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             emp = db.query(Employee).filter_by(employee_id=employee_id).first()
             if emp:
                 emp_name = emp.name
@@ -268,7 +268,7 @@ class DailyPunchService:
         )
         emp_name, emp_code = employee_id, employee_id
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             emp = db.query(Employee).filter_by(employee_id=employee_id).first()
             if emp:
                 emp_name = emp.name
@@ -370,7 +370,7 @@ class SummaryService:
 
     @staticmethod
     def recalculate(db: Session, employee_id: str, punch_date: date) -> Optional[DailyPunchSummary]:
-        from models.daily_punches import EmployeePunch, DailyPunchSummary
+        from model.HR_Automation.daily_punches import EmployeePunch, DailyPunchSummary
 
         punches = (
             db.query(EmployeePunch)
@@ -393,7 +393,7 @@ class SummaryService:
             summary = DailyPunchSummary(employee_id=employee_id, punch_date=punch_date)
             # Pull org fields from Employee model
             try:
-                from models.employee import Employee
+                from model.onboarding.employee import Employee
                 emp = db.query(Employee).filter_by(employee_id=employee_id).first()
                 if emp:
                     summary.business_unit = getattr(emp, "business_unit", "Default Business Units")

@@ -97,7 +97,7 @@ from routers.admin_users.send_assessment_email import router as email_router
 from routers.offers.offer_template_router import router as offer_template_router
 from routers.offers.offer_tracking_router import router as offer_tracking_router
 from routers.HR_Automation.Onboarding.routers import candidates as onboard_candidates, uploads
-from routers.HR_Automation.attendance.routers import attendance
+
 from routers.AI_Interview_Bot.routes import interviews
 from routers.CRM import contacts, company, deals, leads, pipelines, activities, analytics,projects, clients, tasks
 from routers.onboarding.admin_candidates import router as admin_candidates_router
@@ -108,7 +108,7 @@ from routers.Payroll import salary_structure, payroll_processing, payroll_run, s
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
 
-from routers.HR_Automation.attendance.routers import attendance_capture, daily_punches, daily_attendance, monthly_attendance, manual_attendance, leave_correction, shift_management, holiday_calendar, work_hour_rules, attendance_reports, leave_management, holiday_calendar as att_rpt
+from routers.HR_Automation.attendance.routers import attendance_capture, daily_punches, daily_attendance, monthly_attendance, manual_attendance, leave_correction, shift_management, work_hour_rules, attendance_reports as att_rpt, leave_management, holiday_calendar , regularization
 
 from routers.Reports import employee_reports, attendance_reports as rep_att, leave_reports, payroll_reports as rep_pay, compliance_reports, custom_report_builder, executive_dashboard, ai_insights
 from routers.Forms_Workflows import custom_form_builder, workflow_engine, request_management, surveys, approvals
@@ -222,8 +222,6 @@ app.include_router(exam.router, prefix="/api/assessment/aptitude")
 app.include_router(aptitude_results.router, prefix="/api/assessment/aptitude")
 app.include_router(hiring_funnel_router, prefix="/api/hiring_funnel")
 app.include_router(time_hire_router, prefix="/api/time_to_hire")
-app.include_router(attendance.router, prefix="/api/attendance")
-# app.include_router(leave.router, prefix="/api/leave")
 app.include_router(documents_router, prefix="/api/documents")
 app.include_router(signatures_router, prefix="/api/signatures")
 app.include_router(onboard_candidates.router, prefix="/api/candidates")
@@ -314,19 +312,18 @@ app.include_router(transfers.router, prefix="/api/hr-ops", tags=["HR Operations"
 app.include_router(promotions.router, prefix="/api/hr-ops", tags=["HR Operations"])
 
 # Attendance extensions
-app.include_router(shift_management.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(holiday_calendar.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(work_hour_rules.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(att_rpt.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(attendance_capture.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(daily_punches.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(daily_attendance.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(monthly_attendance.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(manual_attendance.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(leave_correction.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(leave_management.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(holiday_calendar.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(attendance_reports.router, prefix="/api/attendance", tags=["Attendance"])
+app.include_router(shift_management.router)
+app.include_router(holiday_calendar.router)
+app.include_router(work_hour_rules.router)
+app.include_router(att_rpt.router)
+app.include_router(attendance_capture.router)
+app.include_router(daily_punches.router)
+app.include_router(daily_attendance.router)
+app.include_router(monthly_attendance.router)
+app.include_router(manual_attendance.router)
+app.include_router(leave_correction.router)
+app.include_router(leave_management.router)
+app.include_router(regularization.router)
 
 # Reports
 app.include_router(employee_reports.router, prefix="/api/reports", tags=["Reports"])

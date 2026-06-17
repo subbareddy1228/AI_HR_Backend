@@ -49,7 +49,7 @@ DEFAULT_HOLIDAYS = [
 
 def _resolve_employee(db: Session, employee_id: str) -> str:
     try:
-        from models.employee import Employee
+        from model.onboarding.employee import Employee
         emp = db.query(Employee).filter_by(employee_id=employee_id).first()
         if emp:
             return emp.name
