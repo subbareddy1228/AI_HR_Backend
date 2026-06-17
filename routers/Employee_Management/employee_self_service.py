@@ -15,7 +15,7 @@ from model.Employee_Management.employee_lifecycle import (
 )
 from model.Payroll.salary_slip                   import SalarySlip
 from model.Payroll.loan_advance                  import LoanAdvance
-from model.Payroll.reimbursement                 import Reimbursement
+from model.Payroll.reimbursement                 import ReimbursementClaim, ReimbursementType
 from model.HR_Operations.hr_helpdesk             import HRHelpdesk
 from model.models                                import AttendanceRecord, LeaveRequest, LeaveStatus
 
@@ -281,7 +281,6 @@ def get_self_leaves(
     m_end   = date(year + 1, 1, 1)
 
     q = select(LeaveRequest).where(
-        LeaveRequest.employee_id == employee_id,
         LeaveRequest.start_date >= m_start,
         LeaveRequest.start_date <  m_end,
     )
@@ -327,7 +326,6 @@ def apply_leave(
         raise HTTPException(status_code=400, detail="End date cannot be before start date")
 
     leave = LeaveRequest(
-        employee_id=employee_id,
         leave_type=leave_type,
         start_date=start_date,
         end_date=end_date,
@@ -534,22 +532,28 @@ def get_self_reimbursements(employee_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Employee not found")
 
     claims = db.execute(
-        select(Reimbursement)
-        .where(Reimbursement.employee_id == employee_id)
-        .order_by(Reimbursement.created_at.desc())
+        select(ReimbursementClaim)
+        .where(ReimbursementClaim.employee_id == employee_id)
+        .order_by(ReimbursementClaim.created_at.desc())
     ).scalars().all()
 
     return [
         {
-            "id":          c.id,
-            "claimType":   c.claim_type,
-            "amount":      float(c.amount),
-            "claimDate":   str(c.claim_date),
-            "description": c.description,
-            "status":      c.status,
-            "approvedBy":  c.approved_by,
-            "remarks":     c.remarks,
-            "createdAt":   str(c.created_at),
+            "id":                    c.id,
+            "claimType":             c.type_name,
+            "amount":                float(c.claimed_amount),
+            "taxAmount":             float(c.tax_amount),
+            "netAmount":             float(c.net_amount),
+            "claimDate":             str(c.claim_date),
+            "description":           c.description,
+            "status":                c.status,
+            "managerApprovalStatus": c.manager_approval_status,
+            "managerApprovedBy":     c.manager_approved_by,
+            "financeApprovalStatus": c.finance_approval_status,
+            "financeApprovedBy":     c.finance_approved_by,
+            "payrollProcessed":      c.payroll_processed,
+            "receiptFilename":       c.receipt_filename,
+            "createdAt":             str(c.created_at),
         }
         for c in claims
     ]
@@ -570,13 +574,38 @@ def submit_reimbursement(
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    claim = Reimbursement(
+    # Resolve type details from reimbursement_types master
+    rtype = db.execute(
+        select(ReimbursementType).where(ReimbursementType.name == claim_type)
+    ).scalar_one_or_none()
+
+    if not rtype:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Reimbursement type '{claim_type}' not found in master."
+        )
+
+    from decimal import Decimal
+    claimed = Decimal(str(amount))
+    tax_amount = (claimed * Decimal("0.30")) if rtype.is_taxable else Decimal("0.00")
+    net_amount = claimed - tax_amount
+
+    claim = ReimbursementClaim(
         employee_id=employee_id,
-        claim_type=claim_type,
-        amount=amount,
+        employee_code=emp.employee_code if hasattr(emp, "employee_code") else str(employee_id),
+        employee_name=f"{emp.first_name} {emp.last_name}",
+        type_id=rtype.id,
+        type_name=rtype.name,
+        frequency=rtype.frequency,
+        claimed_amount=claimed,
+        tax_amount=tax_amount,
+        net_amount=net_amount,
         claim_date=claim_date,
         description=description,
-        status="Pending",
+        status="PENDING",
+        manager_approval_status="PENDING",
+        finance_approval_status="PENDING",
+        payroll_processed=False,
     )
     db.add(claim)
     db.commit()
@@ -584,8 +613,10 @@ def submit_reimbursement(
     return {
         "message":   "Reimbursement claim submitted",
         "claimId":   claim.id,
-        "claimType": claim.claim_type,
-        "amount":    float(claim.amount),
+        "claimType": claim.type_name,
+        "amount":    float(claim.claimed_amount),
+        "taxAmount": float(claim.tax_amount),
+        "netAmount": float(claim.net_amount),
         "status":    claim.status,
     }
 
