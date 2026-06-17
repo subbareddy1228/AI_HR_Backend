@@ -46,7 +46,7 @@ def _resolve_employee(db: Session, employee_id: str) -> dict:
         "business_unit": "", "location": "", "cost_center": "", "department": "",
     }
     try:
-        from models.employee import Employee
+        from model.onboarding.employee import Employee
         emp = db.query(Employee).filter_by(employee_id=employee_id).first()
         if emp:
             result.update({
@@ -90,7 +90,7 @@ def _get_or_create_record(
         # Pull opening balance from LeaveBalance if available
         opening = 0.0
         try:
-            from models.leave_management import LeaveBalance, LeaveType
+            from model.HR_Automation.leave_management import LeaveBalance, LeaveType
             lt = db.query(LeaveType).filter_by(code=leave_type_code).first()
             if lt:
                 bal = db.query(LeaveBalance).filter_by(
@@ -106,7 +106,7 @@ def _get_or_create_record(
         # Pull activity from approved leave applications
         activity = 0.0
         try:
-            from models.leave_management import LeaveApplication, ApplicationStatusEnum, LeaveType as LT
+            from model.HR_Automation.leave_management import LeaveApplication, ApplicationStatusEnum, LeaveType as LT
             lt2 = db.query(LT).filter_by(code=leave_type_code).first()
             if lt2:
                 result = db.query(func.sum(LeaveApplication.days)).filter(
@@ -184,7 +184,7 @@ class FilterOptionsService:
             })
 
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             return {
                 "business_units":     ["All Units"]       + _distinct(Employee.business_unit),
                 "locations":          ["All Locations"]   + _distinct(Employee.location),
@@ -230,7 +230,7 @@ class LeaveCorrectionListService:
         """
         # 1. Pull employees matching org filters
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             q = db.query(Employee).filter_by(status="Active")
             if business_unit and business_unit != "All Units":
                 q = q.filter_by(business_unit=business_unit)
@@ -328,7 +328,7 @@ class LeaveCorrectionSaveService:
         delta = correction - old_correction
         if delta != 0:
             try:
-                from models.leave_management import LeaveBalance, LeaveType
+                from model.HR_Automation.leave_management import LeaveBalance, LeaveType
                 lt = db.query(LeaveType).filter_by(code=leave_type_code).first()
                 if lt:
                     bal = db.query(LeaveBalance).filter_by(

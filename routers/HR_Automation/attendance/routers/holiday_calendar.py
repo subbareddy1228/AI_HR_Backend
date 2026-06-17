@@ -111,7 +111,7 @@ def get_filter_options(
       All Status              → Pending | Approved | Rejected
     """
     from sqlalchemy import distinct
-    from models.holiday_calendar import Holiday
+    from model.HR_Automation.holiday_calendar import Holiday
     cats = sorted({
         v for (v,) in db.query(distinct(Holiday.category)).all() if v
     })
@@ -176,6 +176,22 @@ def create_holiday(
     """
     return HolidayMasterService.create(db, payload, current_user.id)
 
+@router.get("/master/export/csv")
+def export_holidays(
+    search:      Optional[str] = Query(None),
+    category:    Optional[str] = Query(None),
+    type_filter: Optional[str] = Query(None, alias="type"),
+    db:          Session       = Depends(get_db),
+    current_user               = Depends(get_current_user),
+):
+    """Export button (green) → downloads Holiday Master as CSV."""
+    csv_bytes = HolidayMasterService.export_csv(db, search, category, type_filter)
+    return StreamingResponse(
+        io.BytesIO(csv_bytes), media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=holiday_master.csv"},
+    )
+
+
 
 @router.get("/master/{holiday_id}", response_model=HolidayOut)
 def get_holiday(
@@ -218,20 +234,6 @@ def delete_holiday(
     return {"message": f"Holiday {holiday_id} deleted."}
 
 
-@router.get("/master/export/csv")
-def export_holidays(
-    search:      Optional[str] = Query(None),
-    category:    Optional[str] = Query(None),
-    type_filter: Optional[str] = Query(None, alias="type"),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
-):
-    """Export button (green) → downloads Holiday Master as CSV."""
-    csv_bytes = HolidayMasterService.export_csv(db, search, category, type_filter)
-    return StreamingResponse(
-        io.BytesIO(csv_bytes), media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=holiday_master.csv"},
-    )
 
 
 # ══════════════════════════════════════════════════════════

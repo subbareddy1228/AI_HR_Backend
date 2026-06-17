@@ -346,6 +346,7 @@ class AttendanceSettings(Base):
     half_day_threshold_hours         = Column(Numeric(3, 1), default=4.0)
     short_leave_threshold_hours      = Column(Numeric(3, 1), default=2.0)
     auto_sync_enabled                = Column(Boolean, default=False)
+    
     # Field Employee Settings (Settings tab — Field Employee Settings section)
     enable_field_tracking            = Column(Boolean, default=True)
     require_daily_reports            = Column(Boolean, default=True)
@@ -353,6 +354,10 @@ class AttendanceSettings(Base):
     location_update_interval         = Column(String(20), default="30 minutes")
     max_field_radius_km              = Column(Integer, default=50)
     report_deadline                  = Column(Time, default=time(18, 0))
+    spoofing_detection_enabled   = Column(Boolean, default=False)
+    overtime_tracking_enabled    = Column(Boolean, default=True)
+    auto_checkout_enabled        = Column(Boolean, default=False)
+    checkin_reminder_enabled     = Column(Boolean, default=False)
     updated_at                       = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     updated_by                       = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 

@@ -330,6 +330,10 @@ class AttendanceSettingsOut(BaseModel):
     location_update_interval:         str
     max_field_radius_km:              int
     report_deadline:                  time
+    spoofing_detection_enabled:       bool
+    overtime_tracking_enabled:        bool
+    auto_checkout_enabled:            bool
+    checkin_reminder_enabled:         bool
     updated_at:                       datetime
 
     model_config = {"from_attributes": True}
@@ -371,7 +375,10 @@ class AttendanceSettingsUpdate(BaseModel):
     location_update_interval:         Optional[str]     = None
     max_field_radius_km:              Optional[int]     = None
     report_deadline:                  Optional[time]    = None
-
+    spoofing_detection_enabled:       Optional[bool]    = None
+    overtime_tracking_enabled:        Optional[bool]    = None
+    auto_checkout_enabled:            Optional[bool]    = None
+    checkin_reminder_enabled:         Optional[bool]    = None
 
 # ─────────────────────────────────────────────────────────
 # NEW: FIELD EMPLOYEE SCHEMAS

@@ -42,7 +42,7 @@ REQUEST_TYPE_LABELS = {
 
 def _resolve_employee(db: Session, employee_id: str) -> dict:
     try:
-        from models.employee import Employee
+        from model.onboarding.employee import Employee
         emp = db.query(Employee).filter_by(employee_id=employee_id).first()
         if emp:
             return {
@@ -156,7 +156,7 @@ class RegularizationRequestService:
             # Search by employee name or reason (join Employee for name search)
             term = f"%{search.lower()}%"
             try:
-                from models.employee import Employee
+                from model.onboarding.employee import Employee
                 q = q.join(Employee,
                             Employee.employee_id == RegularizationRequest.employee_id,
                             isouter=True)
@@ -418,7 +418,7 @@ class BulkProcessingService:
         emp_ids = list(payload.employeeIds)
         if not emp_ids:
             try:
-                from models.employee import Employee
+                from model.onboarding.employee import Employee
                 emp_ids = [
                     e.employee_id
                     for e in db.query(Employee).filter_by(status="Active").all()

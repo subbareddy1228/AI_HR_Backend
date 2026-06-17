@@ -76,7 +76,7 @@ def _resolve_employee(db: Session, employee_id: str) -> dict:
         "default_shift": "General",
     }
     try:
-        from models.employee import Employee
+        from model.onboarding.employee import Employee
         emp = db.query(Employee).filter_by(employee_id=employee_id).first()
         if emp:
             result.update({
@@ -191,7 +191,7 @@ class FilterOptionsService:
 
         # Pull from employee table for org fields
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             return {
                 "business_units": ["All Units"]      + _distinct(Employee.business_unit),
                 "locations":      ["All Locations"]  + _distinct(Employee.location),
@@ -274,7 +274,7 @@ class RecalculateService:
 
         # Pull daily records for this month
         try:
-            from models.daily_attendance import DailyAttendanceRecord, AttendanceStatusEnum
+            from model.HR_Automation.daily_attendance import DailyAttendanceRecord, AttendanceStatusEnum
             daily_records = (
                 db.query(DailyAttendanceRecord)
                 .filter(
@@ -398,7 +398,7 @@ class ReplaceShiftService:
     @staticmethod
     def replace(db: Session, employee_id: str, year: int, month: int, new_shift: str) -> dict:
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             emp = db.query(Employee).filter_by(employee_id=employee_id).first()
             if not emp:
                 raise ValueError(f"Employee {employee_id} not found.")

@@ -599,7 +599,7 @@ class DashboardService:
         records = db.query(AttendanceRecord).filter_by(date=today)
 
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             total_employees = db.query(Employee).filter_by(status="Active").count()
         except Exception:
             total_employees = 0

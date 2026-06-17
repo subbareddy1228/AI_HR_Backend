@@ -49,7 +49,7 @@ def _resolve_employee(db: Session, employee_id: str) -> dict:
         "cost_center": "", "department": "",
     }
     try:
-        from models.employee import Employee
+        from model.onboarding.employee import Employee
         emp = db.query(Employee).filter_by(employee_id=employee_id).first()
         if emp:
             result.update({
@@ -178,7 +178,7 @@ class ManualAttendanceListService:
 
         # 1. Pull all active employees matching org filters
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             q = db.query(Employee).filter_by(status="Active")
             if business_unit and business_unit != "All Units":
                 q = q.filter_by(business_unit=business_unit)
