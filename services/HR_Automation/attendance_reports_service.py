@@ -82,7 +82,7 @@ DEFAULT_ALERT_RULES = [
 
 def _resolve_employee(db: Session, employee_id: str) -> dict:
     try:
-        from models.employee import Employee
+        from model.onboarding.employee import Employee
         emp = db.query(Employee).filter_by(employee_id=employee_id).first()
         if emp:
             return {
@@ -120,7 +120,7 @@ def _get_attendance_records(db, start: date, end: date,
                              employee_id: Optional[str]):
     """Fetch DailyAttendanceRecord rows filtered by params."""
     try:
-        from models.daily_attendance import DailyAttendanceRecord
+        from model.HR_Automation.daily_attendance import DailyAttendanceRecord
         q = db.query(DailyAttendanceRecord).filter(
             DailyAttendanceRecord.attendance_date >= start,
             DailyAttendanceRecord.attendance_date <= end,

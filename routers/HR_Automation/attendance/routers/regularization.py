@@ -193,6 +193,23 @@ async def create_request(
         attachment_path=attachment_path,
     )
 
+# ══════════════════════════════════════════════════════════
+# AUTO-REJECT CRON TRIGGER
+# ══════════════════════════════════════════════════════════
+
+@router.post("/run-auto-reject", response_model=MessageResponse)
+def run_auto_reject(
+    db:          Session = Depends(get_db),
+    current_user         = Depends(get_current_user),
+):
+    """
+    Manually trigger auto-reject processing.
+    In production this is called by a cron job every hour.
+    Auto-rejects pending requests that have exceeded their rule's day limit.
+    """
+    count = AutoRejectService.run(db)
+    return {"message": f"Auto-reject complete — {count} request(s) rejected."}
+
 
 @router.get("/{request_id}", response_model=RegularizationRequestOut)
 def get_request(
@@ -253,22 +270,7 @@ def delete_request(
     return {"message": f"Request {request_id} deleted."}
 
 
-# ══════════════════════════════════════════════════════════
-# AUTO-REJECT CRON TRIGGER
-# ══════════════════════════════════════════════════════════
 
-@router.post("/run-auto-reject", response_model=MessageResponse)
-def run_auto_reject(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
-):
-    """
-    Manually trigger auto-reject processing.
-    In production this is called by a cron job every hour.
-    Auto-rejects pending requests that have exceeded their rule's day limit.
-    """
-    count = AutoRejectService.run(db)
-    return {"message": f"Auto-reject complete — {count} request(s) rejected."}
 
 
 # ══════════════════════════════════════════════════════════

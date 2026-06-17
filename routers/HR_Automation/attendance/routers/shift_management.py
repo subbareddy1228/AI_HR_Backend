@@ -185,6 +185,11 @@ def update_assignment(
         return ShiftAssignmentService.update_assignment(db, assignment_id, payload)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
+    
+@router.delete("/assignments/{assignment_id}", response_model=MessageResponse)
+def delete_assignment(assignment_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    ShiftAssignmentService.delete_assignment(db, assignment_id)
+    return {"message": f"Assignment {assignment_id} deleted."}
 
 
 # ═══════════════════════════════════════════════════════════

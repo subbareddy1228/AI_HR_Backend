@@ -144,6 +144,19 @@ def list_report_definitions(
     """
     return ReportsService.list_definitions(db, report_type)
 
+@router.get("/library/export-all")
+def export_all_reports(
+    db:          Session = Depends(get_db),
+    current_user         = Depends(get_current_user),
+):
+    """
+    Export All (12) button — downloads the full report definitions catalogue as CSV.
+    """
+    csv_bytes = ReportsService.export_all(db)
+    return StreamingResponse(
+        io.BytesIO(csv_bytes), media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=report_catalogue.csv"},
+    )
 
 @router.post("/library/{report_def_id}/generate")
 def generate_report(
@@ -180,19 +193,7 @@ def generate_report(
     )
 
 
-@router.get("/library/export-all")
-def export_all_reports(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
-):
-    """
-    Export All (12) button — downloads the full report definitions catalogue as CSV.
-    """
-    csv_bytes = ReportsService.export_all(db)
-    return StreamingResponse(
-        io.BytesIO(csv_bytes), media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=report_catalogue.csv"},
-    )
+
 
 
 # ══════════════════════════════════════════════════════════
