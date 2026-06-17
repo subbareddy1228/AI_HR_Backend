@@ -218,7 +218,7 @@ class RequestManagement(Base):
 
     workflow        = Column(String(100), nullable=True)   
     workflow_instance_id = Column(
-        Integer, ForeignKey("workflow_instances.id"), nullable=True, index=True
+        Integer, ForeignKey("workflow_engine_instances.id"), nullable=True, index=True
     )
 
   
@@ -246,7 +246,7 @@ class RequestManagement(Base):
                              onupdate=datetime.utcnow, nullable=False)
 
     
-    workflow_instance = relationship("WorkflowInstance", foreign_keys=[workflow_instance_id])
+    workflow_instance = relationship("WorkflowEngineInstance", foreign_keys=[workflow_instance_id])
 
 
     personal_info_detail  = relationship("RequestPersonalInfoDetail",  back_populates="request", uselist=False, cascade="all, delete-orphan")
@@ -665,7 +665,7 @@ class RequestTypeConfig(Base):
     description     = Column(Text,        nullable=True)
     default_priority= Column(String(20),  nullable=False, default=RequestPriority.MEDIUM)
     sla_days        = Column(String(50),  nullable=True)
-    workflow_id     = Column(Integer, ForeignKey("workflows.id"), nullable=True)
+    workflow_id     = Column(Integer, ForeignKey("workflow_configurations.id"), nullable=True)
     auto_description_template = Column(Text, nullable=True)
     is_active       = Column(Boolean, default=True, nullable=False)
     requires_attachment = Column(Boolean, default=False, nullable=False)
@@ -675,7 +675,7 @@ class RequestTypeConfig(Base):
     updated_at      = Column(DateTime, default=datetime.utcnow,
                              onupdate=datetime.utcnow, nullable=False)
 
-    workflow = relationship("Workflow", foreign_keys=[workflow_id])
+    workflow = relationship("WorkflowConfiguration", foreign_keys=[workflow_id])
 
     __table_args__ = (
         Index("ix_rtc_category_active", "category", "is_active"),
