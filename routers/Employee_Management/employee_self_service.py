@@ -281,6 +281,7 @@ def get_self_leaves(
     m_end   = date(year + 1, 1, 1)
 
     q = select(LeaveRequest).where(
+        LeaveRequest.employee_id == employee_id,
         LeaveRequest.start_date >= m_start,
         LeaveRequest.start_date <  m_end,
     )
@@ -326,6 +327,7 @@ def apply_leave(
         raise HTTPException(status_code=400, detail="End date cannot be before start date")
 
     leave = LeaveRequest(
+        employee_id=employee_id,
         leave_type=leave_type,
         start_date=start_date,
         end_date=end_date,
