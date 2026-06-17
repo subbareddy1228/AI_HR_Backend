@@ -16,7 +16,7 @@ from model.Employee_Management.employee_lifecycle import (
 from model.Payroll.salary_slip                   import SalarySlip
 from model.Payroll.loan_advance                  import LoanAdvance
 from model.Payroll.reimbursement                 import Reimbursement
-from model.HR_Operations.hr_helpdesk             import HRHelpdesk
+from model.HR_Operations.hr_helpdesk import Ticket
 # from model.models import AttendanceRecord, LeaveRequest, LeaveStatus
 from model.HR_Automation.attendance_capture import AttendanceRecord
 from model.models import LeaveRequest, LeaveStatus
@@ -81,13 +81,13 @@ def get_dashboard(employee_id: int, db: Session = Depends(get_db)):
 
     
     open_tickets = (
-        db.query(func.count(HRHelpdesk.id))
-        .filter(
-            HRHelpdesk.employee_id == employee_id,
-            HRHelpdesk.status.in_(["OPEN", "IN_PROGRESS"]),
-        )
-        .scalar() or 0
+    db.query(func.count(Ticket.id))
+    .filter(
+        Ticket.employee_name == emp.first_name,  # adjust if you have employee_id field
+        Ticket.status.in_(["Open", "In-Progress"]),
     )
+    .scalar() or 0
+)
 
     active_loans = (
         db.query(func.count(LoanAdvance.id))
@@ -602,10 +602,10 @@ def get_self_tickets(
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    q = select(HRHelpdesk).where(HRHelpdesk.employee_id == employee_id)
+    q = select(Ticket).where(Ticket.employee_id == employee_id)
     if status:
-        q = q.where(HRHelpdesk.status == status)
-    q = q.order_by(HRHelpdesk.created_at.desc())
+        q = q.where(Ticket.status == status)
+    q = q.order_by(Ticket.created_at.desc())
 
     tickets = db.execute(q).scalars().all()
 
@@ -640,14 +640,13 @@ def raise_ticket(
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    ticket = HRHelpdesk(
-        employee_id=employee_id,
-        category=category,
-        subject=subject,
-        description=description,
-        priority=priority,
-        status="OPEN",
-    )
+    ticket = Ticket(
+    category=category,
+    description=description,
+    priority=priority,
+    status="Open",
+    employee_name=f"{emp.first_name}"
+)
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
