@@ -108,7 +108,7 @@ from routers.Payroll import salary_structure, payroll_processing, payroll_run, s
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
 
-from routers.HR_Automation.attendance.routers import attendance_capture, daily_punches, daily_attendance, monthly_attendance, manual_attendance, leave_correction, shift_management, holiday_calendar, work_hour_rules, attendance_reports, leave_management, holiday_calendar as att_rpt
+from routers.HR_Automation.attendance.routers import attendance_capture, daily_punches, daily_attendance, monthly_attendance, manual_attendance, leave_correction, shift_management, work_hour_rules, attendance_reports as att_rpt, leave_management, holiday_calendar , regularization
 
 from routers.Reports import employee_reports, attendance_reports as rep_att, leave_reports, payroll_reports as rep_pay, compliance_reports, custom_report_builder, executive_dashboard, ai_insights
 from routers.Forms_Workflows import custom_form_builder, workflow_engine, request_management, surveys, approvals
@@ -325,8 +325,7 @@ app.include_router(monthly_attendance.router, prefix="/api/attendance", tags=["A
 app.include_router(manual_attendance.router, prefix="/api/attendance", tags=["Attendance"])
 app.include_router(leave_correction.router, prefix="/api/attendance", tags=["Attendance"])
 app.include_router(leave_management.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(holiday_calendar.router, prefix="/api/attendance", tags=["Attendance"])
-app.include_router(attendance_reports.router, prefix="/api/attendance", tags=["Attendance"])
+app.include_router(regularization.router, prefix="/api/attendance", tags=["Attendance"])
 
 # Reports
 app.include_router(employee_reports.router, prefix="/api/reports", tags=["Reports"])
