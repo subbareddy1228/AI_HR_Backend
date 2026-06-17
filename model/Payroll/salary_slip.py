@@ -1,27 +1,184 @@
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, Text, ForeignKey
+from sqlalchemy import (
+    Column, Integer, String, Boolean, DateTime,
+    Numeric, Text, ForeignKey, Enum
+)
+from sqlalchemy.orm import relationship
 from core.database import Base
 from datetime import datetime
+import enum
+
+
+class SlipStatus(str, enum.Enum):
+    GENERATED   = "generated"
+    DISTRIBUTED = "distributed"
+    REVOKED     = "revoked"
+
+
+class DistributionMethod(str, enum.Enum):
+    EMAIL           = "email"
+    PORTAL          = "portal"
+    EMAIL_AND_PORTAL = "email_and_portal"
+    MANUAL          = "manual"
+
+
+class PasswordStrength(str, enum.Enum):
+    EMPLOYEE_ID     = "employee_id"       
+    DOB             = "dob"               
+    LAST4_PAN       = "last4_pan"
+    CUSTOM          = "custom"
+
+
+class DistributionStatus(str, enum.Enum):
+    PENDING   = "pending"
+    SENT      = "sent"
+    FAILED    = "failed"
+    VIEWED    = "viewed"
 
 
 class SalarySlip(Base):
+
     __tablename__ = "salary_slips"
 
-    id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    id             = Column(Integer, primary_key=True, index=True)
+
+    employee_id    = Column(Integer, ForeignKey("employees.id"), nullable=False)
     payroll_run_id = Column(Integer, ForeignKey("payroll_runs.id"), nullable=True)
-    slip_month = Column(Integer, nullable=False)
-    slip_year = Column(Integer, nullable=False)
-    employee_code = Column(String(100), nullable=False)
-    employee_name = Column(String(255), nullable=False)
-    department = Column(String(255), nullable=True)
-    designation = Column(String(255), nullable=True)
-    bank_account = Column(String(100), nullable=True)
-    bank_name = Column(String(255), nullable=True)
-    gross_salary = Column(Numeric(10, 2), nullable=False)
+    slip_month     = Column(Integer, nullable=False)
+    slip_year      = Column(Integer, nullable=False)
+    employee_code  = Column(String(100), nullable=False)
+    employee_name  = Column(String(255), nullable=False)
+    department     = Column(String(255), nullable=True)
+    designation    = Column(String(255), nullable=True)
+    bank_account   = Column(String(100), nullable=True)
+    bank_name      = Column(String(255), nullable=True)
+    gross_salary   = Column(Numeric(10, 2), nullable=False)
     total_deductions = Column(Numeric(10, 2), nullable=False)
-    net_pay = Column(Numeric(10, 2), nullable=False)
-    earnings_json = Column(Text, nullable=True)   # JSON string of earnings breakdown
-    deductions_json = Column(Text, nullable=True)  # JSON string of deductions breakdown
-    generated_at = Column(DateTime, default=datetime.utcnow)
-    is_published = Column(Boolean, default=False)
+    net_pay        = Column(Numeric(10, 2), nullable=False)
+    earnings_json  = Column(Text, nullable=True)    
+    deductions_json = Column(Text, nullable=True)   
+    generated_at   = Column(DateTime, default=datetime.utcnow)
+    is_published   = Column(Boolean, default=False)
+
+
+    slip_code      = Column(String(50), unique=True, nullable=True)
+
+
+    status         = Column(
+        Enum(SlipStatus), default=SlipStatus.GENERATED, nullable=False
+    )
+
+
+    distribution_method = Column(
+        Enum(DistributionMethod), default=DistributionMethod.EMAIL
+    )
+    distributed_at  = Column(DateTime, nullable=True)
+    is_password_protected = Column(Boolean, default=True)
+
+    pdf_path       = Column(String(500), nullable=True)
+
+    generated_by   = Column(Integer, ForeignKey("employees.id"), nullable=True)
+    revised_at     = Column(DateTime, nullable=True)
+    revision_count = Column(Integer, default=0)
+
+
+    distributions = relationship(
+        "SalarySlipDistribution",
+        back_populates="slip",
+        cascade="all, delete-orphan",
+    )
+
+
+class SalarySlipDistribution(Base):
+
+    __tablename__ = "salary_slip_distributions"
+
+    id      = Column(Integer, primary_key=True, index=True)
+    slip_id = Column(Integer, ForeignKey("salary_slips.id"), nullable=False)
+
+    method          = Column(Enum(DistributionMethod), nullable=False)
+    recipient_email = Column(String(255), nullable=True)
+    recipient_phone = Column(String(20),  nullable=True)
+
+    status          = Column(
+        Enum(DistributionStatus), default=DistributionStatus.PENDING
+    )
+    sent_at         = Column(DateTime, nullable=True)
+    viewed_at       = Column(DateTime, nullable=True)
+    failure_reason  = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    slip = relationship("SalarySlip", back_populates="distributions")
+
+
+class SalarySlipConfig(Base):
+
+    __tablename__ = "salary_slip_configs"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    config_name = Column(String(100), unique=True, default="default", nullable=False)
+
+    company_name       = Column(String(255), nullable=True)
+    company_address    = Column(Text, nullable=True)
+    authorized_signatory = Column(String(255), nullable=True)
+
+    footer_text            = Column(Text, nullable=True,
+                                    default="Generated by HRMS Salary Slip System v2.0")
+    confidentiality_text   = Column(Text, nullable=True,
+                                    default="This document is confidential and intended only "
+                                            "for the employee. Unauthorized distribution is prohibited.")
+    retention_period_months = Column(Integer, default=12)
+
+
+    logo_url  = Column(String(500), nullable=True)
+    seal_url  = Column(String(500), nullable=True)
+
+    password_strength = Column(
+        Enum(PasswordStrength), default=PasswordStrength.EMPLOYEE_ID
+    )
+
+    auto_send_on_generation = Column(Boolean, default=True)   
+    auto_send_time          = Column(String(10), default="09:00")  
+
+
+    allow_salary_slip_revisions = Column(Boolean, default=True)
+    revision_allowed_days       = Column(Integer, default=7)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+
+class DistributionSettings(Base):
+
+    __tablename__ = "distribution_settings"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    config_name = Column(String(100), unique=True, default="default", nullable=False)
+
+    send_automatic_email  = Column(Boolean, default=True)
+    cc_hr_department      = Column(Boolean, default=True)
+    bcc_accounts_department = Column(Boolean, default=False)
+    email_subject         = Column(String(500),
+                                   default="Your Salary Slip for [Month Year]")
+    email_template        = Column(Text, nullable=True,
+                                   default=(
+                                       "Dear [Employee Name],\n\n"
+                                       "Your salary slip for [Month Year] has been generated.\n\n"
+                                       "Net Salary: [Net Amount]\n"
+                                       "Payment Date: [Payment Date]\n\n"
+                                       "You can download your salary slip from the employee portal "
+                                       "or it is attached to this email."
+                                   ))
+
+
+    default_password_type = Column(
+        Enum(PasswordStrength), default=PasswordStrength.EMPLOYEE_ID
+    )
+    send_sms_notification      = Column(Boolean, default=True)
+    enable_employee_portal_access = Column(Boolean, default=True)
+    auto_send_time             = Column(String(10), default="09:00")  
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
