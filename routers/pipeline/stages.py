@@ -8,7 +8,7 @@ from schema import schemas
 
 
 
-router = APIRouter(prefix="/api/pipeline/stages", tags=["Pipeline"])
+router = APIRouter(prefix="/stages", tags=["Pipeline"])
 
 
 @router.get("/", response_model=List[schemas.StageOut])

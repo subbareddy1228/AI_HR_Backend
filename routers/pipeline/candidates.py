@@ -9,7 +9,7 @@ from model.models import User, Job, Application
 from sqlmodel import select
 
 
-router = APIRouter(prefix="/api/pipeline/candidates", tags=["Pipeline"])
+router = APIRouter(prefix="/candidates", tags=["Pipeline"])
 
 
 @router.get("/", response_model=List[schemas.CandidateOut])

@@ -118,7 +118,8 @@ from routers.Payroll import Payroll_Processing
 from routers.Payroll import salary_structure, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
-from routers.HR_Automation.attendance.routers import shift_management, holiday_calendar, work_hour_rules, attendance_reports, monthly_attendance as att_rpt, attendance_capture, daily_punches, daily_attendance, manual_attendance, leave_correction,monthly_attendance
+from routers.HR_Automation.attendance.routers import shift_management, holiday_calendar, work_hour_rules, attendance_reports, monthly_attendance,leave as att_rpt, attendance_capture, daily_punches, daily_attendance, manual_attendance, leave_correction,monthly_attendance,leave
+from routers.HR_Automation.attendance.routers import attendance as basic_attendance
 from routers.Reports import employee_reports, attendance_reports as rep_att, leave_reports, payroll_reports as rep_pay, compliance_reports, custom_report_builder, executive_dashboard, ai_insights
 from routers.Forms_Workflows import custom_form_builder, workflow_engine, request_management, surveys, approvals
 
@@ -221,7 +222,7 @@ app.include_router(jobs_router,               prefix="/api/jobs")
 app.include_router(admin_router,              prefix="/api/admin")
 app.include_router(admin_compat_router)
 app.include_router(candidates_router)
-app.include_router(pipeline_router,            prefix="/api/pipelines")
+app.include_router(pipeline_router,            prefix="/api/pipeline")
 app.include_router(recruiter_dashboard_router, prefix="/api/recruiter_dashboard")
 app.include_router(admin_dashboard_router,     prefix="/api/dashboard")
 app.include_router(analytics_router)
@@ -235,11 +236,11 @@ app.include_router(exam.router,                prefix="/api/assessment/aptitude"
 app.include_router(aptitude_results.router,    prefix="/api/assessment/aptitude")
 app.include_router(hiring_funnel_router,       prefix="/api/hiring_funnel")
 app.include_router(time_hire_router,           prefix="/api/time_to_hire")
-# app.include_router(attendance.router,          prefix="/api/attendance")
+app.include_router(basic_attendance.router,      prefix="/api/attendance", tags=["Attendance"])
 app.include_router(leave.router,               prefix="/api/leave")
 app.include_router(documents_router,           prefix="/api/documents")
 app.include_router(signatures_router,          prefix="/api/signatures")
-app.include_router(onboard_candidates.router,  prefix="/api/candidates")
+app.include_router(onboard_candidates.router,  prefix="/api")  # router self-prefix="/candidates" -> /api/candidates/*
 app.include_router(uploads.router,             prefix="/api/uploads")
 app.include_router(tasks_router,               prefix="/api/tasks")
 app.include_router(resume_router,              prefix="/api/resume")
@@ -338,6 +339,7 @@ app.include_router(daily_attendance.router,       prefix="/api/attendance", tags
 app.include_router(manual_attendance.router,      prefix="/api/attendance", tags=["Attendance"])
 app.include_router(leave_correction.router,       prefix="/api/attendance", tags=["Attendance"])
 app.include_router(monthly_attendance.router,     prefix="/api/attendance", tags=["Attendance"])
+# leave.router already mounted at /api/leave (line above attendance block); not duplicated here
 
 # Reports
 app.include_router(employee_reports.router,      prefix="/api/reports", tags=["Reports"])
