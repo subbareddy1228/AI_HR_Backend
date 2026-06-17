@@ -23,7 +23,7 @@ class CurrencySetting(Base):
   
     last_updated            = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_at              = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_by              = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by              = Column(Integer, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("tenant_id", name="uq_currency_settings_tenant"),
@@ -43,7 +43,7 @@ class ExchangeRate(Base):
     status          = Column(String(20), default="active")  
     created_at      = Column(DateTime, default=datetime.utcnow, nullable=False)
     last_updated    = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    updated_by      = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by      = Column(Integer, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("tenant_id", "from_currency", "to_currency",

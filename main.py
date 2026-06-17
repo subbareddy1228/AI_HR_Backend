@@ -23,7 +23,13 @@ from sqladmin import Admin, ModelView
 # CREATE FASTAPI APP  (THIS MUST COME FIRST)
 
 app = FastAPI(title="AI Recruitment HR Platform")
- 
+
+
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "AI Recruitment HR Platform"}
+
+
 # ADMIN BASIC AUTH MIDDLEWARE
 
 # @app.middleware("http")

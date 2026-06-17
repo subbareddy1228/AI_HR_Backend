@@ -33,7 +33,7 @@ class FinancialYear(Base):
     
     created_at          = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at          = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    updated_by          = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by          = Column(Integer, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("tenant_id", "current_year", name="uq_fy_tenant_year"),

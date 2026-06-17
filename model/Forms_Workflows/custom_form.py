@@ -28,7 +28,7 @@ class CustomForm(Base):
     is_active      = Column(Boolean, default=True, nullable=False)
 
 
-    created_by     = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by     = Column(Integer, nullable=True)
     tenant_id      = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
 
 
@@ -194,7 +194,7 @@ class FormVersionHistory(Base):
     version     = Column(Integer, nullable=False)
     action      = Column(String(500), nullable=False)   # "Added Text field to Page 1"
     changed_by  = Column(String(100), nullable=True, default="System")
-    actor_id    = Column(Integer, ForeignKey("users.id"), nullable=True)
+    actor_id    = Column(Integer, nullable=True)
     created_at  = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     form = relationship("CustomForm", back_populates="version_history")
@@ -212,7 +212,7 @@ class FormSubmission(Base):
 
     # Submitter
     employee_id     = Column(Integer, ForeignKey("employees.id"), nullable=True)
-    submitted_by    = Column(Integer, ForeignKey("users.id"),     nullable=True)
+    submitted_by    = Column(Integer,     nullable=True)
     anonymous       = Column(Boolean, nullable=False, default=False)
 
  
@@ -222,7 +222,7 @@ class FormSubmission(Base):
     started_at      = Column(DateTime, default=datetime.utcnow, nullable=False)
     submitted_at    = Column(DateTime, nullable=True)
     reviewed_at     = Column(DateTime, nullable=True)
-    reviewed_by     = Column(Integer, ForeignKey("users.id"), nullable=True)
+    reviewed_by     = Column(Integer, nullable=True)
 
     form    = relationship("CustomForm",          back_populates="submissions")
     answers = relationship("FormSubmissionAnswer", back_populates="submission",

@@ -599,7 +599,7 @@ class RequestComment(Base):
     id          = Column(Integer, primary_key=True, index=True, autoincrement=True)
     request_id  = Column(BigInteger, ForeignKey("request_management.id", ondelete="CASCADE"),
                           nullable=False, index=True)
-    author_id   = Column(Integer,  ForeignKey("users.id"), nullable=True)
+    author_id   = Column(Integer,  nullable=True)
     author_name = Column(String(255), nullable=True)
     body        = Column(Text, nullable=False)
     is_internal = Column(Boolean, default=False)  # internal HR note vs employee-visible
@@ -643,7 +643,7 @@ class RequestStatusLog(Base):
     from_status = Column(String(50), nullable=True)
     to_status   = Column(String(50), nullable=False)
     changed_by  = Column(String(255), nullable=True)
-    changed_by_id = Column(Integer,   ForeignKey("users.id"), nullable=True)
+    changed_by_id = Column(Integer,   nullable=True)
     note        = Column(Text,        nullable=True)
     changed_at  = Column(DateTime, default=datetime.utcnow, nullable=False)
 

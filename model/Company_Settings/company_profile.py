@@ -35,7 +35,7 @@ class CompanyProfile(Base):
     created_at           = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at           = Column(DateTime, default=datetime.utcnow,
                                   onupdate=datetime.utcnow, nullable=False)
-    updated_by           = Column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_by           = Column(Integer, nullable=True)
     is_deleted           = Column(Boolean, default=False, nullable=False)
     deleted_at           = Column(DateTime, nullable=True)
     
