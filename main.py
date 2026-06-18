@@ -118,7 +118,7 @@ from routers.Payroll import Payroll_Processing
 from routers.Payroll import salary_structure, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
-from routers.HR_Automation.attendance.routers import shift_management, holiday_calendar, work_hour_rules, attendance_reports, monthly_attendance,leave as att_rpt, attendance_capture, daily_punches, daily_attendance, manual_attendance, leave_correction,monthly_attendance,leave
+from routers.HR_Automation.attendance.routers import shift_management, holiday_calendar, work_hour_rules, attendance_reports, monthly_attendance,leave as att_rpt, attendance_capture, daily_punches, daily_attendance, manual_attendance, leave_correction,monthly_attendance,leave, regularization
 from routers.HR_Automation.attendance.routers import attendance as basic_attendance
 from routers.Reports import employee_reports, attendance_reports as rep_att, leave_reports, payroll_reports as rep_pay, compliance_reports, custom_report_builder, executive_dashboard, ai_insights
 from routers.Forms_Workflows import custom_form_builder, workflow_engine, request_management, surveys, approvals
@@ -339,6 +339,7 @@ app.include_router(daily_attendance.router,       prefix="/api/attendance", tags
 app.include_router(manual_attendance.router,      prefix="/api/attendance", tags=["Attendance"])
 app.include_router(leave_correction.router,       prefix="/api/attendance", tags=["Attendance"])
 app.include_router(monthly_attendance.router,     prefix="/api/attendance", tags=["Attendance"])
+app.include_router(regularization.router,         prefix="/api/attendance", tags=["Attendance"])
 # leave.router already mounted at /api/leave (line above attendance block); not duplicated here
 
 # Reports
