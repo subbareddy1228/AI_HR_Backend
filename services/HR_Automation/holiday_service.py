@@ -319,7 +319,7 @@ def process_carry_forward(db: Session, payload: ProcessCarryForwardRequest) -> L
 
     created_records = []
     for emp_id in employee_ids:
-        
+        # Count approved optional holiday applications used in from_year
         from sqlalchemy import extract
         used_count = db.query(func.count(OptionalHolidayApplication.id)).filter(
             OptionalHolidayApplication.employee_id == emp_id,
@@ -327,7 +327,7 @@ def process_carry_forward(db: Session, payload: ProcessCarryForwardRequest) -> L
             extract("year", OptionalHolidayApplication.holiday_date) == payload.from_year,
         ).scalar() or 0
 
-        
+        # Total optional holidays available in from_year
         total_optional = db.query(func.count(Holiday.id)).filter(
             extract("year", Holiday.holiday_date) == payload.from_year,
             Holiday.holiday_type.in_(["OPTIONAL", "RESTRICTED"]),
@@ -337,7 +337,7 @@ def process_carry_forward(db: Session, payload: ProcessCarryForwardRequest) -> L
         if payload.max_carry_forward is not None:
             unused = min(unused, payload.max_carry_forward)
 
-        
+        # Avoid duplicate processing
         existing = db.query(HolidayCarryForward).filter(
             HolidayCarryForward.employee_id == emp_id,
             HolidayCarryForward.from_year == payload.from_year,
