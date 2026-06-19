@@ -27,3 +27,5 @@ python-dateutil
 boto3
 pandas
 redis
+openpyxl
+reportlab
