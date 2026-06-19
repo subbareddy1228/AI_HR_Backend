@@ -36,6 +36,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-
-#updated by subbu
