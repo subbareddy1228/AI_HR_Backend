@@ -18,7 +18,7 @@ from schema.HR_Automation.holiday import (
     HolidayCalendarTabSummary,
 )
 
-# Optional employee lookup (graceful fallback if model differs)
+
 try:
     from model.Employee_Management.employee_master import EmployeeMaster
 except ImportError:
@@ -113,7 +113,7 @@ def delete_optional_application(db: Session, application_id: int) -> bool:
 def add_calendar(db: Session, payload: HolidayCalendarCreate) -> HolidayCalendar:
     
     if payload.is_default:
-        # Only one calendar can be default at a time
+        
         db.query(HolidayCalendar).filter(HolidayCalendar.is_default == True).update(
             {HolidayCalendar.is_default: False}
         )
@@ -319,7 +319,7 @@ def process_carry_forward(db: Session, payload: ProcessCarryForwardRequest) -> L
 
     created_records = []
     for emp_id in employee_ids:
-        # Count approved optional holiday applications used in from_year
+        
         from sqlalchemy import extract
         used_count = db.query(func.count(OptionalHolidayApplication.id)).filter(
             OptionalHolidayApplication.employee_id == emp_id,
