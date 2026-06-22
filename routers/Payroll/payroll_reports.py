@@ -18,7 +18,7 @@ from schema.Payroll.payroll_reports import (
     CustomReportCreate, CustomReportUpdate, CustomReportOut,
     ExportConfigOut,
 )
-#from services.payroll_reports_service import PayrollReportsService
+from services.Payroll.payroll_reports_service import PayrollReportsService
 
 router = APIRouter(
     prefix="/payroll-reports",
