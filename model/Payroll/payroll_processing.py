@@ -56,7 +56,7 @@ class SalaryComponent(Base):
     Salary Component Configuration table visible on the UI.
     Each row is an earning or deduction component used during payroll calculation.
     """
-    __tablename__ = "salary_components"
+    __tablename__ = "salary_components_config"
 
     id               = Column(Integer, primary_key=True, index=True, autoincrement=True)
 

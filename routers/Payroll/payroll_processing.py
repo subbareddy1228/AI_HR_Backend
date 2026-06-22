@@ -12,7 +12,7 @@ from schema.Payroll.payroll_processing import (
     SalaryComponentResponse,
     PayrollFullConfigResponse,
 )
-#import services.Payroll.payroll_processing as svc
+import services.Payroll.payroll_processing_service as svc
 
 router = APIRouter(
     prefix="/payroll-processing",

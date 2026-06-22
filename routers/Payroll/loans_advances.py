@@ -12,7 +12,7 @@ from schema.Payroll.loan_advance import (
     EMIPaymentRequest,
     LoanDashboard,
 )
-#import services.Payroll.loan_advance as svc
+import services.Payroll.loans_advances_service as svc
 
 router = APIRouter(
     prefix="/loans",
