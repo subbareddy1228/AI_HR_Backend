@@ -17,7 +17,7 @@ from schema.Payroll.bank_transfer import (
     BankTransferDashboard,
     PaymentAnalytics,
 )
-#import services.Payroll.bank_transfer as svc
+import services.Payroll.bank_transfer_service as svc
 
 router = APIRouter(
     prefix="/bank-transfer",
