@@ -15,7 +15,7 @@ from schema.Payroll.payroll_integration import (
     DashboardSummaryOut,
     IntegrationReportOut,
 )
-#from services.Payroll.payroll_integration_service import PayrollIntegrationService
+from services.Payroll.payroll_integration_service import PayrollIntegrationService
 
 router = APIRouter(
     prefix="/payroll-integration",
