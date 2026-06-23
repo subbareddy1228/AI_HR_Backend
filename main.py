@@ -115,7 +115,7 @@ from routers.onboarding import bank_details, present_address, statutory, onboard
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile,notification_preference,location,data_privacy
 from routers.Payroll import Payroll_Processing
-from routers.Payroll import salary_structure, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt
+from routers.Payroll import salary_structure, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt, payroll_integration
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
 from routers.HR_Automation.attendance.routers import shift_management, holiday_calendar, work_hour_rules, attendance_reports, monthly_attendance,leave as att_rpt, attendance_capture, daily_punches, daily_attendance, manual_attendance, leave_correction,monthly_attendance,leave, regularization
@@ -311,6 +311,7 @@ app.include_router(bank_transfer.router,        prefix="/api/payroll", tags=["Pa
 app.include_router(final_settlement.router,     prefix="/api/payroll", tags=["Payroll"])
 app.include_router(payroll_rpt.router,          prefix="/api/payroll", tags=["Payroll"])
 app.include_router(Payroll_Processing.router,   prefix="/api/payroll", tags=["Payroll"])
+app.include_router(payroll_integration.router,  prefix="/api/payroll", tags=["Payroll"])
 # Employee Management
 app.include_router(employee_master.router,       prefix="/api/employees", tags=["Employee Management"])
 app.include_router(all_employees.router,         prefix="/api/employees", tags=["Employee Management"])
