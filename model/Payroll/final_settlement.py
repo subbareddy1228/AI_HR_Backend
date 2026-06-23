@@ -56,8 +56,9 @@ class FinalSettlement(Base):
     paid_at              = Column(DateTime(timezone=True), nullable=True)
 
     # ── Payroll linkage ───────────────────────────────────────────────────────
-    payroll_id           = Column(Integer, ForeignKey("payrolls.id"), nullable=True)
-    payroll              = relationship("Payroll", back_populates="final_settlements")
+    # payroll_id           = Column(Integer, ForeignKey("payrolls.id"), nullable=True)
+    # payroll              = relationship("Payroll", back_populates="final_settlements")
+    payroll_id           = Column(Integer, nullable=True)
 
     # ── Audit ─────────────────────────────────────────────────────────────────
     created_at           = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

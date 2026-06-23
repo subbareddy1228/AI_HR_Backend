@@ -51,7 +51,7 @@ class PayrollConfig(Base):
                                          onupdate=func.now(), nullable=False)
 
 
-class SalaryComponent(Base):
+class SalaryComponentConfig(Base):
     """
     Salary Component Configuration table visible on the UI.
     Each row is an earning or deduction component used during payroll calculation.

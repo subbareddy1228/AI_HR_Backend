@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import Optional, List
 
-from model.Payroll.payroll_processing import PayrollConfig, SalaryComponent
+from model.Payroll.payroll_processing import PayrollConfig, SalaryComponentConfig
 from schema.Payroll.payroll_processing import (
     PayrollConfigUpdate,
     SalaryComponentCreate,

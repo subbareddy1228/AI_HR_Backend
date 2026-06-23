@@ -2,7 +2,7 @@ from sqlalchemy import (
     Column, Integer, String, Float, Boolean,
     DateTime, Date, Text, JSON, func
 )
-from database import Base
+from core.database import Base
 
 
 # ── Dashboard Summary (top cards: Total Payroll Cost, Statutory Deductions,
@@ -98,8 +98,8 @@ class AnalyticsDashboard(Base):
 
 
 # ── Generated Reports (output instances) ──────────────────────────────────────
-class GeneratedReport(Base):
-    __tablename__ = "generated_reports"
+class PayrollGeneratedReport(Base):
+    __tablename__ = "payroll_generated_reports"
 
     id               = Column(Integer, primary_key=True, index=True)
     source_type      = Column(String(20), nullable=False)      # standard / compliance / custom

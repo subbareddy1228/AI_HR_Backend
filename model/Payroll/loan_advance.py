@@ -50,8 +50,9 @@ class LoanAdvance(Base):
     remarks            = Column(Text, nullable=True)
 
     # Payroll linkage
-    payroll_id         = Column(Integer, ForeignKey("payrolls.id"), nullable=True)
-    payroll            = relationship("Payroll", back_populates="loan_advances")
+    # payroll_id         = Column(Integer, ForeignKey("payrolls.id"), nullable=True)
+    #payroll            = relationship("Payroll", back_populates="loan_advances")
+    payroll_id         = Column(Integer, nullable=True)
 
     # Audit
     created_at         = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

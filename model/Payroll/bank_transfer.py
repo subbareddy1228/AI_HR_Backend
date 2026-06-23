@@ -72,8 +72,9 @@ class PaymentFile(Base):
     processed_at        = Column(DateTime(timezone=True), nullable=True)
 
     # Payroll linkage
-    payroll_id          = Column(Integer, ForeignKey("payrolls.id"), nullable=True)
-    payroll             = relationship("Payroll", back_populates="payment_files")
+    # payroll_id          = Column(Integer, ForeignKey("payrolls.id"), nullable=True)
+    # payroll             = relationship("Payroll", back_populates="payment_files")
+    payroll_id          = Column(Integer, nullable=True)
 
     created_at          = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at          = Column(DateTime(timezone=True), server_default=func.now(),
