@@ -19,6 +19,24 @@ class Employee(Base):
 
     time_logs = relationship("TimeLog", back_populates="employee")
 
+        # Attendance relationships
+    punches                      = relationship("AttendancePunch",           back_populates="employee")
+    attendance_records           = relationship("AttendanceRecord",          back_populates="employee")
+    employee_punches             = relationship("EmployeePunch",             back_populates="employee")
+    daily_punch_summaries        = relationship("DailyPunchSummary",         back_populates="employee")
+    daily_attendance_records     = relationship("DailyAttendanceRecord",     back_populates="employee")
+    monthly_cells                = relationship("MonthlyAttendanceCell",     back_populates="employee")
+    monthly_summaries            = relationship("MonthlyAttendanceSummary",  back_populates="employee")
+    manual_attendance_records    = relationship("ManualAttendanceRecord",    back_populates="employee")
+    shift_assignments            = relationship("ShiftAssignment",           back_populates="employee")
+    leave_balances               = relationship("LeaveBalance",              back_populates="employee")
+    leave_applications           = relationship("LeaveApplication",          back_populates="employee")
+    leave_correction_records     = relationship("LeaveCorrectionRecord",     back_populates="employee")
+    regularization_requests      = relationship("RegularizationRequest",     back_populates="employee")
+    optional_holiday_applications= relationship("OptionalHolidayApplication",back_populates="employee")
+    holiday_swap_requests        = relationship("HolidaySwapRequest",        back_populates="employee")
+    holiday_carry_forwards       = relationship("HolidayCarryForward",       back_populates="employee")
+
     onboarding_id: Mapped[int | None] = mapped_column(
         ForeignKey("onboarding_forms.id")
     )
@@ -72,3 +90,5 @@ class Employee(Base):
     updated_at: Mapped[datetime] = mapped_column(
         default=datetime.utcnow, onupdate=datetime.utcnow
     )
+
+

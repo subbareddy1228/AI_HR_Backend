@@ -11,29 +11,24 @@ from datetime import date
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    Query, Path,
-)
+    Query, Path)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 
 from schema.HR_Automation.monthly_attendance import (
     MonthlyAttendanceFilter, MonthlyCalendarOut,
     FilterOptionsOut, ReplaceShiftIn, ReplaceShiftOut,
-    RecalculateIn, RecalculateOut, MessageResponse,
-)
+    RecalculateIn, RecalculateOut, MessageResponse)
 from services.HR_Automation.monthly_attendance_service import (
     FilterOptionsService, MonthlyCalendarService,
     RecalculateService, ReplaceShiftService, ExportService,
-    LEGEND,
-)
+    LEGEND)
 
 router = APIRouter(
     prefix="/api/attendance/monthly",
-    tags=["Monthly Attendance"],
-)
+    tags=["Monthly Attendance"])
 
 
 # ─────────────────────────────────────────────────────────
@@ -43,8 +38,7 @@ router = APIRouter(
 
 @router.get("/filter-options", response_model=FilterOptionsOut)
 def get_filter_options(
-    db:           Session = Depends(get_db),
-    current_user          = Depends(get_current_user),
+    db:           Session = Depends(get_db)
 ):
     """
     Returns distinct values for Business Unit · Location · Cost Center · Department.
@@ -88,8 +82,7 @@ def get_monthly_calendar(
     location:      Optional[str]  = Query(None),
     cost_center:   Optional[str]  = Query(None),
     department:    Optional[str]  = Query(None),
-    db:            Session        = Depends(get_db),
-    current_user                  = Depends(get_current_user),
+    db:            Session        = Depends(get_db)
 ):
     """
     Main endpoint — powers the entire Monthly Attendance page.
@@ -112,8 +105,7 @@ def get_monthly_calendar(
         business_unit=business_unit,
         location=location,
         cost_center=cost_center,
-        department=department,
-    )
+        department=department)
     return MonthlyCalendarService.get_calendar(db, f)
 
 
@@ -125,8 +117,7 @@ def get_monthly_calendar(
 @router.post("/recalculate", response_model=RecalculateOut)
 def recalculate(
     payload:     RecalculateIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Recalculate button — rebuilds all MonthlyAttendanceCell rows for
@@ -143,8 +134,7 @@ def recalculate(
             db=db,
             employee_id=payload.employee_id,
             year=payload.year,
-            month=payload.month,
-        )
+            month=payload.month)
     except Exception as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -166,8 +156,7 @@ def recalculate(
 @router.post("/replace-shift", response_model=ReplaceShiftOut)
 def replace_shift(
     payload:     ReplaceShiftIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Replace button — swaps the employee's default shift for the month.
@@ -181,15 +170,13 @@ def replace_shift(
             employee_id=payload.employee_id,
             year=payload.year,
             month=payload.month,
-            new_shift=payload.new_shift,
-        )
+            new_shift=payload.new_shift)
         # Auto-recalculate after shift replacement
         RecalculateService.recalculate(
             db=db,
             employee_id=payload.employee_id,
             year=payload.year,
-            month=payload.month,
-        )
+            month=payload.month)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -208,8 +195,7 @@ def export_csv(
     employee_ids: Optional[str]   = Query(None,
                                           description="Comma-separated employee codes. "
                                                       "Omit to export all employees."),
-    db:           Session          = Depends(get_db),
-    current_user                   = Depends(get_current_user),
+    db:           Session          = Depends(get_db)
 ):
     """
     Options → Download button.
@@ -229,8 +215,7 @@ def export_csv(
     return StreamingResponse(
         io.BytesIO(csv_bytes),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
+        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 # ─────────────────────────────────────────────────────────
@@ -244,13 +229,13 @@ def export_csv(
 #     year:        int     = Query(..., ge=2000, le=2100),
 #     month:       int     = Query(..., ge=1, le=12),
 #     db:          Session = Depends(get_db),
-#     current_user         = Depends(get_current_user),
+#
 # ):
 #     """
 #     Returns the MonthlyAttendanceSummary counts for a single employee+month.
 #     Used to show totals below the calendar (present/absent/leave counts).
 #     """
-#     from models.monthly_attendance import MonthlyAttendanceSummary
+#     from model.monthly_attendance import MonthlyAttendanceSummary
 #     row = db.query(MonthlyAttendanceSummary).filter_by(
 #         employee_id=employee_id, year=year, month=month
 #     ).first()

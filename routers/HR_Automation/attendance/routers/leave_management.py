@@ -11,13 +11,11 @@ from typing import List, Optional
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    Query, Path, UploadFile, File,
-)
+    Query, Path, UploadFile, File)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 
 from model.HR_Automation.leave_management import ApplicationStatusEnum, CompOffStatusEnum
 from schema.HR_Automation.leave_management import (
@@ -29,18 +27,15 @@ from schema.HR_Automation.leave_management import (
     CompOffCreateIn, CompOffOut,
     CampaignCreateIn, CampaignOut, CoverageOut,
     DelegationCreateIn, DelegationOut,
-    MessageResponse, AccrualResultOut, LapseResultOut,
-)
+    MessageResponse, AccrualResultOut, LapseResultOut)
 from services.HR_Automation.leave_management_service import (
     LeaveTypeService, LeaveBalanceService,
     LeaveApplicationService, LeaveCalendarService,
-    CompOffService, LeavePlanningService, DelegationService,
-)
+    CompOffService, LeavePlanningService, DelegationService)
 
 router = APIRouter(
     prefix="/api/attendance/leave",
-    tags=["Leave Management System"],
-)
+    tags=["Leave Management System"])
 
 
 # ══════════════════════════════════════════════════════════
@@ -50,8 +45,7 @@ router = APIRouter(
 @router.get("/types", response_model=List[LeaveTypeOut])
 def list_leave_types(
     active_only: bool    = Query(False),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Leave Type Configuration table.
@@ -66,8 +60,7 @@ def list_leave_types(
 @router.post("/types", response_model=LeaveTypeOut, status_code=status.HTTP_201_CREATED)
 def create_leave_type(
     payload:     LeaveTypeCreateIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + Add Leave Type button → modal → Save Leave Type.
@@ -78,7 +71,7 @@ def create_leave_type(
                   usageLimit · proration · approvalWorkflow
     """
     try:
-        return LeaveTypeService.create(db, payload, current_user.id)
+        return LeaveTypeService.create(db, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
 
@@ -86,13 +79,12 @@ def create_leave_type(
 @router.get("/types/{lt_id}", response_model=LeaveTypeOut)
 def get_leave_type(
     lt_id:       int    = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Returns one leave type — used to pre-populate the Edit modal."""
     try:
         lt = LeaveTypeService.get(db, lt_id)
-        from services.HR_Automation.leave_management import _build_lt_out
+        from services.HR_Automation.leave_management_service import _build_lt_out
         return _build_lt_out(lt)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
@@ -102,12 +94,11 @@ def get_leave_type(
 def update_leave_type(
     lt_id:       int               = Path(...),
     payload:     LeaveTypeUpdateIn = ...,
-    db:          Session           = Depends(get_db),
-    current_user                   = Depends(get_current_user),
+    db:          Session           = Depends(get_db)
 ):
     """✏ Edit icon → Edit modal → Update Leave Type."""
     try:
-        return LeaveTypeService.update(db, lt_id, payload, current_user.id)
+        return LeaveTypeService.update(db, lt_id, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
 
@@ -115,8 +106,7 @@ def update_leave_type(
 @router.delete("/types/{lt_id}", response_model=MessageResponse)
 def delete_leave_type(
     lt_id:       int    = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     🗑 Trash icon — soft-deletes the leave type (is_active=False).
@@ -138,8 +128,7 @@ def list_balances(
     employee_id:   Optional[str] = Query(None),
     leave_type_id: Optional[int] = Query(None),
     year:          Optional[int] = Query(None),
-    db:            Session       = Depends(get_db),
-    current_user                 = Depends(get_current_user),
+    db:            Session       = Depends(get_db)
 ):
     """
     Leave Balance Management table.
@@ -153,8 +142,7 @@ def list_balances(
 @router.post("/balances/adjust", response_model=MessageResponse)
 def adjust_balance(
     payload:     AdjustBalanceIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + Adjust Balance button → modal → Save Balance.
@@ -164,7 +152,7 @@ def adjust_balance(
     Also used for Add Opening Balance (empty state button).
     """
     try:
-        LeaveBalanceService.adjust(db, payload, current_user.id)
+        LeaveBalanceService.adjust(db, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     return {"message": "Balance adjusted successfully."}
@@ -172,8 +160,7 @@ def adjust_balance(
 
 @router.post("/balances/auto-accrual", response_model=AccrualResultOut)
 def auto_accrual(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Auto Accrual button (green) — runs monthly accrual for all
@@ -185,8 +172,7 @@ def auto_accrual(
 
 @router.post("/balances/process-lapse", response_model=LapseResultOut)
 def process_lapse(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Process Lapse button (yellow) — expires carry-forward balances
@@ -200,8 +186,7 @@ def export_statement(
     employee_id: Optional[str] = Query(None,
                                        description="Omit to export all employees"),
     year:        int            = Query(default_factory=lambda: date.today().year),
-    db:          Session        = Depends(get_db),
-    current_user                = Depends(get_current_user),
+    db:          Session        = Depends(get_db)
 ):
     """
     Export Statement button (blue) — downloads leave balance CSV.
@@ -212,8 +197,7 @@ def export_statement(
     filename  = f"leave_statement_{year}.csv"
     return StreamingResponse(
         io.BytesIO(csv_bytes), media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
+        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 # ══════════════════════════════════════════════════════════
@@ -229,8 +213,7 @@ def list_applications(
                                          description="Search by employee name or leave type"),
     page:          int           = Query(1, ge=1),
     page_size:     int           = Query(20, ge=1, le=200),
-    db:            Session       = Depends(get_db),
-    current_user                 = Depends(get_current_user),
+    db:            Session       = Depends(get_db)
 ):
     """
     Leave Applications & Approval table.
@@ -247,8 +230,7 @@ def check_overlap(
     employee_id: str          = Query(...),
     start_date:  date         = Query(...),
     end_date:    Optional[date] = Query(None),
-    db:          Session      = Depends(get_db),
-    current_user              = Depends(get_current_user),
+    db:          Session      = Depends(get_db)
 ):
     """
     Called when the New Application modal dates are filled in —
@@ -264,8 +246,7 @@ def check_overlap(
              status_code=status.HTTP_201_CREATED)
 def apply_leave(
     payload:     LeaveApplicationIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + New Application button → modal → Submit Application.
@@ -281,7 +262,7 @@ def apply_leave(
     Builds multi-level approval workflow from leave type config.
     """
     try:
-        apps = LeaveApplicationService.apply(db, payload, current_user.id)
+        apps = LeaveApplicationService.apply(db, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     return apps
@@ -292,8 +273,7 @@ def apply_leave(
 def decide_application(
     app_id:      int            = Path(...),
     payload:     ApproveRejectIn = ...,
-    db:          Session        = Depends(get_db),
-    current_user                = Depends(get_current_user),
+    db:          Session        = Depends(get_db)
 ):
     """
     ✓ Approve / ✗ Reject buttons in Actions column.
@@ -302,7 +282,7 @@ def decide_application(
     """
     try:
         return LeaveApplicationService.decide(
-            db, app_id, payload.approved, payload.rejectionReason, current_user.id
+            db, app_id, payload.approved, payload.rejectionReason, 1
         )
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
@@ -312,8 +292,7 @@ def decide_application(
              response_model=LeaveApplicationOut)
 def withdraw_application(
     app_id:      int    = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     ↩ Withdraw button — only pending applications can be withdrawn.
@@ -334,8 +313,7 @@ def get_calendar(
     year:        int           = Query(..., ge=2000, le=2100),
     month:       int           = Query(..., ge=1, le=12),
     department:  Optional[str] = Query(None),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     Leave Calendar & Planning — month grid view.
@@ -356,8 +334,7 @@ def list_comp_offs(
     employee_id: Optional[str] = Query(None),
     status:      Optional[str] = Query(None,
                                        description="available|applied|expired"),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     Compensatory Off Management table.
@@ -373,8 +350,7 @@ def list_comp_offs(
              status_code=status.HTTP_201_CREATED)
 def add_comp_off(
     payload:     CompOffCreateIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + Add Comp-Off button → modal → Add Comp-Off.
@@ -384,15 +360,14 @@ def add_comp_off(
       Expiry Date (optional) · Description
     If policyType=compOff → automatically credits CO leave balance.
     """
-    return CompOffService.create(db, payload, current_user.id)
+    return CompOffService.create(db, payload, 1)
 
 
 @router.post("/comp-off/{comp_off_id}/apply",
              response_model=LeaveApplicationOut)
 def apply_comp_off(
     comp_off_id: int    = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Apply button on each available comp-off row.
@@ -415,8 +390,7 @@ def get_coverage(
     end_date:    date          = Query(...),
     department:  Optional[str] = Query(None,
                                        description="'All' or specific dept name"),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     Leave Planning & Coverage — Coverage Analysis cards.
@@ -430,8 +404,7 @@ def get_coverage(
 
 @router.get("/planning/campaigns", response_model=List[CampaignOut])
 def list_campaigns(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Active Planning Campaigns table.
@@ -445,15 +418,14 @@ def list_campaigns(
              status_code=status.HTTP_201_CREATED)
 def create_campaign(
     payload:     CampaignCreateIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + Create Campaign button → modal → Create Campaign.
     Modal fields: Campaign Name* · Period (Quarterly/Annual)
                   Target Department · Start Date* · End Date* · Message
     """
-    return LeavePlanningService.create_campaign(db, payload, current_user.id)
+    return LeavePlanningService.create_campaign(db, payload, 1)
 
 
 # ══════════════════════════════════════════════════════════
@@ -462,8 +434,7 @@ def create_campaign(
 
 @router.get("/delegations", response_model=List[DelegationOut])
 def list_delegations(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Approval Delegation Management table.
@@ -478,8 +449,7 @@ def list_delegations(
              status_code=status.HTTP_201_CREATED)
 def setup_delegation(
     payload:     DelegationCreateIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + Setup Delegation button → modal → Setup Delegation.
@@ -488,15 +458,14 @@ def setup_delegation(
     e.g. "Manager" → "Deputy Manager" for a date range.
     Effective approver is resolved at application submission time.
     """
-    return DelegationService.create(db, payload, current_user.id)
+    return DelegationService.create(db, payload, 1)
 
 
 @router.delete("/delegations/{delegation_id}",
                response_model=MessageResponse)
 def deactivate_delegation(
     delegation_id: int    = Path(...),
-    db:            Session = Depends(get_db),
-    current_user           = Depends(get_current_user),
+    db:            Session = Depends(get_db)
 ):
     """Deactivate an active delegation immediately."""
     try:
@@ -504,5 +473,3 @@ def deactivate_delegation(
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
     return {"message": f"Delegation {delegation_id} deactivated."}
-
-
