@@ -107,7 +107,7 @@ from routers.Company_Settings import currency, financial_year, localization, pol
 from routers.Payroll import salary_structure, payroll_processing, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt, payroll_integration
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
-
+from routers.HR_Operations.transfers import router as transfers_router
 from routers.HR_Automation.attendance.routers import attendance_capture, daily_punches, daily_attendance, monthly_attendance, manual_attendance, leave_correction, shift_management, work_hour_rules, attendance_reports as att_rpt, leave_management, holiday_calendar , regularization
 
 from routers.Reports import employee_reports, attendance_reports as rep_att, leave_reports, payroll_reports as rep_pay, compliance_reports, custom_report_builder, executive_dashboard, ai_insights
@@ -311,6 +311,7 @@ app.include_router(hr_helpdesk.router, prefix="/api/hr-ops", tags=["HR Operation
 app.include_router(employee_confirmation.router, prefix="/api/hr-ops", tags=["HR Operations"])
 app.include_router(transfers.router, prefix="/api/hr-ops", tags=["HR Operations"])
 app.include_router(promotions.router, prefix="/api/hr-ops", tags=["HR Operations"])
+app.include_router(transfers_router)
 
 # Attendance extensions
 app.include_router(shift_management.router)

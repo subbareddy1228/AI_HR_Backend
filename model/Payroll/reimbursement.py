@@ -56,8 +56,9 @@ class ReimbursementClaim(Base):
     finance_remarks       = Column(Text, nullable=True)
 
     # Payroll linkage
-    payroll_id            = Column(Integer, ForeignKey("payrolls.id"), nullable=True)
-    payroll_processed_date = Column(Date, nullable=True)
+    # payroll_id            = Column(Integer, ForeignKey("payrolls.id"), nullable=True)
+    # payroll_processed_date = Column(Date, nullable=True)
+    payroll_id            = Column(Integer, nullable=True)
 
     # Tax
     is_taxable            = Column(Boolean, nullable=False, default=False)
@@ -70,7 +71,7 @@ class ReimbursementClaim(Base):
     employee              = relationship("Employee", back_populates="reimbursement_claims",
                                          foreign_keys=[employee_id])
     reimbursement_type    = relationship("ReimbursementType", back_populates="claims")
-    payroll               = relationship("Payroll", back_populates="reimbursement_claims")
+    #payroll               = relationship("Payroll", back_populates="reimbursement_claims")
 
 
 class ReimbursementBalance(Base):

@@ -1,43 +1,88 @@
-# model/HR_Operations/employee_confirmation.py
-# Employee Confirmation — Tab 2 of Promotions & Career Progression
-# Replaces the original stub
+"""
+model/HR_Operations/employee_confirmation.py
 
-from sqlalchemy import Column, Integer, String, Date, Text, DateTime, ForeignKey, Boolean
+Employee Confirmation Management
+---------------------------------
+Two tables:
+
+1. EmployeeConfirmation        -> one row per probation/confirmation case
+2. ConfirmationApprovalStage   -> the 4-stage approval chain per case
+                                   (Manager -> HR -> Dept Head -> Authority),
+                                   stored as separate rows so the number of
+                                   stages and their order stay flexible.
+"""
+
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Date,
+    Text,
+    DateTime,
+    ForeignKey,
+)
 from core.database import Base
 from datetime import datetime
 
 
+# ======================================================
+# 1. EMPLOYEE CONFIRMATION (core record)
+# ======================================================
 class EmployeeConfirmation(Base):
     __tablename__ = "employee_confirmations"
 
-    id                  = Column(Integer, primary_key=True, index=True)
-    employee_id         = Column(Integer, ForeignKey("employees.id"), nullable=False, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False, index=True)
 
-    # Status: Pending Approval | Confirmed | Extended | Terminated
-    status              = Column(String(50), nullable=False, default="Pending Approval")
+    probation_start_date = Column(Date, nullable=False)
+    probation_end_date = Column(Date, nullable=False)     # = due date shown in "Time Status"
+    confirmation_date = Column(Date, nullable=True)
 
-    # 5-step workflow  (P → A → H → D → A in the UI)
-    workflow_step       = Column(Integer, default=0)      # count of completed steps
-    workflow_total      = Column(Integer, default=5)
-    step_1_done         = Column(Boolean, default=False)  # P  - Profile review
-    step_2_done         = Column(Boolean, default=False)  # A  - Attendance check
-    step_3_done         = Column(Boolean, default=False)  # H  - HR interview
-    step_4_done         = Column(Boolean, default=False)  # D  - Director approval
-    step_5_done         = Column(Boolean, default=False)  # A  - Final approval
+    performance_rating = Column(String(20), nullable=True)   # EXCELLENT | GOOD | SATISFACTORY | POOR
 
-    # Due date & letter
-    due_date            = Column(Date, nullable=True)
-    confirmation_date   = Column(Date, nullable=True)
+    # PENDING_REVIEW | UNDER_REVIEW | PENDING_APPROVAL | CONFIRMED | EXTENDED | OVERDUE | IN_PROGRESS | TERMINATED
+    status = Column(String(50), nullable=False, server_default="PENDING_REVIEW")
 
-    # Performance: Exceeds Expectations | Meets Expectations | Needs Improvement | Unsatisfactory
-    performance_rating  = Column(String(50), nullable=True)
+    # ELIGIBLE | CONDITIONAL | NOT_ELIGIBLE -> auto-computed, see service layer
+    eligibility = Column(String(20), nullable=False, server_default="ELIGIBLE")
 
-    # Automation flags
-    auto_triggered      = Column(Boolean, default=False)
-    letter_sent         = Column(Boolean, default=False)
+    extension_count = Column(Integer, nullable=False, server_default="0")   # powers "Extended 1x"
+    extended_till = Column(Date, nullable=True)
 
-    reviewed_by         = Column(Integer, ForeignKey("employees.id"), nullable=True)
-    remarks             = Column(Text, nullable=True)
+    # manager's recommendation shown under the approval workflow row
+    # RECOMMENDED | CONDITIONAL | NOT_RECOMMENDED | PENDING
+    manager_recommendation = Column(String(20), nullable=False, server_default="PENDING")
 
-    created_at          = Column(DateTime, default=datetime.utcnow)
-    updated_at          = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    reporting_manager_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
+    reviewed_by = Column(Integer, ForeignKey("employees.id"), nullable=True)
+
+    last_reminder_sent_at = Column(DateTime, nullable=True)
+
+    remarks = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ======================================================
+# 2. CONFIRMATION APPROVAL STAGE  (Manager -> HR -> Dept Head -> Authority)
+# ======================================================
+class ConfirmationApprovalStage(Base):
+    __tablename__ = "confirmation_approval_stages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    confirmation_id = Column(
+        Integer, ForeignKey("employee_confirmations.id"), nullable=False, index=True
+    )
+
+    stage_name = Column(String(50), nullable=False)   # MANAGER | HR | DEPT_HEAD | AUTHORITY
+    stage_order = Column(Integer, nullable=False)      # 1, 2, 3, 4 -> display order
+
+    # PENDING | APPROVED | REJECTED
+    status = Column(String(20), nullable=False, server_default="PENDING")
+
+    approver_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
+    acted_at = Column(DateTime, nullable=True)
+    remarks = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
