@@ -127,7 +127,7 @@ class LeaveBalance(Base):
     __tablename__ = "leave_balances"
 
     id                     = Column(Integer, primary_key=True, index=True)
-    employee_id            = Column(String(20), ForeignKey("employees.employee_id", ondelete="CASCADE"),
+    employee_id            = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
                                      nullable=False, index=True)
     leave_type_id          = Column(Integer, ForeignKey("leave_types.id", ondelete="CASCADE"),
                                      nullable=False)
@@ -160,7 +160,7 @@ class LeaveAdjustment(Base):
     __tablename__ = "leave_adjustments"
 
     id              = Column(Integer, primary_key=True, index=True)
-    employee_id     = Column(String(20), ForeignKey("employees.employee_id", ondelete="CASCADE"),
+    employee_id     = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
                               nullable=False, index=True)
     leave_type_id   = Column(Integer, ForeignKey("leave_types.id", ondelete="CASCADE"), nullable=False)
     adjustment_type = Column(SAEnum(AdjustmentTypeEnum), nullable=False)
@@ -179,7 +179,7 @@ class LeaveApplication(Base):
     __tablename__ = "leave_applications"
 
     id               = Column(Integer, primary_key=True, index=True)
-    employee_id      = Column(String(20), ForeignKey("employees.employee_id", ondelete="CASCADE"),
+    employee_id      = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
                                nullable=False, index=True)
     leave_type_id    = Column(Integer, ForeignKey("leave_types.id", ondelete="CASCADE"), nullable=True)
     leave_type_name  = Column(String(100), default="")
@@ -232,7 +232,7 @@ class CompOff(Base):
     __tablename__ = "comp_offs"
 
     id           = Column(Integer, primary_key=True, index=True)
-    employee_id  = Column(String(20), ForeignKey("employees.employee_id", ondelete="CASCADE"),
+    employee_id  = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
                            nullable=False, index=True)
     earned_date  = Column(Date,    nullable=False)
     hours        = Column(Float,   nullable=False)

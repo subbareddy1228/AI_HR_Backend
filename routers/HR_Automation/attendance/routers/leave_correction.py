@@ -18,13 +18,11 @@ from typing import Optional
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    Query, Path, UploadFile, File,
-)
+    Query, Path, UploadFile, File)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 
 from schema.HR_Automation.leave_correction import (
     LeaveCorrectionListOut,
@@ -37,20 +35,17 @@ from schema.HR_Automation.leave_correction import (
     period_label,
     parse_period,
     LEAVE_TYPE_OPTIONS,
-    LEAVE_TYPE_CODES,
-)
+    LEAVE_TYPE_CODES)
 from services.HR_Automation.leave_correction_service import (
     FilterOptionsService,
     LeaveCorrectionListService,
     LeaveCorrectionSaveService,
     LeaveCorrectionExportService,
-    LeaveCorrectionImportService,
-)
+    LeaveCorrectionImportService)
 
 router = APIRouter(
     prefix="/api/attendance/leave-correction",
-    tags=["Leave Correction"],
-)
+    tags=["Leave Correction"])
 
 
 # ─────────────────────────────────────────────────────────
@@ -60,7 +55,6 @@ router = APIRouter(
 
 @router.get("/leave-types")
 def get_leave_types(
-    current_user = Depends(get_current_user),
 ):
     """
     Returns the 9 leave type options for the dropdown:
@@ -78,8 +72,7 @@ def get_leave_types(
 
 @router.get("/filter-options", response_model=FilterOptionsOut)
 def get_filter_options(
-    db:           Session = Depends(get_db),
-    current_user          = Depends(get_current_user),
+    db:           Session = Depends(get_db)
 ):
     """
     Called on page load to populate:
@@ -117,8 +110,7 @@ def list_corrections(
     # ── Pagination ──
     page:            int           = Query(1,  ge=1),
     page_size:       int           = Query(10, ge=1, le=200),
-    db:              Session       = Depends(get_db),
-    current_user                   = Depends(get_current_user),
+    db:              Session       = Depends(get_db)
 ):
     """
     Main endpoint — powers the full Leave Correction table.
@@ -152,8 +144,7 @@ def list_corrections(
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             f"Invalid leave_type_code '{leave_type_code}'. "
-            f"Valid values: {sorted(LEAVE_TYPE_CODES)}",
-        )
+            f"Valid values: {sorted(LEAVE_TYPE_CODES)}")
 
     return LeaveCorrectionListService.list_records(
         db=db,
@@ -166,8 +157,7 @@ def list_corrections(
         department=department,
         search=search,
         page=page,
-        page_size=page_size,
-    )
+        page_size=page_size)
 
 
 # ─────────────────────────────────────────────────────────
@@ -178,8 +168,7 @@ def list_corrections(
 @router.post("/save", response_model=LeaveCorrectionRowOut)
 def save_correction(
     payload:     SaveCorrectionIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Green circle button on each employee row.
@@ -196,8 +185,7 @@ def save_correction(
     if payload.leave_type_code.upper() not in LEAVE_TYPE_CODES:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
-            f"Invalid leave_type_code '{payload.leave_type_code}'.",
-        )
+            f"Invalid leave_type_code '{payload.leave_type_code}'.")
     try:
         row = LeaveCorrectionSaveService.save_row(
             db=db,
@@ -206,8 +194,7 @@ def save_correction(
             year=payload.year,
             month=payload.month,
             correction=payload.correction,
-            saved_by=current_user.id,
-        )
+            saved_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     return row
@@ -221,8 +208,7 @@ def save_correction(
 @router.post("/save-all", response_model=dict)
 def bulk_save(
     payload:     BulkSaveCorrectionIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Save all visible rows at once.
@@ -232,8 +218,7 @@ def bulk_save(
     return LeaveCorrectionSaveService.bulk_save(
         db=db,
         rows=payload.rows,
-        saved_by=current_user.id,
-    )
+        saved_by=1)
 
 
 # ─────────────────────────────────────────────────────────
@@ -251,8 +236,7 @@ def export_corrections(
     location:        Optional[str] = Query(None),
     cost_center:     Optional[str] = Query(None),
     department:      Optional[str] = Query(None),
-    db:              Session       = Depends(get_db),
-    current_user                   = Depends(get_current_user),
+    db:              Session       = Depends(get_db)
 ):
     """
     Options → Download → Download button.
@@ -275,14 +259,12 @@ def export_corrections(
         leave_type_code=lt_code,
         location=location,
         cost_center=cost_center,
-        department=department,
-    )
+        department=department)
     filename = f"leave_corrections_{period_label(year, month)}.csv"
     return StreamingResponse(
         io.BytesIO(csv_bytes),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
+        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 # ─────────────────────────────────────────────────────────
@@ -303,8 +285,7 @@ async def import_corrections(
     leave_type_code: Optional[str] = Query(None,
                                            description="Default leave type code if not "
                                                        "specified per row in the CSV"),
-    db:              Session       = Depends(get_db),
-    current_user                   = Depends(get_current_user),
+    db:              Session       = Depends(get_db)
 ):
     """
     Options → Upload → Upload button.
@@ -327,8 +308,7 @@ async def import_corrections(
     if not file.filename.lower().endswith((".csv", ".xlsx", ".xls")):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "Only .csv, .xlsx, or .xls files are accepted.",
-        )
+            "Only .csv, .xlsx, or .xls files are accepted.")
 
     content = await file.read()
 
@@ -348,8 +328,7 @@ async def import_corrections(
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
                 "openpyxl is required to process XLSX files. "
-                "Install it with: pip install openpyxl",
-            )
+                "Install it with: pip install openpyxl")
 
     lt_code = leave_type_code.upper() if leave_type_code else None
 
@@ -361,8 +340,7 @@ async def import_corrections(
             year=year,
             month=month,
             leave_type_code=lt_code,
-            uploaded_by=current_user.id,
-        )
+            uploaded_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc))
 
@@ -374,7 +352,4 @@ async def import_corrections(
         total_rows=batch.total_rows,
         success_rows=batch.success_rows,
         failed_rows=batch.failed_rows,
-        errors=batch.error_log,
-    )
-
-
+        errors=batch.error_log)

@@ -16,13 +16,11 @@ from typing import Optional
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    Query, Path, UploadFile, File,
-)
+    Query, Path, UploadFile, File)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 
 from schema.HR_Automation.manual_attendance import (
     ManualAttendanceListOut,
@@ -33,21 +31,17 @@ from schema.HR_Automation.manual_attendance import (
     ImportResultOut,
     FilterOptionsOut,
     MessageResponse,
-    # _period_label,
-    parse_period,
-)
+    parse_period)   # _period_label,
 from services.HR_Automation.manual_attendance_service import (
     FilterOptionsService,
     ManualAttendanceListService,
     ManualAttendanceSaveService,
     ManualAttendanceExportService,
-    ManualAttendanceImportService,
-)
+    ManualAttendanceImportService)
 
 router = APIRouter(
     prefix="/api/attendance/manual",
-    tags=["Manual Attendance"],
-)
+    tags=["Manual Attendance"])
 
 
 # ─────────────────────────────────────────────────────────
@@ -57,8 +51,7 @@ router = APIRouter(
 
 @router.get("/filter-options", response_model=FilterOptionsOut)
 def get_filter_options(
-    db:           Session = Depends(get_db),
-    current_user          = Depends(get_current_user),
+    db:           Session = Depends(get_db)
 ):
     """
     Returns distinct values for:
@@ -93,8 +86,7 @@ def list_manual_attendance(
     # ── Pagination (Previous / Page X of Y / Next) ──
     page:          int           = Query(1, ge=1),
     page_size:     int           = Query(10, ge=1, le=200),
-    db:            Session       = Depends(get_db),
-    current_user                 = Depends(get_current_user),
+    db:            Session       = Depends(get_db)
 ):
     """
     Main endpoint — powers the full Manual Attendance table.
@@ -128,8 +120,7 @@ def list_manual_attendance(
         department=department,
         search=search,
         page=page,
-        page_size=page_size,
-    )
+        page_size=page_size)
 
 
 # ─────────────────────────────────────────────────────────
@@ -141,8 +132,7 @@ def list_manual_attendance(
              status_code=status.HTTP_200_OK)
 def save_attendance_row(
     payload:     SaveAttendanceRowIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Save button (green toggle icon) on each employee row.
@@ -160,8 +150,7 @@ def save_attendance_row(
             year=payload.year,
             month=payload.month,
             counts=payload.counts.model_dump(),
-            saved_by=current_user.id,
-        )
+            saved_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     return row
@@ -175,8 +164,7 @@ def save_attendance_row(
 @router.post("/save-all", response_model=dict)
 def bulk_save(
     payload:     BulkSaveIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Save all visible rows at once.
@@ -187,8 +175,7 @@ def bulk_save(
         year=payload.year,
         month=payload.month,
         rows=payload.rows,
-        saved_by=current_user.id,
-    )
+        saved_by=1)
 
 
 # ─────────────────────────────────────────────────────────
@@ -205,8 +192,7 @@ def download_attendance(
     location:    Optional[str] = Query(None),
     cost_center: Optional[str] = Query(None),
     department:  Optional[str] = Query(None),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     Options → Download Attendance → Download button.
@@ -224,14 +210,12 @@ def download_attendance(
         month=month,
         location=location,
         cost_center=cost_center,
-        department=department,
-    )
+        department=department)
     filename = f"manual_attendance_{_period_label(year, month)}.csv"
     return StreamingResponse(
         io.BytesIO(csv_bytes),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
+        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 # ─────────────────────────────────────────────────────────
@@ -249,8 +233,7 @@ async def upload_attendance(
                                     description="Target year for import"),
     month:       int        = Query(..., ge=1, le=12,
                                     description="Target month for import (1-12)"),
-    db:          Session    = Depends(get_db),
-    current_user            = Depends(get_current_user),
+    db:          Session    = Depends(get_db)
 ):
     """
     Options → Upload Attendance → Upload button.
@@ -269,8 +252,7 @@ async def upload_attendance(
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "Only .csv files are accepted.",
-        )
+            "Only .csv files are accepted.")
 
     content = await file.read()
     try:
@@ -280,8 +262,7 @@ async def upload_attendance(
             filename=file.filename,
             year=year,
             month=month,
-            uploaded_by=current_user.id,
-        )
+            uploaded_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc))
 
@@ -292,5 +273,4 @@ async def upload_attendance(
         total_rows=batch.total_rows,
         success_rows=batch.success_rows,
         failed_rows=batch.failed_rows,
-        errors=batch.error_log,
-    )
+        errors=batch.error_log)

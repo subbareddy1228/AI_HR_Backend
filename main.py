@@ -283,17 +283,17 @@ app.include_router(asset_insurance.router)
 
 
 # Payroll
-app.include_router(salary_structure.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(payroll_run.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(payroll_processing.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(salary_slip.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(reimbursements.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(loans_advances.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(statutory_compliance.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(bank_transfer.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(final_settlement.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(payroll_rpt.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(payroll_integration.router,prefix="/api/payroll",tags=["Payroll"])
+app.include_router(salary_structure.router)
+app.include_router(payroll_run.router)
+app.include_router(payroll_processing.router)
+app.include_router(salary_slip.router)
+app.include_router(reimbursements.router)
+app.include_router(loans_advances.router)
+app.include_router(statutory_compliance.router)
+app.include_router(bank_transfer.router)
+app.include_router(final_settlement.router)
+app.include_router(payroll_rpt.router)
+app.include_router(payroll_integration.router)
 
 # Employee Management
 app.include_router(employee_master.router, prefix="/api/employees", tags=["Employee Management"])

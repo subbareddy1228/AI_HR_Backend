@@ -45,7 +45,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 from schema.HR_Automation.work_hour_rule import (
     WorkHourRuleConfigOut,
     ComplianceStatsOut,
@@ -67,10 +66,10 @@ from services.HR_Automation.work_hour_rule_service import (
     export_config,
     import_config,
     _get_or_create,
-    _to_out,
-)
+    _to_out)
 
-router = APIRouter(prefix="/work-hour-rules", tags=["Work Hour Rules"])
+
+router = APIRouter(prefix="/api/attendance/work-hour-rules", tags=["Work Hour Rules"])
 
 VALID_TABS = {"attendance", "overtime", "breaks", "settings"}  # "settings" was missing
 
@@ -81,11 +80,9 @@ VALID_TABS = {"attendance", "overtime", "breaks", "settings"}  # "settings" was 
 @router.get(
     "/",
     response_model=WorkHourRuleConfigOut,
-    summary="Page load — returns full Work Hour Rules config for all 4 tabs",
-)
+    summary="Page load — returns full Work Hour Rules config for all 4 tabs")
 def get_work_hour_rules(
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     Called when the page mounts.
@@ -101,11 +98,9 @@ def get_work_hour_rules(
 @router.get(
     "/compliance-stats",
     response_model=ComplianceStatsOut,
-    summary="Stats bar — Active Rules / Grace Period / Min Hours / Short Leave / Absence Alert / Weekend Rate",
-)
+    summary="Stats bar — Active Rules / Grace Period / Min Hours / Short Leave / Absence Alert / Weekend Rate")
 def compliance_stats(
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     FIX: compliance score must be computed dynamically from the stored config,
@@ -128,12 +123,10 @@ def compliance_stats(
 @router.post(
     "/save",
     response_model=WorkHourRuleConfigOut,
-    summary="Save Changes button — persist full state of all 4 tabs",
-)
+    summary="Save Changes button — persist full state of all 4 tabs")
 def save_changes(
     payload: SaveAllIn,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     return save_all(
         db=db,
@@ -141,8 +134,7 @@ def save_changes(
         overtime_rules=payload.overtime_rules,
         break_rules=payload.break_rules,
         settings=payload.settings,
-        saved_by=current_user.id,
-    )
+        saved_by=1)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -151,12 +143,10 @@ def save_changes(
 @router.post(
     "/save-tab",
     response_model=WorkHourRuleConfigOut,
-    summary="Auto-save — update a single tab's config",
-)
+    summary="Auto-save — update a single tab's config")
 def save_single_tab(
     payload: SaveTabIn,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     FIX: "settings" is now a valid tab name (was missing, caused 422).
@@ -165,10 +155,9 @@ def save_single_tab(
     if payload.tab not in VALID_TABS:
         raise HTTPException(
             status_code=422,
-            detail=f"Invalid tab '{payload.tab}'. Must be one of: {sorted(VALID_TABS)}",
-        )
+            detail=f"Invalid tab '{payload.tab}'. Must be one of: {sorted(VALID_TABS)}")
     try:
-        return save_tab(db, payload.tab, payload.data, saved_by=current_user.id)
+        return save_tab(db, payload.tab, payload.data, saved_by=1)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -179,23 +168,19 @@ def save_single_tab(
 @router.post(
     "/reset",
     response_model=ResetOut,
-    summary="Reset button — restore defaults for one tab or all tabs",
-)
+    summary="Reset button — restore defaults for one tab or all tabs")
 def reset_rules(
     tab: Optional[str] = Query(
         default=None,
-        description="'attendance' | 'overtime' | 'breaks' | 'settings' | omit for all",
-    ),
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+        description="'attendance' | 'overtime' | 'breaks' | 'settings' | omit for all"),
+    db: Session = Depends(get_db)
 ):
     if tab and tab not in VALID_TABS:
         raise HTTPException(
             status_code=422,
-            detail=f"Invalid tab '{tab}'. Must be one of: {sorted(VALID_TABS)}",
-        )
+            detail=f"Invalid tab '{tab}'. Must be one of: {sorted(VALID_TABS)}")
     try:
-        return reset_config(db, tab=tab, reset_by=current_user.id)
+        return reset_config(db, tab=tab, reset_by=1)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -205,15 +190,13 @@ def reset_rules(
 # ─────────────────────────────────────────────────────────────────────────────
 @router.get("/export", summary="Export button — download full config as JSON")
 def export_rules(
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     data     = export_config(db)
     filename = f"work-hour-rules-{datetime.now(timezone.utc).strftime('%Y-%m-%d')}.json"
     return JSONResponse(
         content=data,
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
+        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -222,12 +205,10 @@ def export_rules(
 @router.post(
     "/import",
     response_model=WorkHourRuleConfigOut,
-    summary="Import button — upload a JSON file to overwrite current config",
-)
+    summary="Import button — upload a JSON file to overwrite current config")
 async def import_rules(
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     if not file.filename.lower().endswith(".json"):
         raise HTTPException(status_code=422, detail="Only .json files are accepted.")
@@ -236,7 +217,7 @@ async def import_rules(
         data = json.loads(content.decode("utf-8"))
     except json.JSONDecodeError:
         raise HTTPException(status_code=422, detail="Invalid JSON format.")
-    return import_config(db, data, imported_by=current_user.id)
+    return import_config(db, data, imported_by=1)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -244,8 +225,7 @@ async def import_rules(
 # ─────────────────────────────────────────────────────────────────────────────
 @router.post("/backup", summary="Backup button — snapshot current config to DB backup column")
 def backup_rules(
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     NEW: Maps to the Settings tab → Backup button.
@@ -258,7 +238,7 @@ def backup_rules(
 
     config.backup_json    = snapshot
     config.last_backup_at = datetime.now(timezone.utc)
-    config.updated_by     = current_user.id
+    config.updated_by     = 1
     db.commit()
 
     filename = f"work-hours-backup-{datetime.now(timezone.utc).strftime('%Y-%m-%d')}.json"
@@ -268,8 +248,7 @@ def backup_rules(
             "last_backup_at": config.last_backup_at.isoformat(),
             "data":           snapshot,
         },
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
+        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -277,15 +256,14 @@ def backup_rules(
 # ─────────────────────────────────────────────────────────────────────────────
 @router.delete("/cache", summary="Clear Cache button — wipe config row and restore defaults")
 def clear_cache(
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     NEW: Maps to Settings tab → Clear Cache button.
     Deletes the current config row so the next GET / seeds fresh defaults.
     Frontend should reload the page after this call succeeds.
     """
-    from models.work_hour_rules import WorkHourRuleConfig   # adjust import path
+    from model.HR_Automation.work_hour_rule import WorkHourRuleConfig   # adjust import path
     db.query(WorkHourRuleConfig).delete()
     db.commit()
     return {"message": "Config cleared. Defaults will be loaded on next page visit."}
@@ -297,11 +275,9 @@ def clear_cache(
 @router.get(
     "/settings",
     response_model=WorkHourSettingsOut,
-    summary="Settings tab load — currency, timeFormat, weekStart, autoSave, notifications, backupFrequency",
-)
+    summary="Settings tab load — currency, timeFormat, weekStart, autoSave, notifications, backupFrequency")
 def get_settings(
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     NEW: Settings tab was previously 100% localStorage.
@@ -326,12 +302,10 @@ def get_settings(
 @router.put(
     "/settings",
     response_model=WorkHourSettingsOut,
-    summary="Settings tab save — persist general settings fields",
-)
+    summary="Settings tab save — persist general settings fields")
 def update_settings(
     payload: WorkHourSettingsIn,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     NEW: Saves Settings tab fields to the config row.
@@ -341,7 +315,7 @@ def update_settings(
     existing = config.settings or {}
     existing.update(payload.model_dump(exclude_none=True))
     config.settings   = existing
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -355,12 +329,10 @@ def update_settings(
 @router.post(
     "/attendance/short-leave/category",
     response_model=WorkHourRuleConfigOut,
-    summary="Add a new short-leave category",
-)
+    summary="Add a new short-leave category")
 def add_short_leave_category(
     payload: ShortLeaveCategory,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     config = _get_or_create(db)
     att    = config.attendance_rules or {}
@@ -373,7 +345,7 @@ def add_short_leave_category(
 
     att.setdefault("shortLeave", {})["categories"] = cats
     config.attendance_rules = att
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -383,13 +355,11 @@ def add_short_leave_category(
 @router.put(
     "/attendance/short-leave/category/{cat_id}",
     response_model=WorkHourRuleConfigOut,
-    summary="Update a short-leave category (pencil icon)",
-)
+    summary="Update a short-leave category (pencil icon)")
 def update_short_leave_category(
     cat_id: int,
     payload: ShortLeaveCategory,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     config = _get_or_create(db)
     att    = config.attendance_rules or {}
@@ -404,7 +374,7 @@ def update_short_leave_category(
     ]
     att["shortLeave"]["categories"] = updated
     config.attendance_rules = att
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -414,12 +384,10 @@ def update_short_leave_category(
 @router.delete(
     "/attendance/short-leave/category/{cat_id}",
     response_model=WorkHourRuleConfigOut,
-    summary="Delete a short-leave category (trash icon)",
-)
+    summary="Delete a short-leave category (trash icon)")
 def delete_short_leave_category(
     cat_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     config = _get_or_create(db)
     att    = config.attendance_rules or {}
@@ -431,7 +399,7 @@ def delete_short_leave_category(
 
     att["shortLeave"]["categories"] = new_cats
     config.attendance_rules = att
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -445,12 +413,10 @@ def delete_short_leave_category(
 @router.post(
     "/overtime/category",
     response_model=WorkHourRuleConfigOut,
-    summary="Add a new overtime category (+ Add button)",
-)
+    summary="Add a new overtime category (+ Add button)")
 def add_overtime_category(
     payload: OvertimeCategory,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     config = _get_or_create(db)
     ot     = config.overtime_rules or {}
@@ -463,7 +429,7 @@ def add_overtime_category(
 
     ot["categories"] = cats
     config.overtime_rules = ot
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -473,13 +439,11 @@ def add_overtime_category(
 @router.put(
     "/overtime/category/{cat_id}",
     response_model=WorkHourRuleConfigOut,
-    summary="Update an overtime category (inline table edit)",
-)
+    summary="Update an overtime category (inline table edit)")
 def update_overtime_category(
     cat_id: int,
     payload: OvertimeCategory,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     config = _get_or_create(db)
     ot     = config.overtime_rules or {}
@@ -494,7 +458,7 @@ def update_overtime_category(
     ]
     ot["categories"] = updated
     config.overtime_rules = ot
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -504,12 +468,10 @@ def update_overtime_category(
 @router.delete(
     "/overtime/category/{cat_id}",
     response_model=WorkHourRuleConfigOut,
-    summary="Delete an overtime category (trash icon)",
-)
+    summary="Delete an overtime category (trash icon)")
 def delete_overtime_category(
     cat_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     config = _get_or_create(db)
     ot     = config.overtime_rules or {}
@@ -522,7 +484,7 @@ def delete_overtime_category(
 
     ot["categories"] = new_cats
     config.overtime_rules = ot
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -536,8 +498,7 @@ def delete_overtime_category(
 )
 def duplicate_overtime_category(
     cat_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     NEW: Copy icon on the Overtime tab category row.
@@ -557,7 +518,7 @@ def duplicate_overtime_category(
 
     ot["categories"] = cats
     config.overtime_rules = ot
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -571,12 +532,10 @@ def duplicate_overtime_category(
 @router.post(
     "/breaks/break",
     response_model=WorkHourRuleConfigOut,
-    summary="Add a new break (+ Add Break button)",
-)
+    summary="Add a new break (+ Add Break button)")
 def add_break(
     payload: BreakItem,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     config = _get_or_create(db)
     br     = config.break_rules or {}
@@ -589,7 +548,7 @@ def add_break(
 
     br["breaks"] = breaks
     config.break_rules = br
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -599,13 +558,11 @@ def add_break(
 @router.put(
     "/breaks/break/{break_id}",
     response_model=WorkHourRuleConfigOut,
-    summary="Update a break (pencil icon → edit modal)",
-)
+    summary="Update a break (pencil icon → edit modal)")
 def update_break(
     break_id: int,
     payload: BreakItem,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     config = _get_or_create(db)
     br     = config.break_rules or {}
@@ -620,7 +577,7 @@ def update_break(
     ]
     br["breaks"] = updated
     config.break_rules = br
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -630,12 +587,10 @@ def update_break(
 @router.delete(
     "/breaks/break/{break_id}",
     response_model=WorkHourRuleConfigOut,
-    summary="Delete a break (trash icon)",
-)
+    summary="Delete a break (trash icon)")
 def delete_break(
     break_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     FIX: removed the min-1 guard — the UI allows deleting ALL breaks.
@@ -651,7 +606,7 @@ def delete_break(
 
     br["breaks"] = new_breaks
     config.break_rules = br
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)
@@ -665,8 +620,7 @@ def delete_break(
 )
 def duplicate_break(
     break_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     NEW: Copy icon on each break card in the Breaks tab.
@@ -686,7 +640,7 @@ def duplicate_break(
 
     br["breaks"] = breaks
     config.break_rules = br
-    config.updated_by = current_user.id
+    config.updated_by = 1
     config.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(config)

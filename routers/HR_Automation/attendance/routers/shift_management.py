@@ -12,7 +12,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 from model.HR_Automation.shift_management import SwapStatusEnum
 from schema.HR_Automation.shift_management import (
     ShiftCreateIn, ShiftUpdateIn, ShiftOut,
@@ -21,19 +20,16 @@ from schema.HR_Automation.shift_management import (
     SwapRequestIn, SwapApprovalIn, SwapRequestOut,
     FlexibleArrangementIn, FlexibleArrangementOut,
     WorkHourRulesOut, WorkHourRulesUpdate,
-    NotificationOut, MarkReadIn, MessageResponse,
-)
+    NotificationOut, MarkReadIn, MessageResponse)
 from services.HR_Automation.shift_management_service import (
     ShiftMasterService, ShiftAssignmentService,
     RosteringService, ShiftSwapService,
     FlexibleArrangementService, WorkHourRulesService,
-    NotificationService,
-)
+    NotificationService)
 
 router = APIRouter(
     prefix="/api/attendance/shifts",
-    tags=["Shift Management & Rostering"],
-)
+    tags=["Shift Management & Rostering"])
 
 
 # ═══════════════════════════════════════════════════════════
@@ -44,8 +40,7 @@ router = APIRouter(
 def list_shifts(
     search:     Optional[str] = Query(None, description="Search shifts..."),
     shift_type: Optional[str] = Query(None, description="All | general | night | rotational | flexible"),
-    db:         Session       = Depends(get_db),
-    current_user              = Depends(get_current_user),
+    db:         Session       = Depends(get_db)
 ):
     """
     Shift Master tab — the main shift table.
@@ -58,8 +53,7 @@ def list_shifts(
 @router.post("/master", response_model=ShiftOut, status_code=status.HTTP_201_CREATED)
 def create_shift(
     payload:     ShiftCreateIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Add Shift button → Add New Shift modal → Save Shift.
@@ -70,7 +64,7 @@ def create_shift(
             Allow Multiple Shifts Per Day toggle · Active toggle
     """
     try:
-        return ShiftMasterService.create_shift(db, payload, current_user.id)
+        return ShiftMasterService.create_shift(db, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
 
@@ -78,8 +72,7 @@ def create_shift(
 @router.get("/master/{shift_id}", response_model=ShiftOut)
 def get_shift(
     shift_id: int    = Path(...),
-    db:       Session = Depends(get_db),
-    current_user      = Depends(get_current_user),
+    db:       Session = Depends(get_db)
 ):
     try:
         return ShiftMasterService.get_shift(db, shift_id)
@@ -91,12 +84,11 @@ def get_shift(
 def update_shift(
     shift_id: int          = Path(...),
     payload:  ShiftUpdateIn = ...,
-    db:       Session       = Depends(get_db),
-    current_user            = Depends(get_current_user),
+    db:       Session       = Depends(get_db)
 ):
     """Edit icon → Edit Shift modal → Update Shift."""
     try:
-        return ShiftMasterService.update_shift(db, shift_id, payload, current_user.id)
+        return ShiftMasterService.update_shift(db, shift_id, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -104,8 +96,7 @@ def update_shift(
 @router.delete("/master/{shift_id}", response_model=MessageResponse)
 def delete_shift(
     shift_id:    int    = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Trash icon → delete shift (blocked if active assignments exist)."""
     try:
@@ -123,8 +114,7 @@ def delete_shift(
              status_code=status.HTTP_201_CREATED)
 def bulk_assign(
     payload:     BulkAssignIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Bulk Shift Assignment panel.
@@ -132,7 +122,7 @@ def bulk_assign(
     Sends shift_assigned notification to each employee.
     """
     try:
-        assignments = ShiftAssignmentService.bulk_assign(db, payload, current_user.id)
+        assignments = ShiftAssignmentService.bulk_assign(db, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     return assignments
@@ -142,15 +132,14 @@ def bulk_assign(
              status_code=status.HTTP_201_CREATED)
 def individual_assign(
     payload:     IndividualAssignIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Individual Assignment panel.
     Employee · Shift · Start Date · End Date (optional) → Assign Shift button.
     """
     try:
-        return ShiftAssignmentService.individual_assign(db, payload, current_user.id)
+        return ShiftAssignmentService.individual_assign(db, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -159,8 +148,7 @@ def individual_assign(
 def list_assignments(
     employee_id: Optional[str] = Query(None),
     active_only: bool          = Query(True),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """Current Shift Assignments table — Employee · Shift · Start · End · Status · Edit."""
     assignments = ShiftAssignmentService.list_assignments(db, employee_id, active_only)
@@ -177,8 +165,7 @@ def list_assignments(
 def update_assignment(
     assignment_id: int              = Path(...),
     payload:       AssignmentUpdateIn = ...,
-    db:            Session           = Depends(get_db),
-    current_user                     = Depends(get_current_user),
+    db:            Session           = Depends(get_db)
 ):
     """Edit icon in Current Shift Assignments table."""
     try:
@@ -187,7 +174,7 @@ def update_assignment(
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
     
 @router.delete("/assignments/{assignment_id}", response_model=MessageResponse)
-def delete_assignment(assignment_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def delete_assignment(assignment_id: int, db: Session = Depends(get_db)):
     ShiftAssignmentService.delete_assignment(db, assignment_id)
     return {"message": f"Assignment {assignment_id} deleted."}
 
@@ -200,8 +187,7 @@ def delete_assignment(assignment_id: int, db: Session = Depends(get_db), current
              status_code=status.HTTP_201_CREATED)
 def generate_roster(
     payload:     GenerateRosterIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Generate Roster button.
@@ -210,15 +196,14 @@ def generate_roster(
     Generates ShiftRosterDay rows for the period.
     """
     try:
-        return RosteringService.generate_roster(db, payload, current_user.id)
+        return RosteringService.generate_roster(db, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
 
 @router.get("/rosters", response_model=List[RosterOut])
 def list_rosters(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Shift Rosters table — Name · Shift · Period · Start · End · Status · Published · Actions."""
     rosters = RosteringService.list_rosters(db)
@@ -233,8 +218,7 @@ def list_rosters(
 @router.get("/rosters/{roster_id}", response_model=RosterOut)
 def get_roster(
     roster_id:   int    = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Eye icon — view roster detail with all day rows."""
     try:
@@ -249,15 +233,14 @@ def get_roster(
 @router.post("/rosters/{roster_id}/publish", response_model=PublishRosterOut)
 def publish_roster(
     roster_id:   int    = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Publish button — publishes the roster and sends notifications to all
     employees assigned in the roster days.
     """
     try:
-        return RosteringService.publish_roster(db, roster_id, current_user.id)
+        return RosteringService.publish_roster(db, roster_id, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -271,8 +254,7 @@ def list_swap_requests(
     status_filter: Optional[str] = Query(None, alias="status",
                                           description="pending | approved | rejected"),
     employee_id:   Optional[str] = Query(None),
-    db:            Session       = Depends(get_db),
-    current_user                 = Depends(get_current_user),
+    db:            Session       = Depends(get_db)
 ):
     """
     Shift Swap Requests table.
@@ -293,19 +275,17 @@ def list_swap_requests(
 @router.post("/swaps", response_model=SwapRequestOut, status_code=status.HTTP_201_CREATED)
 def create_swap_request(
     payload:     SwapRequestIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """New Swap Request button → modal → Submit Request."""
-    return ShiftSwapService.create_swap_request(db, payload, current_user.id)
+    return ShiftSwapService.create_swap_request(db, payload, 1)
 
 
 @router.post("/swaps/{request_id}/decision", response_model=SwapRequestOut)
 def decide_swap(
     request_id:  int           = Path(...),
     payload:     SwapApprovalIn = ...,
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     ✓ (approve) or ✗ (reject) buttons in the Actions column.
@@ -315,8 +295,7 @@ def decide_swap(
     try:
         req = ShiftSwapService.approve_or_reject(
             db, request_id, payload.approved,
-            payload.rejection_reason, current_user.id,
-        )
+            payload.rejection_reason, 1)
         out = SwapRequestOut.model_validate(req)
         out.current_shift_name   = req.current_shift.name   if req.current_shift   else ""
         out.requested_shift_name = req.requested_shift.name if req.requested_shift else ""
@@ -331,8 +310,7 @@ def decide_swap(
 
 @router.get("/flexible", response_model=List[FlexibleArrangementOut])
 def list_flexible(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Flexible Work Arrangements table.
@@ -351,8 +329,7 @@ def list_flexible(
              status_code=status.HTTP_201_CREATED)
 def save_flexible(
     payload:     FlexibleArrangementIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Add Arrangement button → Flexible Work Arrangement modal → Save.
@@ -361,7 +338,7 @@ def save_flexible(
     - hybrid            : office_days + remote_days
     - compressed        : compressed_work_days + compressed_hours_per_day
     """
-    arr = FlexibleArrangementService.save(db, payload, current_user.id)
+    arr = FlexibleArrangementService.save(db, payload, 1)
     out = FlexibleArrangementOut.model_validate(arr)
     out.employee_name = arr.employee.name if arr.employee else arr.employee_id
     return out
@@ -370,8 +347,7 @@ def save_flexible(
 @router.delete("/flexible/{arrangement_id}", response_model=MessageResponse)
 def deactivate_flexible(
     arrangement_id: int    = Path(...),
-    db:             Session = Depends(get_db),
-    current_user            = Depends(get_current_user),
+    db:             Session = Depends(get_db)
 ):
     try:
         FlexibleArrangementService.deactivate(db, arrangement_id)
@@ -386,8 +362,7 @@ def deactivate_flexible(
 
 @router.get("/rules", response_model=WorkHourRulesOut)
 def get_rules(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Work Hour Rules tab — loads the singleton rules config.
@@ -399,15 +374,14 @@ def get_rules(
 @router.put("/rules", response_model=WorkHourRulesOut)
 def update_rules(
     payload:     WorkHourRulesUpdate,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Save button on Work Hour Rules tab.
     Partial update — only supplied fields are changed.
     Fields map directly to every input/toggle visible in the UI.
     """
-    return WorkHourRulesService.update(db, payload, current_user.id)
+    return WorkHourRulesService.update(db, payload, 1)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -417,8 +391,7 @@ def update_rules(
 @router.get("/notifications", response_model=List[NotificationOut])
 def get_notifications(
     unread_only: bool = Query(False),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Bell button → Notifications panel.
@@ -426,20 +399,19 @@ def get_notifications(
     Badge shows unread count.
     """
     return NotificationService.list_for_employee(
-        db, current_user.employee_id, unread_only
+        db, "EMP001", unread_only
     )
 
 
 @router.post("/notifications/mark-read", response_model=MessageResponse)
 def mark_notifications_read(
     payload:     MarkReadIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Mark All Read button — or pass specific notification_ids to mark selectively.
     """
     count = NotificationService.mark_read(
-        db, current_user.employee_id, payload.notification_ids
+        db, "EMP001", payload.notification_ids
     )
     return {"message": f"{count} notification(s) marked as read."}

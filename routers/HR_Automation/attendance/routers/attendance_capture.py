@@ -39,14 +39,12 @@ from typing import Optional, List
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    UploadFile, File, Form, Query, Request, BackgroundTasks,
-)
+    UploadFile, File, Form, Query, Request, BackgroundTasks)
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 from model.HR_Automation.attendance_capture import (
     BiometricDevice, DeviceSyncLog, GeoLocation,
     AttendancePunch, AttendanceRecord, WhitelistedIP,
@@ -54,8 +52,7 @@ from model.HR_Automation.attendance_capture import (
     FieldEmployee, WFHRequest,
     PunchTypeEnum, CaptureMethodEnum,
     DeviceStatusEnum, SyncTypeEnum,
-    WFHStatusEnum, FieldEmployeeStatusEnum,
-)
+    WFHStatusEnum, FieldEmployeeStatusEnum)
 from schema.HR_Automation.attendance_capture import (
     DeviceCreate, DeviceUpdate, DeviceOut, SyncLogOut,
     SyncAllResponse, ReconnectResponse, OfflineSyncResponse,
@@ -69,13 +66,11 @@ from schema.HR_Automation.attendance_capture import (
     FieldLocationUpdate, FieldReportCreate,
     WFHRequestCreate, WFHRequestOut, WFHDecision,
     GPSStatistics, WebCurrentStatus, PunchStatistics,
-    MessageResponse,
-)
+    MessageResponse)
 from services.HR_Automation.attendance_capture_service import (
     PunchService, AttendanceAggregationService,
     DeviceSyncService, OfflineSyncService, DashboardService,
-    _is_ip_whitelisted,
-)
+    _is_ip_whitelisted)
 
 router = APIRouter(prefix="/api/attendance/capture", tags=["Attendance Capture"])
 
@@ -89,8 +84,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.get("/dashboard", response_model=AttendanceDashboard)
 def get_dashboard(
-    db:           Session = Depends(get_db),
-    current_user          = Depends(get_current_user),
+    db:           Session = Depends(get_db)
 ):
     """4 KPI tiles — Total Records, Present Today, Late Arrivals, Overtime Hours."""
     return DashboardService.today_stats(db)
@@ -103,8 +97,7 @@ def get_dashboard(
 @router.get("/devices", response_model=List[DeviceOut])
 def list_devices(
     status:       Optional[str] = Query(None, description="Online|Offline|Syncing|Error"),
-    db:           Session       = Depends(get_db),
-    current_user                = Depends(get_current_user),
+    db:           Session       = Depends(get_db)
 ):
     """Device Status Dashboard table + Device Health Monitor cards."""
     q = db.query(BiometricDevice).filter_by(is_active=True)
@@ -128,8 +121,7 @@ def list_devices(
 @router.post("/devices", response_model=DeviceOut, status_code=status.HTTP_201_CREATED)
 def add_device(
     payload:      DeviceCreate,
-    db:           Session       = Depends(get_db),
-    current_user                = Depends(get_current_user),
+    db:           Session       = Depends(get_db)
 ):
     """+ Add Device form — Vendor, Device Type, Model Name, IP Address."""
     if db.query(BiometricDevice).filter_by(ip_address=payload.ip_address).first():
@@ -145,8 +137,7 @@ def add_device(
 @router.get("/devices/{device_id}", response_model=DeviceOut)
 def get_device(
     device_id:   int,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Edit icon — fetches device to pre-fill edit form."""
     device = db.query(BiometricDevice).filter_by(id=device_id).first()
@@ -161,8 +152,7 @@ def get_device(
 def update_device(
     device_id:   int,
     payload:     DeviceUpdate,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Edit device modal → Save."""
     device = db.query(BiometricDevice).filter_by(id=device_id).first()
@@ -178,8 +168,7 @@ def update_device(
 @router.delete("/devices/{device_id}", response_model=MessageResponse)
 def delete_device(
     device_id:   int,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Trash icon in Device Status table — soft-delete."""
     device = db.query(BiometricDevice).filter_by(id=device_id).first()
@@ -197,8 +186,7 @@ def delete_device(
 @router.post("/devices/sync-all", response_model=SyncAllResponse)
 def sync_all_devices(
     background_tasks: BackgroundTasks,          # FIXED: added BackgroundTasks
-    db:               Session = Depends(get_db),
-    current_user              = Depends(get_current_user),
+    db:               Session = Depends(get_db)
 ):
     """Sync All Devices green button — queues all online devices in background."""
     devices = db.query(BiometricDevice).filter_by(
@@ -211,13 +199,12 @@ def sync_all_devices(
             device_id=device.id,
             sync_type=SyncTypeEnum.manual,
             status="in_progress",
-            initiated_by=current_user.id,
-        )
+            initiated_by=1)
         db.add(log)
         db.flush()
         logs.append(log)
         background_tasks.add_task(
-            DeviceSyncService.sync_device, db, device, current_user.id
+            DeviceSyncService.sync_device, db, device, 1
         )
     db.commit()
 
@@ -232,21 +219,19 @@ def sync_all_devices(
 def sync_device(
     device_id:        int,
     background_tasks: BackgroundTasks,
-    db:               Session = Depends(get_db),
-    current_user              = Depends(get_current_user),
+    db:               Session = Depends(get_db)
 ):
     """Sync icon per device row — triggers manual sync for that device."""
     device = db.query(BiometricDevice).filter_by(id=device_id, is_active=True).first()
     if not device:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Device not found.")
-    log = DeviceSyncService.sync_device(db, device, initiated_by=current_user.id)
+    log = DeviceSyncService.sync_device(db, device, initiated_by=1)
     return SyncLogOut.model_validate(log)
 
 
 @router.post("/devices/reconnect-offline", response_model=ReconnectResponse)
 def reconnect_offline_devices(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Reconnect Offline button — attempts reconnection for all offline devices."""
     reconnected = DeviceSyncService.reconnect_offline(db)
@@ -256,8 +241,7 @@ def reconnect_offline_devices(
 @router.get("/devices/{device_id}/report", response_model=DeviceReport)
 def device_report(
     device_id:   int,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Device-wise Reports card — Total Punches, Check-ins, Check-outs, Employees."""
     device = db.query(BiometricDevice).filter_by(id=device_id).first()
@@ -269,8 +253,7 @@ def device_report(
 @router.get("/devices/{device_id}/report/export")
 def export_device_report(
     device_id:   int,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Export Device Report button — downloads device punch data as CSV."""
     device = db.query(BiometricDevice).filter_by(id=device_id).first()
@@ -288,8 +271,7 @@ def export_device_report(
     return StreamingResponse(
         io.BytesIO(output.getvalue().encode()),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=device_{device_id}_report.csv"},
-    )
+        headers={"Content-Disposition": f"attachment; filename=device_{device_id}_report.csv"})
 
 
 # ─────────────────────────────────────────────────────────
@@ -300,8 +282,7 @@ def export_device_report(
 def list_sync_logs(
     device_id:   Optional[int] = Query(None),
     limit:       int           = Query(50, le=500),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """Recent Syncing Activity table — Time, Device, Type, Status, Records."""
     q = db.query(DeviceSyncLog).order_by(DeviceSyncLog.started_at.desc())
@@ -319,8 +300,7 @@ def list_sync_logs(
 
 @router.get("/sync-logs/export")
 def export_sync_logs(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Export Logs button — downloads sync activity as CSV."""
     import csv
@@ -340,8 +320,7 @@ def export_sync_logs(
     return StreamingResponse(
         io.BytesIO(output.getvalue().encode()),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=sync_logs.csv"},
-    )
+        headers={"Content-Disposition": "attachment; filename=sync_logs.csv"})
 
 
 # ─────────────────────────────────────────────────────────
@@ -350,8 +329,7 @@ def export_sync_logs(
 
 @router.get("/locations", response_model=List[GeoLocationOut])
 def list_locations(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Geo-fence Locations table — Location, Radius, Coordinates, Status."""
     return db.query(GeoLocation).filter_by(is_active=True).all()
@@ -360,8 +338,7 @@ def list_locations(
 @router.post("/locations", response_model=GeoLocationOut, status_code=status.HTTP_201_CREATED)
 def create_location(
     payload:     GeoLocationCreate,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """+ Add Geo-fence at Current Location button."""
     loc = GeoLocation(**payload.model_dump())
@@ -375,8 +352,7 @@ def create_location(
 @router.patch("/locations/{location_id}/toggle-status", response_model=GeoLocationOut)
 def toggle_location_status(
     location_id: int,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Status column toggle per geo-fence row — switches between Inactive and Active."""
     loc = db.query(GeoLocation).filter_by(id=location_id).first()
@@ -391,8 +367,7 @@ def toggle_location_status(
 @router.delete("/locations/{location_id}", response_model=MessageResponse)
 def delete_location(
     location_id: int,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Delete icon per geo-fence row."""
     loc = db.query(GeoLocation).filter_by(id=location_id).first()
@@ -409,8 +384,7 @@ def delete_location(
 
 @router.get("/gps/statistics", response_model=GPSStatistics)
 def get_gps_statistics(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """GPS Statistics panel — Today check-ins, This Week, Pending offline, Avg Hours."""
     today      = date.today()
@@ -419,13 +393,11 @@ def get_gps_statistics(
     today_ci = db.query(AttendancePunch).filter(
         AttendancePunch.capture_method == CaptureMethodEnum.gps,
         AttendancePunch.punch_type     == PunchTypeEnum.check_in,
-        func.date(AttendancePunch.punch_time) == today,
-    ).count()
+        func.date(AttendancePunch.punch_time) == today).count()
 
     this_week = db.query(AttendancePunch).filter(
         AttendancePunch.capture_method == CaptureMethodEnum.gps,
-        func.date(AttendancePunch.punch_time) >= week_start,
-    ).count()
+        func.date(AttendancePunch.punch_time) >= week_start).count()
 
     pending   = db.query(OfflinePunchQueue).filter_by(status="pending").count()
 
@@ -443,8 +415,7 @@ def get_gps_statistics(
 @router.get("/gps/recent-activity")
 def get_gps_recent_activity(
     limit:       int     = Query(20, ge=1, le=100),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Recent GPS Activity table — Employee, Time, Type, Hours, Status."""
     punches = (
@@ -474,8 +445,7 @@ def get_gps_recent_activity(
 def list_field_employees(
     status_filter: Optional[str] = Query(None, alias="status",
                                          description="Active|Traveling|Working|Inactive"),
-    db:            Session       = Depends(get_db),
-    current_user                 = Depends(get_current_user),
+    db:            Session       = Depends(get_db)
 ):
     """Field Employee Management table — Employee, Location, Status, Last Activity."""
     q = db.query(FieldEmployee).filter_by(is_active=True)
@@ -488,8 +458,7 @@ def list_field_employees(
              status_code=status.HTTP_201_CREATED)
 def add_field_employee(
     payload:     FieldEmployeeCreate,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """+ Add Field Employee button."""
     existing = db.query(FieldEmployee).filter_by(
@@ -509,8 +478,7 @@ def add_field_employee(
 def update_field_location(
     employee_id: str,
     payload:     FieldLocationUpdate,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Update Field Location button — updates employee's current GPS coordinates."""
     fe = db.query(FieldEmployee).filter_by(
@@ -533,8 +501,7 @@ def update_field_location(
 def submit_field_report(
     employee_id: str,
     payload:     FieldReportCreate,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Submit Field Report button — submits daily activity report."""
     fe = db.query(FieldEmployee).filter_by(
@@ -555,8 +522,7 @@ def submit_field_report(
 def list_wfh_requests(
     employee_id:   Optional[str] = Query(None),
     status_filter: Optional[str] = Query(None, alias="status"),
-    db:            Session       = Depends(get_db),
-    current_user                 = Depends(get_current_user),
+    db:            Session       = Depends(get_db)
 ):
     """View Requests button + Today's WFH count + Pending Requests count badges."""
     q = db.query(WFHRequest)
@@ -571,8 +537,7 @@ def list_wfh_requests(
              status_code=status.HTTP_201_CREATED)
 def create_wfh_request(
     payload:     WFHRequestCreate,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Date picker + Request button in WFH panel."""
     existing = db.query(WFHRequest).filter_by(
@@ -592,15 +557,14 @@ def create_wfh_request(
 def decide_wfh_request(
     request_id: int,
     payload:    WFHDecision,
-    db:         Session = Depends(get_db),
-    current_user        = Depends(get_current_user),
+    db:         Session = Depends(get_db)
 ):
     """HR approval action on pending WFH request."""
     req = db.query(WFHRequest).filter_by(id=request_id).first()
     if not req:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "WFH request not found.")
     req.status      = WFHStatusEnum.approved if payload.approved else WFHStatusEnum.rejected
-    req.approved_by = current_user.id
+    req.approved_by = 1
     req.approved_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(req)
@@ -614,8 +578,7 @@ def decide_wfh_request(
 @router.post("/punch/biometric", response_model=PunchOut, status_code=status.HTTP_201_CREATED)
 def biometric_punch(
     payload:     BiometricPunchIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Simulate Biometric CHECKIN button."""
     try:
@@ -627,8 +590,7 @@ def biometric_punch(
             punch_time=payload.punch_time,
             device_user_id=payload.device_user_id,
             is_offline=payload.is_offline_record,
-            created_by=current_user.id,
-        )
+            created_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
     return PunchOut.model_validate(punch)
@@ -643,8 +605,7 @@ async def gps_punch(
     gps_accuracy: Optional[float] = Form(None),
     punch_time:   Optional[str]   = Form(None),
     selfie:       Optional[UploadFile] = File(None),
-    db:           Session         = Depends(get_db),
-    current_user                  = Depends(get_current_user),
+    db:           Session         = Depends(get_db)
 ):
     """GPS Check In button — GPS punch with coordinates and optional selfie."""
     selfie_path = None
@@ -666,8 +627,7 @@ async def gps_punch(
             gps_accuracy=gps_accuracy,
             selfie_path=selfie_path,
             punch_time=pt,
-            created_by=current_user.id,
-        )
+            created_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
     return PunchOut.model_validate(punch)
@@ -680,8 +640,7 @@ async def web_punch(
     punch_type:  PunchTypeEnum = Form(...),
     punch_time:  Optional[str] = Form(None),
     selfie:      Optional[UploadFile] = File(None),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """Web Check-in / Web Check-out / Quick Check-in / Quick Check-out buttons."""
     selfie_path = None
@@ -705,8 +664,7 @@ async def web_punch(
             ip_address=client_ip,
             selfie_path=selfie_path,
             punch_time=pt,
-            created_by=current_user.id,
-        )
+            created_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
     return PunchOut.model_validate(punch)
@@ -719,8 +677,7 @@ def get_punch_statistics(
     capture_method: Optional[CaptureMethodEnum] = Query(None),
     date_from:      Optional[date]              = Query(None),
     date_to:        Optional[date]              = Query(None),
-    db:             Session                     = Depends(get_db),
-    current_user                                = Depends(get_current_user),
+    db:             Session                     = Depends(get_db)
 ):
     """View Punch Statistics button — aggregated punch counts by method/employee/date."""
     q = db.query(AttendancePunch).filter_by(is_valid=True)
@@ -762,8 +719,7 @@ def list_punches(
     date_to:        Optional[date]              = Query(None),
     limit:          int                         = Query(100, le=1000),
     offset:         int                         = Query(0),
-    db:             Session                     = Depends(get_db),
-    current_user                                = Depends(get_current_user),
+    db:             Session                     = Depends(get_db)
 ):
     """Raw punch list with filters."""
     q = db.query(AttendancePunch).filter_by(is_valid=True)
@@ -785,8 +741,7 @@ def list_punches(
 
 @router.get("/records/today", response_model=List[AttendanceRecordOut])
 def today_records(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Present Today KPI tile — today's specific records."""
     today = date.today()
@@ -801,20 +756,18 @@ def export_records(
     status_filter:  Optional[str]               = Query(None, alias="status"),  # ADDED
     date_from:      Optional[date]              = Query(None),
     date_to:        Optional[date]              = Query(None),
-    db:             Session                     = Depends(get_db),
-    current_user                                = Depends(get_current_user),
+    db:             Session                     = Depends(get_db)
 ):
     """Export button — downloads filtered records as CSV."""
     import csv
     q = db.query(AttendanceRecord)
     if search:
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             q = q.join(Employee, AttendanceRecord.employee_id == Employee.employee_id)
             q = q.filter(or_(
                 Employee.name.ilike(f"%{search}%"),
-                AttendanceRecord.employee_id.ilike(f"%{search}%"),
-            ))
+                AttendanceRecord.employee_id.ilike(f"%{search}%")))
         except ImportError:
             q = q.filter(AttendanceRecord.employee_id.ilike(f"%{search}%"))
     if capture_method:
@@ -846,8 +799,7 @@ def export_records(
     return StreamingResponse(
         io.BytesIO(output.getvalue().encode()),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=attendance_records.csv"},
-    )
+        headers={"Content-Disposition": "attachment; filename=attendance_records.csv"})
 
 
 @router.get("/records", response_model=List[AttendanceRecordOut])
@@ -860,8 +812,7 @@ def list_records(
     status_filter:  Optional[str]               = Query(None, alias="status"),
     limit:          int                         = Query(100, le=1000),
     offset:         int                         = Query(0),
-    db:             Session                     = Depends(get_db),
-    current_user                                = Depends(get_current_user),
+    db:             Session                     = Depends(get_db)
 ):
     """Top filter bar — Search employees + All Status + All Methods + All Dates."""
     q = db.query(AttendanceRecord)
@@ -869,12 +820,11 @@ def list_records(
         q = q.filter_by(employee_id=employee_id)
     if search:
         try:
-            from models.employee import Employee
+            from model.onboarding.employee import Employee
             q = q.join(Employee, AttendanceRecord.employee_id == Employee.employee_id)
             q = q.filter(or_(
                 Employee.name.ilike(f"%{search}%"),
-                AttendanceRecord.employee_id.ilike(f"%{search}%"),
-            ))
+                AttendanceRecord.employee_id.ilike(f"%{search}%")))
         except ImportError:
             q = q.filter(AttendanceRecord.employee_id.ilike(f"%{search}%"))
     if capture_method:
@@ -895,8 +845,7 @@ def list_records(
 
 @router.post("/offline/sync", response_model=OfflineSyncResponse)
 def sync_offline_queue(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Offline Mode — flush offline punch queue when back online."""
     return OfflineSyncService.flush_queue(db)
@@ -904,8 +853,7 @@ def sync_offline_queue(
 
 @router.get("/offline/queue", response_model=List[dict])
 def list_offline_queue(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """GPS Statistics Pending tile — count of punches in offline queue."""
     items = db.query(OfflinePunchQueue).filter_by(status="pending").order_by("punch_time").all()
@@ -927,8 +875,7 @@ def list_offline_queue(
 
 @router.get("/whitelist-ips", response_model=List[WhitelistedIPOut])
 def list_whitelist_ips(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """IP Whitelist Management table."""
     return db.query(WhitelistedIP).filter_by(is_active=True).all()
@@ -938,8 +885,7 @@ def list_whitelist_ips(
              status_code=status.HTTP_201_CREATED)
 def add_whitelist_ip(
     payload:     WhitelistedIPCreate,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """IP input + + button — adds IP to whitelist."""
     if db.query(WhitelistedIP).filter_by(ip_address=payload.ip_address).first():
@@ -954,8 +900,7 @@ def add_whitelist_ip(
 @router.delete("/whitelist-ips/{ip_id}", response_model=MessageResponse)
 def remove_whitelist_ip(
     ip_id:       int,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Trash icon per IP row."""
     ip = db.query(WhitelistedIP).filter_by(id=ip_id).first()
@@ -973,8 +918,7 @@ def remove_whitelist_ip(
 @router.post("/web/verify-ip")
 def verify_ip(
     ip_address:  str     = Query(..., description="IP address to verify"),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Verify IP button — checks if IP is in whitelist, returns Allowed/Blocked."""
     is_wl = db.query(WhitelistedIP).filter_by(
@@ -991,8 +935,7 @@ def verify_ip(
              status_code=status.HTTP_201_CREATED)
 def mark_wfh(
     employee_id: str     = Query(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Mark WFH quick button + Mark as Work From Home button — marks employee WFH for today."""
     today    = date.today()
@@ -1001,7 +944,7 @@ def mark_wfh(
     ).first()
     if existing:
         existing.status      = WFHStatusEnum.approved
-        existing.approved_by = current_user.id
+        existing.approved_by = 1
         existing.approved_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(existing)
@@ -1010,9 +953,8 @@ def mark_wfh(
         employee_id=employee_id,
         date=today,
         status=WFHStatusEnum.approved,
-        approved_by=current_user.id,
-        approved_at=datetime.now(timezone.utc),
-    )
+        approved_by=1,
+        approved_at=datetime.now(timezone.utc))
     db.add(req)
     db.commit()
     db.refresh(req)
@@ -1023,8 +965,7 @@ def mark_wfh(
 def get_web_current_status(
     employee_id: str,
     request:     Request,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Current Network Status panel (IP + Whitelisted badge) + Current Status: Ready badge."""
     client_ip = (
@@ -1059,8 +1000,7 @@ def get_web_current_status(
 
 @router.get("/web/today-activity")
 def get_today_activity(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Today's Web & Field Activity section — Recent Web Attendance + Field Activity Today tables."""
     today = date.today()
@@ -1069,8 +1009,7 @@ def get_today_activity(
         db.query(AttendancePunch)
         .filter(
             AttendancePunch.capture_method == CaptureMethodEnum.web,
-            func.date(AttendancePunch.punch_time) == today,
-        )
+            func.date(AttendancePunch.punch_time) == today)
         .order_by(AttendancePunch.punch_time.desc())
         .limit(50)
         .all()
@@ -1109,8 +1048,7 @@ def get_today_activity(
 @router.post("/settings/reset-to-defaults", response_model=AttendanceSettingsOut)
 def reset_settings_to_defaults(
     confirm:     bool    = Query(..., description="Must be true to proceed"),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Reset to Defaults button on Settings tab."""
     if not confirm:
@@ -1130,8 +1068,7 @@ def reset_settings_to_defaults(
 # NEW: Export Settings button
 @router.get("/settings/export")
 def export_settings(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Export Settings button — downloads current settings as JSON file."""
     s = db.query(AttendanceSettings).filter_by(id=1).first()
@@ -1143,16 +1080,14 @@ def export_settings(
     return StreamingResponse(
         io.BytesIO(content.encode()),
         media_type="application/json",
-        headers={"Content-Disposition": "attachment; filename=attendance_settings.json"},
-    )
+        headers={"Content-Disposition": "attachment; filename=attendance_settings.json"})
 
 
 # NEW: Import Settings button
 @router.post("/settings/import", response_model=AttendanceSettingsOut)
 async def import_settings(
     file:        UploadFile = File(..., description="JSON file from Export Settings"),
-    db:          Session    = Depends(get_db),
-    current_user            = Depends(get_current_user),
+    db:          Session    = Depends(get_db)
 ):
     """Import Settings button — uploads and applies a previously exported settings file."""
     if not file.filename.lower().endswith(".json"):
@@ -1174,7 +1109,7 @@ async def import_settings(
         db.add(s)
     for field, val in update.model_dump(exclude_none=True).items():
         setattr(s, field, val)
-    s.updated_by = current_user.id
+    s.updated_by = 1
     db.commit()
     db.refresh(s)
     return AttendanceSettingsOut.model_validate(s)
@@ -1182,8 +1117,7 @@ async def import_settings(
 
 @router.get("/settings", response_model=AttendanceSettingsOut)
 def get_settings(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Settings tab load — all toggles, work hours, thresholds, field employee settings."""
     s = db.query(AttendanceSettings).filter_by(id=1).first()
@@ -1198,8 +1132,7 @@ def get_settings(
 @router.put("/settings", response_model=AttendanceSettingsOut)
 def update_settings(
     payload:     AttendanceSettingsUpdate,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Save Settings / Save All Settings button."""
     s = db.query(AttendanceSettings).filter_by(id=1).first()
@@ -1208,7 +1141,8 @@ def update_settings(
         db.add(s)
     for field, val in payload.model_dump(exclude_none=True).items():
         setattr(s, field, val)
-    s.updated_by = current_user.id
+    s.updated_by = 1
     db.commit()
     db.refresh(s)
     return AttendanceSettingsOut.model_validate(s)
+

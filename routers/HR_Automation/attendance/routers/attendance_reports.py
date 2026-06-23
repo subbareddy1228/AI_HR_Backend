@@ -11,13 +11,11 @@ from typing import List, Optional
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    Query, Path,
-)
+    Query, Path)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 
 from model.HR_Automation.attendance_reports import ReportTypeEnum, ExceptionTypeEnum
 from schema.HR_Automation.attendance_reports import (
@@ -26,18 +24,15 @@ from schema.HR_Automation.attendance_reports import (
     AnalyticsOut,
     ExceptionListOut, ExceptionOut,
     AlertsPageOut, AlertOut, AcknowledgeIn, ConfigureAlertIn,
-    MessageResponse,
-)
+    MessageResponse)
 from services.HR_Automation.attendance_reports_service import (
     DashboardService, ReportsService,
     AnalyticsService, ExceptionsService, AlertsService,
-    seed_reports_defaults,
-)
+    seed_reports_defaults)
 
 router = APIRouter(
     prefix="/api/attendance/reports",
-    tags=["Attendance Reports & Analytics"],
-)
+    tags=["Attendance Reports & Analytics"])
 
 
 # ══════════════════════════════════════════════════════════
@@ -46,8 +41,7 @@ router = APIRouter(
 
 @router.get("/filter-options")
 def get_filter_options(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Populates the 4 header dropdowns:
@@ -60,12 +54,12 @@ def get_filter_options(
     from sqlalchemy import distinct
     depts, locs, emps = [], [], []
     try:
-        from models.employee import Employee
+        from model.onboarding.employee import Employee
         depts = sorted({
-            v for (v,) in db.query(distinct(Employee.department)).all() if v
+            v for (v) in db.query(distinct(Employee.department)).all() if v
         })
         locs  = sorted({
-            v for (v,) in db.query(distinct(Employee.location)).all() if v
+            v for (v) in db.query(distinct(Employee.location)).all() if v
         })
         emps  = [
             {"id": e.employee_id, "name": e.name}
@@ -99,8 +93,7 @@ def get_dashboard(
     location:    Optional[str] = Query(None),
     employee_id: Optional[str] = Query(None),
     role:        str           = Query("Manager"),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     Dashboard tab — full page data.
@@ -134,8 +127,7 @@ def get_dashboard(
 def list_report_definitions(
     report_type: Optional[str] = Query(None,
                                         description="standard | exception | analytics"),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     Reports tab — Standard Reports Library.
@@ -146,8 +138,7 @@ def list_report_definitions(
 
 @router.get("/library/export-all")
 def export_all_reports(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Export All (12) button — downloads the full report definitions catalogue as CSV.
@@ -155,15 +146,13 @@ def export_all_reports(
     csv_bytes = ReportsService.export_all(db)
     return StreamingResponse(
         io.BytesIO(csv_bytes), media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=report_catalogue.csv"},
-    )
+        headers={"Content-Disposition": "attachment; filename=report_catalogue.csv"})
 
 @router.post("/library/{report_def_id}/generate")
 def generate_report(
     report_def_id: int             = Path(...),
     payload:       GenerateReportIn = ...,
-    db:            Session          = Depends(get_db),
-    current_user                    = Depends(get_current_user),
+    db:            Session          = Depends(get_db)
 ):
     """
     ↓ Download icon on each report card → generates and downloads the report.
@@ -175,9 +164,8 @@ def generate_report(
     try:
         report, csv_bytes = ReportsService.generate(
             db=db, payload=payload,
-            generated_by=current_user.id,
-            generated_by_name=getattr(current_user, "name", "HR Admin"),
-        )
+            generated_by=1,
+            generated_by_name="HR Admin")
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
 
@@ -189,8 +177,7 @@ def generate_report(
             "Content-Disposition": f"attachment; filename={report.file_name}",
             "X-Report-ID":         str(report.id),
             "X-Total-Records":     str(report.total_records),
-        },
-    )
+        })
 
 
 
@@ -208,8 +195,7 @@ def get_analytics(
     department:  Optional[str] = Query(None),
     location:    Optional[str] = Query(None),
     employee_id: Optional[str] = Query(None),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     Analytics & Insights tab — full page data.
@@ -251,8 +237,7 @@ def list_exceptions(
     date_from:      Optional[date]= Query(None),
     date_to:        Optional[date]= Query(None),
     employee_id:    Optional[str] = Query(None),
-    db:             Session       = Depends(get_db),
-    current_user                  = Depends(get_current_user),
+    db:             Session       = Depends(get_db)
 ):
     """
     Exceptions tab — Attendance Exception Reports table.
@@ -277,8 +262,7 @@ def list_exceptions(
 @router.get("/exceptions/export")
 def export_exceptions(
     exception_type: Optional[str] = Query(None, alias="type"),
-    db:             Session       = Depends(get_db),
-    current_user                  = Depends(get_current_user),
+    db:             Session       = Depends(get_db)
 ):
     """
     Export button (top right) → downloads exceptions as CSV.
@@ -293,25 +277,23 @@ def export_exceptions(
     csv_bytes = ExceptionsService.export_csv(db, et)
     return StreamingResponse(
         io.BytesIO(csv_bytes), media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=exceptions.csv"},
-    )
+        headers={"Content-Disposition": "attachment; filename=exceptions.csv"})
 
 
 @router.get("/exceptions/{exception_id}", response_model=ExceptionOut)
 def get_exception_detail(
     exception_id: int     = Path(...),
-    db:           Session = Depends(get_db),
-    current_user          = Depends(get_current_user),
+    db:           Session = Depends(get_db)
 ):
     """
     View Details button on each exception row → opens a detail modal.
     Returns full exception record with employee info.
     """
-    from models.attendance_reports import AttendanceException
+    from model.HR_Automation.attendance_reports import AttendanceException
     exc = db.query(AttendanceException).filter_by(id=exception_id).first()
     if not exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"Exception {exception_id} not found.")
-    from services.attendance_reports_service import _resolve_employee, ExceptionTypeEnum as ET
+    from services.HR_Automation.attendance_reports_service import _resolve_employee, ExceptionTypeEnum as ET
     emp = _resolve_employee(db, exc.employee_id)
     td  = (
         f"Late by {exc.duration_minutes} mins"
@@ -346,8 +328,7 @@ def get_exception_detail(
 
 @router.get("/alerts", response_model=AlertsPageOut)
 def get_alerts(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Alerts tab — Predictive Alerts & Anomaly Detection.
@@ -371,15 +352,14 @@ def get_alerts(
 @router.post("/alerts/acknowledge", response_model=MessageResponse)
 def acknowledge_alerts(
     payload:     AcknowledgeIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Acknowledge button on each alert card.
     Pass alert_ids=None to acknowledge ALL unacknowledged alerts at once.
     Pass specific IDs to acknowledge individual alerts.
     """
-    count = AlertsService.acknowledge(db, payload.alert_ids, current_user.id)
+    count = AlertsService.acknowledge(db, payload.alert_ids, 1)
     return {"message": f"{count} alert(s) acknowledged."}
 
 
@@ -387,8 +367,7 @@ def acknowledge_alerts(
 def configure_alert_rule(
     rule_id:     int             = Path(...),
     payload:     ConfigureAlertIn = ...,
-    db:          Session         = Depends(get_db),
-    current_user                 = Depends(get_current_user),
+    db:          Session         = Depends(get_db)
 ):
     """
     Configure Alerts button → update threshold or toggle rule on/off.
@@ -404,8 +383,7 @@ def configure_alert_rule(
             rule_id=payload.rule_id,
             threshold=payload.threshold,
             is_active=payload.is_active,
-            updated_by=current_user.id,
-        )
+            updated_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
     return {"message": f"Alert rule {rule_id} updated."}

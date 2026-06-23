@@ -12,32 +12,26 @@ from typing import Optional
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    UploadFile, File, Query, Path,
-)
+    UploadFile, File, Query, Path)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 
 from model.HR_Automation.daily_punches import (
-    EmployeePunch, PunchDirectionEnum, PunchSourceEnum,
-)
+    EmployeePunch, PunchDirectionEnum, PunchSourceEnum)
 from schema.HR_Automation.daily_punches import (
     DailyPunchFilter, DailyPunchListOut, DailyPunchRowOut,
     AddPunchIn, PunchOut, DeletePunchResponse,
     SelfieModalOut, LocationModalOut, AllPunchesOut,
-    ImportResultOut, FilterOptionsOut, MessageResponse,
-)
+    ImportResultOut, FilterOptionsOut, MessageResponse)
 from services.HR_Automation.daily_punches_service import (
     DailyPunchService, PunchManagementService,
-    PunchImportService, PunchExportService, SummaryService,
-)
+    PunchImportService, PunchExportService, SummaryService)
 
 router = APIRouter(
     prefix="/api/attendance/daily-punches",
-    tags=["Daily Punches"],
-)
+    tags=["Daily Punches"])
 
 
 # ─────────────────────────────────────────────────────────
@@ -47,8 +41,7 @@ router = APIRouter(
 
 @router.get("/filter-options", response_model=FilterOptionsOut)
 def get_filter_options(
-    db:           Session = Depends(get_db),
-    current_user          = Depends(get_current_user),
+    db:           Session = Depends(get_db)
 ):
     """
     Returns distinct values for Business Unit, Location, Cost Center, Departments.
@@ -80,8 +73,7 @@ def list_daily_punches(
     # ── Pagination ──
     page:           int             = Query(1, ge=1),
     page_size:      int             = Query(10, ge=1, le=200),
-    db:             Session         = Depends(get_db),
-    current_user                    = Depends(get_current_user),
+    db:             Session         = Depends(get_db)
 ):
     """
     Powers the main Daily Punches table.
@@ -97,8 +89,7 @@ def list_daily_punches(
         status_filter=status_filter,
         search=search,
         page=page,
-        page_size=page_size,
-    )
+        page_size=page_size)
     return DailyPunchService.list_daily_punches(db, f)
 
 
@@ -112,8 +103,7 @@ def get_selfie(
     employee_id:  str             = Path(...),
     punch_date:   date            = Query(...),
     direction:    str             = Query("IN", description="IN or OUT"),
-    db:           Session         = Depends(get_db),
-    current_user                  = Depends(get_current_user),
+    db:           Session         = Depends(get_db)
 ):
     """
     Opens the Selfie Punch Image modal (camera icon on Start or End column).
@@ -135,8 +125,7 @@ def get_location(
     employee_id: str   = Path(...),
     punch_date:  date  = Query(...),
     direction:   str   = Query("IN", description="IN or OUT"),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Opens the Location modal (GPS pin icon on Start or End column).
@@ -157,8 +146,7 @@ def get_location(
 def get_all_punches(
     employee_id: str   = Path(...),
     punch_date:  date  = Query(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Opens the '...' All Punches modal.
@@ -176,8 +164,7 @@ def get_all_punches(
 @router.post("/punch", response_model=PunchOut, status_code=status.HTTP_201_CREATED)
 def add_punch(
     payload:     AddPunchIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Add Time Punch modal → Insert button.
@@ -196,8 +183,7 @@ def add_punch(
             latitude=payload.latitude,
             longitude=payload.longitude,
             location_url=payload.location_url,
-            added_by=current_user.id,
-        )
+            added_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
     return PunchOut.model_validate(punch)
@@ -211,15 +197,14 @@ def add_punch(
 @router.delete("/punch/{punch_id}", response_model=DeletePunchResponse)
 def delete_punch(
     punch_id:    uuid.UUID = Path(...),
-    db:          Session   = Depends(get_db),
-    current_user           = Depends(get_current_user),
+    db:          Session   = Depends(get_db)
 ):
     """
     Delete a single punch entry (trash icon in the '...' modal list).
     Automatically recalculates the daily summary.
     """
     try:
-        punch = PunchManagementService.delete_punch(db, punch_id, deleted_by=current_user.id)
+        punch = PunchManagementService.delete_punch(db, punch_id, deleted_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
     return {"message": "Punch deleted successfully.", "punch_id": punch.id}
@@ -239,8 +224,7 @@ def export_csv(
     department:     Optional[str]   = Query(None),
     status_filter:  Optional[str]   = Query(None),
     search:         Optional[str]   = Query(None),
-    db:             Session         = Depends(get_db),
-    current_user                    = Depends(get_current_user),
+    db:             Session         = Depends(get_db)
 ):
     """
     Options → Download button.
@@ -265,8 +249,7 @@ def export_csv(
     return StreamingResponse(
         io.BytesIO(csv_bytes),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
+        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 # ─────────────────────────────────────────────────────────
@@ -277,8 +260,7 @@ def export_csv(
 @router.post("/import", response_model=ImportResultOut, status_code=status.HTTP_201_CREATED)
 async def import_csv(
     file:        UploadFile = File(..., description="CSV file — columns: code,date,time,direction,source,remarks"),
-    db:          Session    = Depends(get_db),
-    current_user            = Depends(get_current_user),
+    db:          Session    = Depends(get_db)
 ):
     """
     Options → Upload button.
@@ -295,8 +277,7 @@ async def import_csv(
             db=db,
             file_content=content,
             filename=file.filename,
-            uploaded_by=current_user.id,
-        )
+            uploaded_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc))
 
@@ -306,8 +287,7 @@ async def import_csv(
         total_rows=batch.total_rows,
         success_rows=batch.success_rows,
         failed_rows=batch.failed_rows,
-        errors=batch.error_log,
-    )
+        errors=batch.error_log)
 
 
 # ─────────────────────────────────────────────────────────
@@ -319,8 +299,7 @@ async def import_csv(
 def recalculate_summary(
     employee_id: str  = Query(...),
     punch_date:  date = Query(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Force-recalculate the daily summary for a specific employee + date.

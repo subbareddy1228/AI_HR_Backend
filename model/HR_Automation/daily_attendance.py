@@ -69,7 +69,7 @@ class DailyAttendanceRecord(Base):
     id                  = Column(Integer, primary_key=True, index=True)
     employee_id         = Column(
         String(20),
-        ForeignKey("employees.employee_id", ondelete="CASCADE"),
+        ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
     )
     attendance_date     = Column(Date, nullable=False, index=True)

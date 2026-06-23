@@ -13,17 +13,14 @@ from typing import Optional, List
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    Query, Path, UploadFile, File, Form,
-)
+    Query, Path, UploadFile, File, Form)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 
 from model.HR_Automation.regularization import (
-    RequestTypeEnum, RequestStatusEnum,
-)
+    RequestTypeEnum, RequestStatusEnum)
 from schema.HR_Automation.regularization import (
     RegularizationRequestIn, RegularizationRequestOut,
     RegularizationListOut, ApproveRejectIn,
@@ -31,21 +28,18 @@ from schema.HR_Automation.regularization import (
     RequestStatisticsOut,
     BulkProcessIn, BulkProcessOut,
     GenerateReportIn, RegularizationReportOut,
-    MessageResponse,
-)
+    MessageResponse)
 from services.HR_Automation.regularization_service import (
     RegularizationRequestService,
     AutoRejectService,
     SettingsService,
     BulkProcessingService,
     ReportsService,
-    seed_auto_reject_rules,
-)
+    seed_auto_reject_rules)
 
 router = APIRouter(
     prefix="/api/attendance/regularization",
-    tags=["Regularization Workflow"],
-)
+    tags=["Regularization Workflow"])
 
 UPLOAD_DIR = os.getenv("REGULARIZATION_UPLOAD_DIR", "/tmp/regularization_attachments")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -69,8 +63,7 @@ def list_requests(
     # ── Pagination ──
     page:         int                        = Query(1,  ge=1),
     page_size:    int                        = Query(20, ge=1, le=200),
-    db:           Session                    = Depends(get_db),
-    current_user                             = Depends(get_current_user),
+    db:           Session                    = Depends(get_db)
 ):
     """
     Requests tab — Regularization Requests table.
@@ -114,8 +107,7 @@ async def create_request(
     purpose:       Optional[str]          = Form(None),
     # file attachment
     attachment:    Optional[UploadFile]   = File(None),
-    db:            Session                = Depends(get_db),
-    current_user                          = Depends(get_current_user),
+    db:            Session                = Depends(get_db)
 ):
     """
     + New Request button → New Regularization Request modal → Submit Request.
@@ -189,9 +181,8 @@ async def create_request(
     return RegularizationRequestService.create(
         db=db,
         payload=p,
-        created_by=current_user.id,
-        attachment_path=attachment_path,
-    )
+        created_by=1,
+        attachment_path=attachment_path)
 
 # ══════════════════════════════════════════════════════════
 # AUTO-REJECT CRON TRIGGER
@@ -199,8 +190,7 @@ async def create_request(
 
 @router.post("/run-auto-reject", response_model=MessageResponse)
 def run_auto_reject(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Manually trigger auto-reject processing.
@@ -214,8 +204,7 @@ def run_auto_reject(
 @router.get("/{request_id}", response_model=RegularizationRequestOut)
 def get_request(
     request_id:  int     = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """👁 View Details — opens the Request Details & Approval modal."""
     try:
@@ -228,8 +217,7 @@ def get_request(
 def decide_request(
     request_id:  int            = Path(...),
     payload:     ApproveRejectIn = ...,
-    db:          Session        = Depends(get_db),
-    current_user                = Depends(get_current_user),
+    db:          Session        = Depends(get_db)
 ):
     """
     ✓ Approve / ✗ Reject / Request Changes buttons.
@@ -250,8 +238,7 @@ def decide_request(
             request_id=request_id,
             action=payload.action,
             remarks=payload.remarks,
-            decided_by=current_user.id,
-        )
+            decided_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -259,8 +246,7 @@ def decide_request(
 @router.delete("/{request_id}", response_model=MessageResponse)
 def delete_request(
     request_id:  int     = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Delete a regularization request (HR Admin only)."""
     try:
@@ -279,8 +265,7 @@ def delete_request(
 
 @router.get("/settings/rules", response_model=List[AutoRejectRuleOut])
 def list_auto_reject_rules(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Settings tab — Auto-Reject Rules table.
@@ -294,8 +279,7 @@ def list_auto_reject_rules(
               response_model=AutoRejectRuleOut)
 def toggle_auto_reject_rule(
     rule_id:     int     = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Enable / Disable button on each rule row.
@@ -303,7 +287,7 @@ def toggle_auto_reject_rule(
     Button label changes: 'Disable' when enabled · 'Enable' when disabled.
     """
     try:
-        return SettingsService.toggle_rule(db, rule_id, current_user.id)
+        return SettingsService.toggle_rule(db, rule_id, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
 
@@ -312,20 +296,18 @@ def toggle_auto_reject_rule(
 def update_auto_reject_rule(
     rule_id:     int                    = Path(...),
     payload:     AutoRejectRuleUpdateIn = ...,
-    db:          Session                = Depends(get_db),
-    current_user                        = Depends(get_current_user),
+    db:          Session                = Depends(get_db)
 ):
     """Update days or enabled flag for an auto-reject rule."""
     try:
-        return SettingsService.update_rule(db, rule_id, payload, current_user.id)
+        return SettingsService.update_rule(db, rule_id, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
 
 
 @router.get("/settings/statistics", response_model=RequestStatisticsOut)
 def get_statistics(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Settings tab — Request Statistics right panel.
@@ -340,8 +322,7 @@ def get_statistics(
 
 @router.get("/bulk", response_model=List[BulkProcessOut])
 def list_bulk_processes(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Bulk Processing tab — history table.
@@ -362,8 +343,7 @@ async def process_bulk(
                                                        "Leave empty to process all."),
     file:        Optional[UploadFile] = File(None,
                                              description="CSV/Excel with employee IDs"),
-    db:          Session            = Depends(get_db),
-    current_user                    = Depends(get_current_user),
+    db:          Session            = Depends(get_db)
 ):
     """
     + Process Bulk button → Bulk Regularization Processing modal.
@@ -378,7 +358,7 @@ async def process_bulk(
     Stores a BulkRegularizationProcess audit record.
     """
     from datetime import datetime as _dt
-    from models.regularization import IssueTypeEnum as _IT
+    from model.HR_Automation.regularization import IssueTypeEnum as _IT
 
     # Parse dates
     try:
@@ -433,9 +413,8 @@ async def process_bulk(
         db=db,
         payload=p,
         file_path=file_path,
-        processed_by=current_user.id,
-        processed_by_name=getattr(current_user, "name", "HR Admin"),
-    )
+        processed_by=1,
+        processed_by_name="HR Admin")
     return BulkProcessOut.model_validate(batch)
 
 
@@ -445,8 +424,7 @@ async def process_bulk(
 
 @router.get("/reports", response_model=List[RegularizationReportOut])
 def list_reports(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Reports tab — Generated Reports history table.
@@ -459,8 +437,7 @@ def list_reports(
 @router.post("/reports/generate")
 def generate_report(
     payload:     GenerateReportIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Reports tab → Generate Report button.
@@ -475,9 +452,8 @@ def generate_report(
     report, csv_bytes = ReportsService.generate(
         db=db,
         payload=payload,
-        generated_by=current_user.id,
-        generated_by_name=getattr(current_user, "name", "HR Admin"),
-    )
+        generated_by=1,
+        generated_by_name="HR Admin")
 
     media_type = {
         "pdf":   "text/csv",        # extend with reportlab for true PDF
@@ -492,5 +468,4 @@ def generate_report(
             "Content-Disposition": f"attachment; filename={report.file_name}",
             "X-Report-ID":         str(report.id),
             "X-Total-Records":     str(report.total_records),
-        },
-    )
+        })
