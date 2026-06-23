@@ -341,6 +341,7 @@ app.include_router(manual_attendance.router,      prefix="/api/attendance", tags
 app.include_router(leave_correction.router,       prefix="/api/attendance", tags=["Attendance"])
 app.include_router(monthly_attendance.router,     prefix="/api/attendance", tags=["Attendance"])
 app.include_router(regularization.router,         prefix="/api/attendance", tags=["Attendance"])
+app.include_router(attendance_reports.router,     prefix="/api/attendance", tags=["Attendance"])
 # leave.router already mounted at /api/leave (line above attendance block); not duplicated here
 
 # Reports
