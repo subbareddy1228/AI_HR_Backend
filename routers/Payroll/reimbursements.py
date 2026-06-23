@@ -292,7 +292,7 @@ def download_receipt(claim_id: int, db: Session = Depends(get_db)):
         with open(claim.receipt_path, "rb") as f:
             yield from f
 
-    # Infer media type from extension
+
     ext = os.path.splitext(filename)[1].lower()
     media_type = {
         ".pdf":  "application/pdf",

@@ -61,7 +61,7 @@ def _period_key(frequency: str) -> str:
 
 
 def _utilisation(balance: ReimbursementBalance) -> tuple[float, str]:
-    """Return (pct, label) for the Balances tab progress bar."""
+
     if not balance.limit_amount or balance.limit_amount == 0:
         return (0.0, "Good")
     pct = float(balance.remaining_amount / balance.limit_amount * 100)
@@ -274,7 +274,6 @@ def submit_claim(
             ),
         )
 
-    # Period balance check (SELECT FOR UPDATE)
     balance = _get_balance_locked(
         db, payload.employee_id, payload.employee_code,
         payload.employee_name, rtype,
@@ -352,7 +351,7 @@ def list_claims(
     if type_id:
         q = q.filter(ReimbursementClaim.type_id == type_id)
     if claim_status:
-        # Map frontend display value to DB value
+
         status_map = {
             "Finance Review": "FINANCE_REVIEW",
             "finance_review": "FINANCE_REVIEW",
@@ -457,7 +456,7 @@ def manager_reject(
 def finance_approve(
     db: Session, claim_id: int, payload: FinanceApprovalRequest
 ) -> ReimbursementClaim:
-    """Approve button (finance stage) — FINANCE_REVIEW → APPROVED + balance debit."""
+
     claim = _fetch_claim(db, claim_id)
     if claim.status != "FINANCE_REVIEW":
         raise HTTPException(
@@ -726,7 +725,7 @@ def export_claims(
     date_to:      Optional[datetime] = None,
     search:       Optional[str]      = None,
 ) -> List[ClaimExportRow]:
-    """Flat list for CSV/Excel export matching the frontend exportToCSV() headers."""
+   
     claims = list_claims(
         db, employee_id=employee_id, type_id=type_id,
         claim_status=claim_status, date_from=date_from,

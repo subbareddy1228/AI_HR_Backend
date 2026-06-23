@@ -1,23 +1,3 @@
-"""
-Final Settlement Processing Model
-==================================
-Covers every data entity visible in the UI:
-  • Settlement header      (FinalSettlement)
-  • Notice period block    (SettlementNoticePeriod)
-  • Salary breakdown       (SettlementSalaryBreakdown)
-  • Leave encashment       (SettlementLeaveEncashment)
-  • Bonus pro-rata         (SettlementBonus)
-  • Gratuity               (SettlementGratuity)
-  • Asset tracking         (SettlementAsset)
-  • Deductions             (SettlementDeduction)
-  • Payment info           (SettlementPayment)
-  • Document checklist     (SettlementDocument)
-  • Approval workflow log  (SettlementApprovalLog)
-  • Settlement Timeline    (SettlementTimeline)
-
-Status lifecycle:
-  Draft → Pending Approval → Approved → Paid
-"""
 
 from __future__ import annotations
 
@@ -41,10 +21,6 @@ from sqlalchemy.orm import relationship
 
 from core.database import Base
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Enumerations
-# ──────────────────────────────────────────────────────────────────────────────
 
 class SettlementStatus(str, enum.Enum):
     DRAFT            = "Draft"
@@ -108,22 +84,13 @@ class ApprovalAction(str, enum.Enum):
     CANCELLED  = "Cancelled"
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Main Settlement Header
-# ──────────────────────────────────────────────────────────────────────────────
-
 class FinalSettlement(Base):
-    """
-    One record per employee exit.  All child blocks reference this via
-    settlement_id FK, making partial lazy-loads cheap.
-    """
+
     __tablename__ = "final_settlements"
 
     id                   = Column(Integer, primary_key=True, index=True)
     settlement_code      = Column(String(30), unique=True, nullable=False, index=True)
-    # e.g. FS-2024-0001
-
-    # ── Employee snapshot (denormalised for auditability) ─────────────────────
+   
     employee_id          = Column(Integer, ForeignKey("employees.id", ondelete="RESTRICT"),
                                   nullable=False, index=True)
     employee_code        = Column(String(50),  nullable=False)
@@ -135,19 +102,15 @@ class FinalSettlement(Base):
     pf_number            = Column(String(50),  nullable=True)
     pan_number           = Column(String(20),  nullable=True)
 
-    # ── Exit context ──────────────────────────────────────────────────────────
+  
     exit_type            = Column(Enum(ExitType), nullable=False,
                                   default=ExitType.RESIGNATION)
     resignation_date     = Column(Date, nullable=True)
     last_working_date    = Column(Date, nullable=False)
     notice_period_required_days = Column(Integer, default=90)
-
-    # ── Computed totals (updated on every recalculate) ────────────────────────
     total_additions      = Column(Numeric(14, 2), default=0)
     total_deductions     = Column(Numeric(14, 2), default=0)
-    net_settlement       = Column(Numeric(14, 2), default=0)   # additions - deductions
-
-    # ── Workflow ───────────────────────────────────────────────────────────────
+    net_settlement       = Column(Numeric(14, 2), default=0)   
     status               = Column(Enum(SettlementStatus), nullable=False,
                                   default=SettlementStatus.DRAFT, index=True)
     initiated_by         = Column(Integer, ForeignKey("employees.id"), nullable=True)
@@ -159,13 +122,11 @@ class FinalSettlement(Base):
     rejection_reason     = Column(Text, nullable=True)
     remarks              = Column(Text, nullable=True)
 
-    # ── Audit ─────────────────────────────────────────────────────────────────
     last_calculated_at   = Column(DateTime, nullable=True)
     created_at           = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at           = Column(DateTime, default=datetime.utcnow,
                                   onupdate=datetime.utcnow, nullable=False)
 
-    # ── Relationships ─────────────────────────────────────────────────────────
     notice_period   = relationship("SettlementNoticePeriod",  back_populates="settlement",
                                    uselist=False, cascade="all, delete-orphan")
     salary_breakdown = relationship("SettlementSalaryBreakdown", back_populates="settlement",
@@ -198,11 +159,6 @@ class FinalSettlement(Base):
     def __repr__(self) -> str:
         return f"<FinalSettlement {self.settlement_code} | {self.employee_name} | {self.status}>"
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Notice Period Block
-# ──────────────────────────────────────────────────────────────────────────────
-
 class SettlementNoticePeriod(Base):
     __tablename__ = "settlement_notice_periods"
 
@@ -213,19 +169,14 @@ class SettlementNoticePeriod(Base):
     verified             = Column(Boolean, default=False)
     days_served          = Column(Integer, default=0)
     required_days        = Column(Integer, default=90)
-    shortfall_days       = Column(Integer, default=0)    # computed: required - served
-    recovery_amount      = Column(Numeric(12, 2), default=0)  # shortfall × daily rate
+    shortfall_days       = Column(Integer, default=0)    
+    recovery_amount      = Column(Numeric(12, 2), default=0)  
     verification_date    = Column(Date, nullable=True)
     verified_by_name     = Column(String(255), nullable=True)
     waiver_approved      = Column(Boolean, default=False)
     waiver_remarks       = Column(Text, nullable=True)
 
     settlement = relationship("FinalSettlement", back_populates="notice_period")
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Salary Breakdown
-# ──────────────────────────────────────────────────────────────────────────────
 
 class SettlementSalaryBreakdown(Base):
     __tablename__ = "settlement_salary_breakdowns"
@@ -248,11 +199,6 @@ class SettlementSalaryBreakdown(Base):
 
     settlement = relationship("FinalSettlement", back_populates="salary_breakdown")
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Leave Encashment
-# ──────────────────────────────────────────────────────────────────────────────
-
 class SettlementLeaveEncashment(Base):
     __tablename__ = "settlement_leave_encashments"
 
@@ -263,18 +209,14 @@ class SettlementLeaveEncashment(Base):
     earned_leave_balance  = Column(Numeric(6, 2), default=0)
     casual_leave_balance  = Column(Numeric(6, 2), default=0)
     sick_leave_balance    = Column(Numeric(6, 2), default=0)
-    encashment_rate       = Column(Numeric(12, 2), default=0)   # per day
-    # Only earned leave is encashable (by policy)
+    encashment_rate       = Column(Numeric(12, 2), default=0)  
+
     encashable_days       = Column(Numeric(6, 2), default=0)
     total_encashment      = Column(Numeric(12, 2), default=0)
     encashment_policy     = Column(String(255), default="Earned leave only")
 
     settlement = relationship("FinalSettlement", back_populates="leave_encashment")
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Bonus / Pro-Rata
-# ──────────────────────────────────────────────────────────────────────────────
 
 class SettlementBonus(Base):
     __tablename__ = "settlement_bonuses"
@@ -292,10 +234,6 @@ class SettlementBonus(Base):
 
     settlement = relationship("FinalSettlement", back_populates="bonus")
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Gratuity
-# ──────────────────────────────────────────────────────────────────────────────
 
 class SettlementGratuity(Base):
     __tablename__ = "settlement_gratuities"
@@ -315,10 +253,6 @@ class SettlementGratuity(Base):
     settlement = relationship("FinalSettlement", back_populates="gratuity")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Deductions Block (aggregated)
-# ──────────────────────────────────────────────────────────────────────────────
-
 class SettlementDeduction(Base):
     __tablename__ = "settlement_deductions"
 
@@ -328,22 +262,18 @@ class SettlementDeduction(Base):
 
     loan_outstanding       = Column(Numeric(12, 2), default=0)
     advance_amount         = Column(Numeric(12, 2), default=0)
-    notice_period_recovery = Column(Numeric(12, 2), default=0)   # computed from notice block
-    asset_penalty          = Column(Numeric(12, 2), default=0)   # computed from asset block
+    notice_period_recovery = Column(Numeric(12, 2), default=0)   
+    asset_penalty          = Column(Numeric(12, 2), default=0)  
     id_card_deduction      = Column(Numeric(12, 2), default=0)
     uniform_deduction      = Column(Numeric(12, 2), default=0)
     other_deductions       = Column(Numeric(12, 2), default=0)
     tds_deduction          = Column(Numeric(12, 2), default=0)
     penalty_amount         = Column(Numeric(12, 2), default=0)
-    total_deductions       = Column(Numeric(12, 2), default=0)   # sum of all above
+    total_deductions       = Column(Numeric(12, 2), default=0)   
     deduction_remarks      = Column(Text, nullable=True)
 
     settlement = relationship("FinalSettlement", back_populates="deduction")
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Asset Return Tracking
-# ──────────────────────────────────────────────────────────────────────────────
 
 class SettlementAsset(Base):
     __tablename__ = "settlement_assets"
@@ -352,10 +282,10 @@ class SettlementAsset(Base):
     settlement_id  = Column(Integer, ForeignKey("final_settlements.id",
                             ondelete="CASCADE"), nullable=False, index=True)
 
-    asset_id       = Column(String(50),  nullable=False)      # e.g. AST001
+    asset_id       = Column(String(50),  nullable=False)      
     asset_name     = Column(String(255), nullable=False)
     asset_tag      = Column(String(100), nullable=True)
-    category       = Column(String(100), nullable=True)       # Laptop, Mobile, etc.
+    category       = Column(String(100), nullable=True)      
     return_status  = Column(Enum(AssetReturnStatus), default=AssetReturnStatus.PENDING)
     return_date    = Column(Date, nullable=True)
     condition      = Column(Enum(AssetCondition), nullable=True)
@@ -369,10 +299,6 @@ class SettlementAsset(Base):
     )
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Payment Info
-# ──────────────────────────────────────────────────────────────────────────────
-
 class SettlementPayment(Base):
     __tablename__ = "settlement_payments"
 
@@ -381,7 +307,7 @@ class SettlementPayment(Base):
                                ondelete="CASCADE"), unique=True, nullable=False)
 
     payment_method    = Column(Enum(PaymentMethod), default=PaymentMethod.BANK_TRANSFER)
-    payment_mode      = Column(String(20), default="NEFT")          # NEFT / RTGS / IMPS
+    payment_mode      = Column(String(20), default="NEFT")          
     account_number    = Column(String(30), nullable=True)
     ifsc_code         = Column(String(20), nullable=True)
     bank_name         = Column(String(150), nullable=True)
@@ -397,10 +323,6 @@ class SettlementPayment(Base):
     settlement = relationship("FinalSettlement", back_populates="payment")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Document Checklist
-# ──────────────────────────────────────────────────────────────────────────────
-
 class SettlementDocument(Base):
     __tablename__ = "settlement_documents"
 
@@ -409,22 +331,16 @@ class SettlementDocument(Base):
                              ondelete="CASCADE"), nullable=False, index=True)
 
     document_type   = Column(String(100), nullable=False)
-    # Form16 / Form19 / Form10C / Experience Letter / Relieving Letter
     generated       = Column(Boolean, default=False)
     generated_date  = Column(DateTime, nullable=True)
     issued          = Column(Boolean, default=False)
     issued_date     = Column(DateTime, nullable=True)
-    financial_year  = Column(String(10), nullable=True)    # for Form16
-    pf_account_no   = Column(String(50), nullable=True)    # for Form19 / Form10C
+    financial_year  = Column(String(10), nullable=True)    
+    pf_account_no   = Column(String(50), nullable=True)    
     download_url    = Column(Text, nullable=True)
     generated_by    = Column(String(255), nullable=True)
 
     settlement = relationship("FinalSettlement", back_populates="documents")
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Timeline
-# ──────────────────────────────────────────────────────────────────────────────
 
 class SettlementTimeline(Base):
     __tablename__ = "settlement_timelines"
@@ -440,10 +356,6 @@ class SettlementTimeline(Base):
 
     settlement = relationship("FinalSettlement", back_populates="timeline")
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Approval Audit Log
-# ──────────────────────────────────────────────────────────────────────────────
 
 class SettlementApprovalLog(Base):
     __tablename__ = "settlement_approval_logs"

@@ -1,54 +1,3 @@
-"""
-Final Settlement Router
-=======================
-All endpoints that power the /payroll/settlement UI page.
-
-Route map
-─────────────────────────────────────────────────────────────────────────────
-GET    /final-settlements/stats                    → Dashboard KPI cards
-GET    /final-settlements                          → Paginated list
-POST   /final-settlements                          → Create new settlement
-GET    /final-settlements/{id}                     → Full nested detail
-PUT    /final-settlements/{id}                     → Update header
-DELETE /final-settlements/{id}                     → Delete (non-paid only)
-
-GET    /final-settlements/employee/{employee_id}   → Lookup by employee
-
-── Recalculate ───────────────────────────────────────────────────────────────
-POST   /final-settlements/{id}/recalculate         → Recompute all blocks
-
-── Workflow ──────────────────────────────────────────────────────────────────
-POST   /final-settlements/{id}/submit              → Draft → Pending Approval
-POST   /final-settlements/{id}/approve             → Pending → Approved
-POST   /final-settlements/{id}/reject              → Pending / Approved → Draft
-POST   /final-settlements/{id}/pay                 → Approved → Paid
-POST   /final-settlements/{id}/cancel              → Any → Cancelled
-
-── Sub-block Updates ─────────────────────────────────────────────────────────
-PATCH  /final-settlements/{id}/notice-period       → Notice period block
-PATCH  /final-settlements/{id}/salary-breakdown    → Salary breakdown block
-PATCH  /final-settlements/{id}/leave-encashment    → Leave encashment block
-PATCH  /final-settlements/{id}/bonus               → Bonus block
-PATCH  /final-settlements/{id}/gratuity            → Gratuity block
-PATCH  /final-settlements/{id}/deductions          → Deductions block
-
-── Assets ────────────────────────────────────────────────────────────────────
-POST   /final-settlements/{id}/assets              → Add asset
-PATCH  /final-settlements/{id}/assets/{asset_id}   → Update asset
-DELETE /final-settlements/{id}/assets/{asset_id}   → Remove asset
-
-── Payment ───────────────────────────────────────────────────────────────────
-PATCH  /final-settlements/{id}/payment             → Update bank/payment details
-
-── Documents ─────────────────────────────────────────────────────────────────
-POST   /final-settlements/{id}/documents/{type}/generate  → Generate document
-POST   /final-settlements/{id}/documents/{type}/issue     → Mark as issued
-
-── Export ────────────────────────────────────────────────────────────────────
-GET    /final-settlements/{id}/export              → Single settlement CSV
-GET    /final-settlements/export/report            → All settlements CSV
-─────────────────────────────────────────────────────────────────────────────
-"""
 
 from typing import Optional
 
@@ -113,10 +62,6 @@ router = APIRouter(
 )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Dashboard Stats
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.get(
     "/stats",
     response_model=SettlementStatsResponse,
@@ -134,10 +79,6 @@ def settlement_stats(
     return get_settlement_stats(db, settlement_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Export — must be declared before /{id} routes so /export/report is matched
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.get(
     "/export/report",
     summary="Export all settlements (CSV)",
@@ -151,10 +92,6 @@ def export_all_settlements(db: Session = Depends(get_db)):
         headers={"Content-Disposition": "attachment; filename=final_settlements_report.csv"},
     )
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# CRUD
-# ─────────────────────────────────────────────────────────────────────────────
 
 @router.get(
     "",
@@ -232,10 +169,6 @@ def delete_settlement_record(settlement_id: int, db: Session = Depends(get_db)):
     delete_settlement(db, settlement_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Recalculate  (Quick Actions → Recalculate button)
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.post(
     "/{settlement_id}/recalculate",
     response_model=FinalSettlementResponse,
@@ -255,10 +188,6 @@ def delete_settlement_record(settlement_id: int, db: Session = Depends(get_db)):
 def recalculate(settlement_id: int, db: Session = Depends(get_db)):
     return recalculate_settlement(db, settlement_id)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Workflow  (Quick Actions buttons)
-# ─────────────────────────────────────────────────────────────────────────────
 
 @router.post(
     "/{settlement_id}/submit",
@@ -329,11 +258,6 @@ def cancel(
     db: Session = Depends(get_db),
 ):
     return cancel_settlement(db, settlement_id, reason, cancelled_by_name)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Sub-block PATCH endpoints
-# ─────────────────────────────────────────────────────────────────────────────
 
 @router.patch(
     "/{settlement_id}/notice-period",
@@ -426,11 +350,6 @@ def patch_deductions(
 ):
     return update_deductions(db, settlement_id, payload)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Asset Return Tracking
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.post(
     "/{settlement_id}/assets",
     response_model=FinalSettlementResponse,
@@ -476,10 +395,6 @@ def remove_asset(
     return delete_asset(db, settlement_id, asset_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Payment Info
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.patch(
     "/{settlement_id}/payment",
     response_model=FinalSettlementResponse,
@@ -495,11 +410,6 @@ def patch_payment(
     db: Session = Depends(get_db),
 ):
     return update_payment_info(db, settlement_id, payload)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Document Checklist  (Quick Actions → Documents button)
-# ─────────────────────────────────────────────────────────────────────────────
 
 @router.post(
     "/{settlement_id}/documents/{doc_type}/generate",
@@ -533,10 +443,6 @@ def issue_doc(
 ):
     return issue_document(db, settlement_id, doc_type)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Export  (Quick Actions → Export button)
-# ─────────────────────────────────────────────────────────────────────────────
 
 @router.get(
     "/{settlement_id}/export",

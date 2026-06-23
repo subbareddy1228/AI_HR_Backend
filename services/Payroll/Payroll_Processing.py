@@ -1,7 +1,3 @@
-"""
-Payroll Processing Module — Service Layer
-All business logic is isolated here; routers stay thin.
-"""
 
 from __future__ import annotations
 
@@ -36,10 +32,6 @@ from schema.Payroll.Payrol_Processing import (
 )
 
 
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
-
 def _get_or_404(db: Session, model, record_id: int):
     obj = db.get(model, record_id)
     if not obj:
@@ -51,12 +43,12 @@ def _get_or_404(db: Session, model, record_id: int):
 
 
 def _get_singleton(db: Session, model):
-    """Return the first (and only) config row, or None."""
+
     return db.execute(select(model)).scalars().first()
 
 
 def _require_unlocked(config: Optional[PayrollConfig]) -> None:
-    """Raise 423 Locked if payroll is currently locked."""
+
     if config and config.payroll_status == PayrollStatus.LOCKED:
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
@@ -65,11 +57,6 @@ def _require_unlocked(config: Optional[PayrollConfig]) -> None:
                 f"Locked reason: {config.lock_reason or 'N/A'}"
             ),
         )
-
-
-# ===========================================================================
-# Payroll Config Service
-# ===========================================================================
 
 class PayrollConfigService:
 
@@ -110,7 +97,6 @@ class PayrollConfigService:
         db.refresh(config)
         return config
 
-    # ---- Lock / Unlock ----
 
     @staticmethod
     def lock(db: Session, payload: LockPayrollRequest) -> PayrollConfig:
@@ -133,7 +119,6 @@ class PayrollConfigService:
         config.lock_reason    = payload.reason
         config.updated_at     = datetime.utcnow()
 
-        # Audit
         log = PayrollLockLog(
             action          = LockAction.LOCK,
             reason          = payload.reason,
@@ -192,10 +177,6 @@ class PayrollConfigService:
         )
 
 
-# ===========================================================================
-# Commission Config Service
-# ===========================================================================
-
 class CommissionConfigService:
 
     @staticmethod
@@ -234,10 +215,6 @@ class CommissionConfigService:
         db.refresh(obj)
         return obj
 
-
-# ===========================================================================
-# Statutory Settings Service
-# ===========================================================================
 
 class StatutorySettingsService:
 
@@ -278,10 +255,6 @@ class StatutorySettingsService:
         return obj
 
 
-# ===========================================================================
-# Payroll Component Service  (Salary Component Configuration table)
-# ===========================================================================
-
 class PayrollComponentService:
 
     @staticmethod
@@ -310,7 +283,7 @@ class PayrollComponentService:
 
     @staticmethod
     def create(db: Session, payload: PayrollComponentCreate) -> PayrollComponent:
-        # Check duplicate name (active components)
+
         existing = db.execute(
             select(PayrollComponent).where(
                 PayrollComponent.component_name == payload.component_name,
@@ -335,7 +308,7 @@ class PayrollComponentService:
     ) -> PayrollComponent:
         obj = _get_or_404(db, PayrollComponent, component_id)
 
-        # Name uniqueness check (skip if name unchanged or not provided)
+
         if payload.component_name and payload.component_name != obj.component_name:
             duplicate = db.execute(
                 select(PayrollComponent).where(
@@ -360,15 +333,10 @@ class PayrollComponentService:
     @staticmethod
     def delete(db: Session, component_id: int) -> None:
         obj = _get_or_404(db, PayrollComponent, component_id)
-        # Soft delete — keeps history intact
         obj.is_active  = False
         obj.updated_at = datetime.utcnow()
         db.commit()
 
-
-# ===========================================================================
-# Full Page Service  (single query to hydrate entire page)
-# ===========================================================================
 
 class PayrollProcessingPageService:
 

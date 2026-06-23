@@ -61,7 +61,7 @@ def create_config(payload: StatutoryConfigCreate, db: Session = Depends(get_db))
 def update_config(
     config_id: int, payload: StatutoryConfigUpdate, db: Session = Depends(get_db)
 ):
-    """Save button on the PF Configuration + PF Settings panels."""
+
     return svc.update_statutory_config(db, config_id, payload)
 
 

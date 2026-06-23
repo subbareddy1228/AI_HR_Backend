@@ -1,21 +1,3 @@
-"""
-Final Settlement Service
-========================
-All business logic lives here — routers stay thin.
-
-Key responsibilities:
-  • Auto-generate settlement_code (FS-YYYY-NNNN)
-  • Full recalculate()  — recomputes every sub-block and header totals
-  • Workflow transitions: Draft → Pending → Approved → Paid / Cancelled
-  • Approval log insertion on every status change
-  • Timeline milestone management
-  • Asset penalty computation
-  • Gratuity eligibility check (≥ 5 completed years)
-  • Leave encashment (earned leave only, unless policy overrides)
-  • Notice period shortfall recovery
-  • Document generation stubs (Form16, Form19, Form10C, letters)
-  • Export helpers (PDF/CSV) — returns raw bytes for the router to stream
-"""
 
 from __future__ import annotations
 
@@ -75,10 +57,6 @@ from schema.Payroll.final_settlement import (
 )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
 TWO_PLACES = Decimal("0.01")
 
 
@@ -94,7 +72,7 @@ def _get_or_404(db: Session, model, record_id: int, label: str = "Record"):
 
 
 def _load_full(db: Session, settlement_id: int) -> FinalSettlement:
-    """Load settlement with all eager relationships."""
+
     stmt = (
         select(FinalSettlement)
         .where(FinalSettlement.id == settlement_id)
@@ -153,7 +131,7 @@ def _add_log(
 
 
 def _seed_timeline(db: Session, settlement: FinalSettlement) -> None:
-    """Insert default timeline milestones for a new settlement."""
+
     events = [
         (TimelineEvent.NOTICE_PERIOD_INITIATED, settlement.resignation_date, True),
         (TimelineEvent.DOCUMENT_COLLECTION, None, False),
@@ -172,7 +150,7 @@ def _seed_timeline(db: Session, settlement: FinalSettlement) -> None:
 
 
 def _seed_documents(db: Session, settlement: FinalSettlement) -> None:
-    """Insert default document checklist items."""
+
     doc_types = ["Form16", "Form19", "Form10C", "Experience Letter", "Relieving Letter"]
     for doc_type in doc_types:
         db.add(
@@ -184,17 +162,9 @@ def _seed_documents(db: Session, settlement: FinalSettlement) -> None:
         )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Computation Engine
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _compute_asset_penalty(assets: List[SettlementAsset]) -> Decimal:
-    """
-    Penalty matrix:
-      Lost     Laptop=50000, Mobile=20000, Others=5000
-      Damaged  Laptop=10000, Mobile=5000,  Others=2000
-      Pending  Laptop=5000,  Mobile=2000,  Others=1000
-    """
+
     penalty = Decimal("0")
     for asset in assets:
         cat = (asset.category or "").lower()
@@ -211,7 +181,6 @@ def _compute_asset_penalty(assets: List[SettlementAsset]) -> Decimal:
         elif ret == AssetReturnStatus.PENDING:
             penalty += Decimal("5000") if is_laptop else (Decimal("2000") if is_mobile else Decimal("1000"))
 
-        # Update individual asset penalty too
         asset.penalty = (
             Decimal("50000") if (cond == AssetCondition.LOST or ret == AssetReturnStatus.LOST) and is_laptop
             else Decimal("20000") if (cond == AssetCondition.LOST or ret == AssetReturnStatus.LOST) and is_mobile
@@ -228,10 +197,7 @@ def _compute_asset_penalty(assets: List[SettlementAsset]) -> Decimal:
 
 
 def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
-    """
-    Master recalculate — recomputes every monetary field bottom-up and
-    updates header totals.  Call after any sub-block change.
-    """
+
     np   = settlement.notice_period
     sal  = settlement.salary_breakdown
     lv   = settlement.leave_encashment
@@ -240,7 +206,6 @@ def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
     ded  = settlement.deduction
     assets = settlement.assets or []
 
-    # 1. Salary for days worked
     sal_for_days = Decimal("0")
     daily_rate   = Decimal("0")
     if sal:
@@ -254,7 +219,6 @@ def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
         sal.daily_rate    = daily_rate
         sal.salary_for_days = sal_for_days
 
-    # 2. Notice period shortfall
     notice_recovery = Decimal("0")
     if np:
         shortfall = max(0, int(np.required_days or 0) - int(np.days_served or 0))
@@ -264,7 +228,6 @@ def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
         np.shortfall_days    = shortfall
         np.recovery_amount   = notice_recovery
 
-    # 3. Leave encashment  (earned leave only by default)
     leave_enc = Decimal("0")
     if lv:
         enc_days   = _round2(lv.earned_leave_balance or 0)
@@ -281,7 +244,7 @@ def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
         pro_rata_bonus = _round2((annual / 365) * days) if days else Decimal("0")
         bon.pro_rata_bonus = pro_rata_bonus
 
-    # 5. Gratuity  (15/26 × basic × completed full years, only if ≥ eligibility_years)
+ 
     gratuity_amt = Decimal("0")
     if grat:
         years     = float(grat.completed_years or 0)
@@ -294,17 +257,13 @@ def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
         grat.gratuity_amount = gratuity_amt
         grat.is_eligible     = is_elig
 
-    # 6. Approved reimbursements (sourced from deduction block for now)
     approved_reimbursements = Decimal("0")
     if ded:
-        # reimbursements are additions, stored separately in the FE but we
-        # add them via total_additions path — use pending_reimbursements if present
+        
         pass
 
-    # 7. Asset penalties
     asset_penalty = _compute_asset_penalty(assets) if assets else Decimal("0")
 
-    # 8. Aggregate totals
     total_additions = _round2(
         sal_for_days
         + leave_enc
@@ -334,13 +293,11 @@ def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
 
     net = _round2(max(Decimal("0"), total_additions - total_ded))
 
-    # 9. Update header
     settlement.total_additions  = total_additions
     settlement.total_deductions = total_ded
     settlement.net_settlement   = net
     settlement.last_calculated_at = datetime.utcnow()
 
-    # 10. Mark timeline: Settlement Calculation done
     for tl in (settlement.timeline or []):
         if tl.event == TimelineEvent.SETTLEMENT_CALCULATION:
             tl.is_completed = True
@@ -349,9 +306,6 @@ def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
     return settlement
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CRUD — Settlement
-# ─────────────────────────────────────────────────────────────────────────────
 
 def create_settlement(db: Session, payload: FinalSettlementCreate) -> FinalSettlement:
     # Duplicate guard
@@ -388,9 +342,8 @@ def create_settlement(db: Session, payload: FinalSettlementCreate) -> FinalSettl
         status=SettlementStatus.DRAFT,
     )
     db.add(settlement)
-    db.flush()  # get settlement.id
+    db.flush()  
 
-    # Sub-blocks
     np_data = payload.notice_period or NoticePeriodCreate(
         required_days=payload.notice_period_required_days
     )
@@ -434,7 +387,7 @@ def create_settlement(db: Session, payload: FinalSettlementCreate) -> FinalSettl
     _seed_timeline(db, settlement)
     _seed_documents(db, settlement)
 
-    # Initial approval log
+
     db.flush()
     _add_log(
         db, settlement,
@@ -519,12 +472,8 @@ def delete_settlement(db: Session, settlement_id: int) -> None:
     db.commit()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Stats / Dashboard
-# ─────────────────────────────────────────────────────────────────────────────
-
 def get_settlement_stats(db: Session, settlement_id: Optional[int] = None):
-    """Returns KPI card data for the dashboard."""
+
     counts = {
         "pending": db.execute(
             select(func.count(FinalSettlement.id)).where(
@@ -561,10 +510,6 @@ def get_settlement_stats(db: Session, settlement_id: Optional[int] = None):
     }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Recalculate
-# ─────────────────────────────────────────────────────────────────────────────
-
 def recalculate_settlement(db: Session, settlement_id: int) -> FinalSettlement:
     settlement = _load_full(db, settlement_id)
     if settlement.status == SettlementStatus.PAID:
@@ -580,10 +525,6 @@ def recalculate_settlement(db: Session, settlement_id: int) -> FinalSettlement:
     db.commit()
     return _load_full(db, settlement_id)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Workflow Transitions
-# ─────────────────────────────────────────────────────────────────────────────
 
 def submit_for_approval(db: Session, settlement_id: int, submitted_by_name: Optional[str] = None) -> FinalSettlement:
     settlement = _get_or_404(db, FinalSettlement, settlement_id, "Final settlement")
@@ -642,7 +583,6 @@ def process_payment(
     if settlement.status != SettlementStatus.APPROVED:
         raise HTTPException(status_code=400, detail="Settlement must be Approved before marking as Paid")
 
-    # Update payment sub-block
     pay = db.execute(
         select(SettlementPayment).where(SettlementPayment.settlement_id == settlement_id)
     ).scalar_one_or_none()
@@ -661,7 +601,6 @@ def process_payment(
     settlement.status     = SettlementStatus.PAID
     settlement.updated_at = datetime.utcnow()
 
-    # Update timeline — Payment Processing done
     for tl in (db.execute(
         select(SettlementTimeline).where(SettlementTimeline.settlement_id == settlement_id)
     ).scalars().all()):
@@ -694,10 +633,6 @@ def cancel_settlement(db: Session, settlement_id: int, reason: str, cancelled_by
     db.commit()
     return _load_full(db, settlement_id)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Sub-block Updates
-# ─────────────────────────────────────────────────────────────────────────────
 
 def update_notice_period(db: Session, settlement_id: int, payload: NoticePeriodUpdate) -> FinalSettlement:
     settlement = _load_full(db, settlement_id)
@@ -771,10 +706,6 @@ def update_deductions(db: Session, settlement_id: int, payload: DeductionUpdate)
     return _load_full(db, settlement_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Asset Management
-# ─────────────────────────────────────────────────────────────────────────────
-
 def add_asset(db: Session, settlement_id: int, payload: AssetCreate) -> FinalSettlement:
     _get_or_404(db, FinalSettlement, settlement_id, "Final settlement")
     db.add(SettlementAsset(settlement_id=settlement_id, **payload.model_dump()))
@@ -819,16 +750,12 @@ def delete_asset(db: Session, settlement_id: int, asset_id: int) -> FinalSettlem
     return _load_full(db, settlement_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Payment
-# ─────────────────────────────────────────────────────────────────────────────
-
 def update_payment_info(db: Session, settlement_id: int, payload: PaymentUpdate) -> FinalSettlement:
     pay = db.execute(
         select(SettlementPayment).where(SettlementPayment.settlement_id == settlement_id)
     ).scalar_one_or_none()
     if not pay:
-        # create if missing
+
         pay = SettlementPayment(settlement_id=settlement_id)
         db.add(pay)
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -836,10 +763,6 @@ def update_payment_info(db: Session, settlement_id: int, payload: PaymentUpdate)
     db.commit()
     return _load_full(db, settlement_id)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Documents
-# ─────────────────────────────────────────────────────────────────────────────
 
 def generate_document(db: Session, settlement_id: int, doc_type: str, generated_by: Optional[str] = None) -> FinalSettlement:
     doc = db.execute(
@@ -855,7 +778,6 @@ def generate_document(db: Session, settlement_id: int, doc_type: str, generated_
     doc.generated_by   = generated_by
     doc.download_url   = f"/api/v1/final-settlements/{settlement_id}/documents/{doc_type}/download"
 
-    # Update timeline — Document Collection
     settlement = _get_or_404(db, FinalSettlement, settlement_id, "Final settlement")
     all_docs = db.execute(
         select(SettlementDocument).where(SettlementDocument.settlement_id == settlement_id)
@@ -891,12 +813,8 @@ def issue_document(db: Session, settlement_id: int, doc_type: str) -> FinalSettl
     return _load_full(db, settlement_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Export  (CSV — minimal; PDF requires WeasyPrint/ReportLab install)
-# ─────────────────────────────────────────────────────────────────────────────
-
 def export_settlement_csv(db: Session, settlement_id: int) -> bytes:
-    """Return raw CSV bytes for the settlement summary."""
+
     s = _load_full(db, settlement_id)
     lines = [
         "Field,Value",
@@ -932,7 +850,7 @@ def export_settlement_csv(db: Session, settlement_id: int) -> bytes:
 
 
 def export_settlement_report_csv(db: Session) -> bytes:
-    """Export all settlements as a tabular CSV."""
+
     settlements = db.execute(
         select(FinalSettlement).order_by(FinalSettlement.created_at.desc())
     ).scalars().all()

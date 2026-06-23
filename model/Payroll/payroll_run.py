@@ -44,4 +44,4 @@ class PayrollRunDetail(Base):
     tds = Column(Numeric(10, 2), nullable=False)
     total_deductions = Column(Numeric(10, 2), nullable=False)
     net_pay = Column(Numeric(10, 2), nullable=False)
-    status = Column(String(50), default="Pending")  # Pending/Processed/Paid
+    status = Column(String(50), default="Pending")
