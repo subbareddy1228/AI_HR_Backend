@@ -12,13 +12,11 @@ from typing import Optional
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    UploadFile, File, Query, Path,
-)
+    UploadFile, File, Query, Path)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 
 from model.HR_Automation.daily_attendance import PunchDirectionEnum, PunchTypeEnum
 from schema.HR_Automation.daily_attendance import (
@@ -26,17 +24,14 @@ from schema.HR_Automation.daily_attendance import (
     AttendanceCardOut, AllPunchesOut,
     AddAttendancePunchIn, AddAttendancePunchOut,
     DeletePunchOut, FilterOptionsOut, ImportResultOut,
-    MessageResponse,
-)
+    MessageResponse)
 from services.HR_Automation.daily_attendance_service import (
     FilterOptionsService, DailyAttendanceService,
-    PunchManagementService, ImportExportService, _build_card,
-)
+    PunchManagementService, ImportExportService, _build_card)
 
 router = APIRouter(
     prefix="/api/attendance/daily",
-    tags=["Daily Attendance"],
-)
+    tags=["Daily Attendance"])
 
 
 # ─────────────────────────────────────────────────────────
@@ -46,8 +41,7 @@ router = APIRouter(
 
 @router.get("/filter-options", response_model=FilterOptionsOut)
 def get_filter_options(
-    db:           Session = Depends(get_db),
-    current_user          = Depends(get_current_user),
+    db:           Session = Depends(get_db)
 ):
     """
     Returns distinct values for Business Unit · Location · Cost Center · Departments.
@@ -76,8 +70,7 @@ def list_attendance(
                                            description="all | late | absent | nopunch"),
     # ── Employee search box ──
     search:          Optional[str]  = Query(None, description="Name / code / designation"),
-    db:              Session        = Depends(get_db),
-    current_user                    = Depends(get_current_user),
+    db:              Session        = Depends(get_db)
 ):
     """
     Returns all attendance cards for the selected date, filtered and sorted.
@@ -95,8 +88,7 @@ def list_attendance(
         cost_center=cost_center,
         department=department,
         status_filter=status_filter,
-        search=search,
-    )
+        search=search)
     return DailyAttendanceService.list_cards(db, f)
 
 # ─────────────────────────────────────────────────────────
@@ -113,8 +105,7 @@ def export_csv(
     department:      Optional[str]  = Query(None),
     status_filter:   Optional[str]  = Query(None),
     search:          Optional[str]  = Query(None),
-    db:              Session        = Depends(get_db),
-    current_user                    = Depends(get_current_user),
+    db:              Session        = Depends(get_db)
 ):
     """
     Options → Download button.
@@ -130,8 +121,7 @@ def export_csv(
         cost_center=cost_center,
         department=department,
         status_filter=status_filter,
-        search=search,
-    )
+        search=search)
     result    = DailyAttendanceService.list_cards(db, f)
     csv_bytes = ImportExportService.export_csv(result["items"], attendance_date)
     filename  = f"daily_attendance_{attendance_date.strftime('%Y_%m_%d')}.csv"
@@ -139,8 +129,7 @@ def export_csv(
     return StreamingResponse(
         io.BytesIO(csv_bytes),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
+        headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
 # ─────────────────────────────────────────────────────────
@@ -152,11 +141,10 @@ def export_csv(
 def get_employee_card(
     employee_id:     str  = Path(...),
     attendance_date: date = Query(...),
-    db:              Session = Depends(get_db),
-    current_user             = Depends(get_current_user),
+    db:              Session = Depends(get_db)
 ):
     """Returns the attendance card for a single employee on a given date."""
-    from models.daily_attendance import DailyAttendanceRecord
+    from model.HR_Automation.daily_attendance import DailyAttendanceRecord
     record = db.query(DailyAttendanceRecord).filter_by(
         employee_id=employee_id, attendance_date=attendance_date
     ).first()
@@ -175,8 +163,7 @@ def get_employee_card(
 def get_all_punches(
     employee_id:     str  = Path(...),
     attendance_date: date = Query(...),
-    db:              Session = Depends(get_db),
-    current_user             = Depends(get_current_user),
+    db:              Session = Depends(get_db)
 ):
     """
     Opens the '…' All Punches modal.
@@ -194,8 +181,7 @@ def get_all_punches(
              status_code=status.HTTP_201_CREATED)
 def add_punch(
     payload:     AddAttendancePunchIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Add Time Punch modal → Insert button.
@@ -219,8 +205,7 @@ def add_punch(
             direction=payload.direction,
             punch_type=payload.punch_type,
             remarks=payload.remarks,
-            added_by=current_user.id,
-        )
+            added_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -239,8 +224,7 @@ def add_punch(
 @router.delete("/punch/{punch_id}", response_model=DeletePunchOut)
 def delete_punch(
     punch_id:    uuid.UUID = Path(...),
-    db:          Session   = Depends(get_db),
-    current_user           = Depends(get_current_user),
+    db:          Session   = Depends(get_db)
 ):
     """
     Trash icon in the '…' All Punches modal.
@@ -250,8 +234,7 @@ def delete_punch(
         entry, record = PunchManagementService.delete_punch(
             db=db,
             punch_id=str(punch_id),
-            deleted_by=current_user.id,
-        )
+            deleted_by=1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
 
@@ -277,8 +260,7 @@ async def import_csv(
                     description="CSV — columns: code, date, punch_in, punch_out, "
                                 "punch_type, status, location, department, "
                                 "cost_center, business_unit, note"),
-    db:          Session    = Depends(get_db),
-    current_user            = Depends(get_current_user),
+    db:          Session    = Depends(get_db)
 ):
     """
     Options → Upload button.
@@ -295,6 +277,5 @@ async def import_csv(
         db=db,
         file_content=content,
         filename=file.filename,
-        uploaded_by=current_user.id,
-    )
+        uploaded_by=1)
     return result

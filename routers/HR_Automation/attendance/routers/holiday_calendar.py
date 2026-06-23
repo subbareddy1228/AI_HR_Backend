@@ -11,36 +11,30 @@ from typing import List, Optional
 
 from fastapi import (
     APIRouter, Depends, HTTPException, status,
-    Query, Path,
-)
+    Query, Path)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from core.dependencies import get_current_user
 
 from model.HR_Automation.holiday_calendar import (
-    ApplicationStatusEnum, SwapStatusEnum,
-)
+    ApplicationStatusEnum, SwapStatusEnum)
 from schema.HR_Automation.holiday_calendar import (
     HolidayCreateIn, HolidayUpdateIn, HolidayOut, HolidayStats,
     ApplyOptionalIn, UpdateApplicationStatusIn, OptionalApplicationOut,
     HolidayCalendarCreateIn, HolidayCalendarUpdateIn, HolidayCalendarOut,
     SwapRequestIn, SwapDecisionIn, SwapRequestOut,
     CarryForwardIn, CarryForwardOut,
-    CalendarMonthOut, FilterOptionsOut, MessageResponse,
-)
+    CalendarMonthOut, FilterOptionsOut, MessageResponse)
 from services.HR_Automation.holiday_calendar_service import (
     HolidayMasterService, OptionalApplicationService,
     HolidayCalendarService, HolidaySwapService,
     CarryForwardService, CalendarGridService,
-    seed_holiday_defaults,
-)
+    seed_holiday_defaults)
 
 router = APIRouter(
     prefix="/api/attendance/holidays",
-    tags=["Holiday Calendar"],
-)
+    tags=["Holiday Calendar"])
 
 
 # ══════════════════════════════════════════════════════════
@@ -53,8 +47,7 @@ def get_calendar_grid(
                                  ge=2000, le=2100),
     month:       int     = Query(default_factory=lambda: date.today().month,
                                  ge=1, le=12),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Left-panel month mini-calendar.
@@ -71,8 +64,7 @@ def get_calendar_grid(
 
 @router.get("/tab-counts")
 def get_tab_counts(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Returns badge counts for all 5 tabs:
@@ -82,10 +74,9 @@ def get_tab_counts(
       Holiday Swap    → N Requests
       Carry Forward   → N Records
     """
-    from models.holiday_calendar import (
+    from model.HR_Automation.holiday_calendar import (
         Holiday, OptionalHolidayApplication, HolidayCalendar,
-        HolidaySwapRequest, HolidayCarryForward,
-    )
+        HolidaySwapRequest, HolidayCarryForward)
     return {
         "holidayMaster":  db.query(Holiday).count(),
         "optionalApps":   db.query(OptionalHolidayApplication).count(),
@@ -101,8 +92,7 @@ def get_tab_counts(
 
 @router.get("/filter-options", response_model=FilterOptionsOut)
 def get_filter_options(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Populates:
@@ -113,12 +103,12 @@ def get_filter_options(
     from sqlalchemy import distinct
     from model.HR_Automation.holiday_calendar import Holiday
     cats = sorted({
-        v for (v,) in db.query(distinct(Holiday.category)).all() if v
+        v for (v) in db.query(distinct(Holiday.category)).all() if v
     })
     return {
         "categories": ["All Categories"] + cats,
         "locations":  ["All"] + sorted({
-            v for (v,) in db.query(distinct(Holiday.location)).all() if v
+            v for (v) in db.query(distinct(Holiday.location)).all() if v
         }),
         "statuses":   ["All Status", "Pending", "Approved", "Rejected"],
     }
@@ -135,8 +125,7 @@ def list_holidays(
     type_filter: Optional[str] = Query(None, alias="type",
                                         description="mandatory | optional"),
     year:        Optional[int] = Query(None),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     Holiday Master tab — table.
@@ -149,8 +138,7 @@ def list_holidays(
 
 @router.get("/master/stats", response_model=HolidayStats)
 def get_holiday_stats(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Stats shown across the 5 tab badges."""
     return HolidayMasterService.get_stats(db)
@@ -160,8 +148,7 @@ def get_holiday_stats(
              status_code=status.HTTP_201_CREATED)
 def create_holiday(
     payload:     HolidayCreateIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + Add Holiday button → Add Holiday modal → Save.
@@ -174,30 +161,27 @@ def create_holiday(
         → Allow Carry Forward + Carry Forward Limit
       Applicable Calendars · Applicable Employee Groups
     """
-    return HolidayMasterService.create(db, payload, current_user.id)
+    return HolidayMasterService.create(db, payload, 1)
 
 @router.get("/master/export/csv")
 def export_holidays(
     search:      Optional[str] = Query(None),
     category:    Optional[str] = Query(None),
     type_filter: Optional[str] = Query(None, alias="type"),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """Export button (green) → downloads Holiday Master as CSV."""
     csv_bytes = HolidayMasterService.export_csv(db, search, category, type_filter)
     return StreamingResponse(
         io.BytesIO(csv_bytes), media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=holiday_master.csv"},
-    )
+        headers={"Content-Disposition": "attachment; filename=holiday_master.csv"})
 
 
 
 @router.get("/master/{holiday_id}", response_model=HolidayOut)
 def get_holiday(
     holiday_id:  int     = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """Returns one holiday — pre-populates the Edit modal."""
     try:
@@ -210,12 +194,11 @@ def get_holiday(
 def update_holiday(
     holiday_id:  int            = Path(...),
     payload:     HolidayUpdateIn = ...,
-    db:          Session        = Depends(get_db),
-    current_user                = Depends(get_current_user),
+    db:          Session        = Depends(get_db)
 ):
     """✏ Edit icon → Edit Holiday modal → Save."""
     try:
-        return HolidayMasterService.update(db, holiday_id, payload, current_user.id)
+        return HolidayMasterService.update(db, holiday_id, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
 
@@ -223,8 +206,7 @@ def update_holiday(
 @router.delete("/master/{holiday_id}", response_model=MessageResponse)
 def delete_holiday(
     holiday_id:  int     = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """🗑 Trash icon — permanently deletes the holiday."""
     try:
@@ -246,8 +228,7 @@ def list_optional_applications(
     status_filter:Optional[str]                  = Query(None, alias="status",
                                                           description="Pending|Approved|Rejected"),
     employee_id: Optional[str]                   = Query(None),
-    db:          Session                         = Depends(get_db),
-    current_user                                 = Depends(get_current_user),
+    db:          Session                         = Depends(get_db)
 ):
     """
     Optional Apps tab — Optional Applications table.
@@ -262,8 +243,7 @@ def list_optional_applications(
              status_code=status.HTTP_201_CREATED)
 def apply_optional_holiday(
     payload:     ApplyOptionalIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + Apply Holiday button → Apply Optional Holiday modal → Apply.
@@ -275,7 +255,7 @@ def apply_optional_holiday(
     Builds 2-level Manager → HR approval workflow.
     """
     try:
-        return OptionalApplicationService.apply(db, payload, current_user.id)
+        return OptionalApplicationService.apply(db, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -285,8 +265,7 @@ def apply_optional_holiday(
 def update_application_status(
     app_id:      int                      = Path(...),
     payload:     UpdateApplicationStatusIn = ...,
-    db:          Session                  = Depends(get_db),
-    current_user                          = Depends(get_current_user),
+    db:          Session                  = Depends(get_db)
 ):
     """
     ✏ Edit icon → Update Status modal → Save.
@@ -295,8 +274,7 @@ def update_application_status(
     try:
         return OptionalApplicationService.update_status(
             db, app_id, payload.status,
-            decided_by=getattr(current_user, "name", "HR Admin"),
-        )
+            decided_by="HR Admin")
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
 
@@ -304,8 +282,7 @@ def update_application_status(
 @router.delete("/optional-apps/{app_id}", response_model=MessageResponse)
 def delete_optional_application(
     app_id:      int     = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """🗑 Trash icon — deletes an optional holiday application."""
     try:
@@ -318,16 +295,14 @@ def delete_optional_application(
 @router.get("/optional-apps/export/csv")
 def export_optional_apps(
     status_filter: Optional[str] = Query(None, alias="status"),
-    db:            Session       = Depends(get_db),
-    current_user                 = Depends(get_current_user),
+    db:            Session       = Depends(get_db)
 ):
     """Export button → downloads Optional Applications as CSV."""
     st = ApplicationStatusEnum(status_filter) if status_filter else None
     csv_bytes = OptionalApplicationService.export_csv(db, st)
     return StreamingResponse(
         io.BytesIO(csv_bytes), media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=optional_applications.csv"},
-    )
+        headers={"Content-Disposition": "attachment; filename=optional_applications.csv"})
 
 
 # ══════════════════════════════════════════════════════════
@@ -336,8 +311,7 @@ def export_optional_apps(
 
 @router.get("/calendars", response_model=List[HolidayCalendarOut])
 def list_calendars(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Calendars tab — Holiday Calendars table.
@@ -351,27 +325,25 @@ def list_calendars(
              status_code=status.HTTP_201_CREATED)
 def create_calendar(
     payload:     HolidayCalendarCreateIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + Add Calendar button → Add Holiday Calendar modal → Save.
     Modal fields: Calendar Name* · Location* · Employee Group · Set as Default toggle
     If isDefault=True, unsets all other calendars' default flag.
     """
-    return HolidayCalendarService.create(db, payload, current_user.id)
+    return HolidayCalendarService.create(db, payload, 1)
 
 
 @router.put("/calendars/{calendar_id}", response_model=HolidayCalendarOut)
 def update_calendar(
     calendar_id: int                     = Path(...),
     payload:     HolidayCalendarUpdateIn = ...,
-    db:          Session                 = Depends(get_db),
-    current_user                         = Depends(get_current_user),
+    db:          Session                 = Depends(get_db)
 ):
     """✏ Edit icon → Edit Holiday Calendar modal → Save."""
     try:
-        return HolidayCalendarService.update(db, calendar_id, payload, current_user.id)
+        return HolidayCalendarService.update(db, calendar_id, payload, 1)
     except ValueError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc))
 
@@ -379,8 +351,7 @@ def update_calendar(
 @router.delete("/calendars/{calendar_id}", response_model=MessageResponse)
 def delete_calendar(
     calendar_id: int     = Path(...),
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """🗑 Trash icon — blocked if it is the default calendar."""
     try:
@@ -399,8 +370,7 @@ def list_swap_requests(
     employee_id: Optional[str]            = Query(None),
     status_filter:Optional[str]           = Query(None, alias="status",
                                                    description="pending|approved|rejected"),
-    db:          Session                  = Depends(get_db),
-    current_user                          = Depends(get_current_user),
+    db:          Session                  = Depends(get_db)
 ):
     """
     Holiday Swap tab — Holiday Swap Requests table.
@@ -414,8 +384,7 @@ def list_swap_requests(
              status_code=status.HTTP_201_CREATED)
 def create_swap_request(
     payload:     SwapRequestIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + New Swap Request button → New Holiday Swap Request modal → Submit.
@@ -423,15 +392,14 @@ def create_swap_request(
       Employee* · Holiday Date* (work on this holiday)
       Work Date* (take this day off instead) · Reason*
     """
-    return HolidaySwapService.create(db, payload, current_user.id)
+    return HolidaySwapService.create(db, payload, 1)
 
 
 @router.post("/swaps/{swap_id}/decide", response_model=SwapRequestOut)
 def decide_swap(
     swap_id:     int            = Path(...),
     payload:     SwapDecisionIn = ...,
-    db:          Session        = Depends(get_db),
-    current_user                = Depends(get_current_user),
+    db:          Session        = Depends(get_db)
 ):
     """
     ✓ Approve / ✗ Reject buttons in the Actions column.
@@ -440,8 +408,7 @@ def decide_swap(
     try:
         return HolidaySwapService.decide(
             db, swap_id, payload.approved,
-            decided_by=getattr(current_user, "name", "HR Admin"),
-        )
+            decided_by="HR Admin")
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -453,8 +420,7 @@ def decide_swap(
 @router.get("/carry-forward", response_model=List[CarryForwardOut])
 def list_carry_forward(
     employee_id: Optional[str] = Query(None),
-    db:          Session       = Depends(get_db),
-    current_user               = Depends(get_current_user),
+    db:          Session       = Depends(get_db)
 ):
     """
     Carry Forward tab — Holiday Carry Forward table.
@@ -467,8 +433,7 @@ def list_carry_forward(
 @router.get("/carry-forward/available-holidays",
             response_model=List[HolidayOut])
 def get_available_carry_forward_holidays(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Populates the checkbox list in the Process Carry Forward modal.
@@ -481,8 +446,7 @@ def get_available_carry_forward_holidays(
              status_code=status.HTTP_201_CREATED)
 def process_carry_forward(
     payload:     CarryForwardIn,
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     + Process Carry Forward button → Process Carry Forward modal → Submit.
@@ -494,9 +458,8 @@ def process_carry_forward(
     try:
         return CarryForwardService.process(
             db=db, payload=payload,
-            processed_by=current_user.id,
-            processed_by_name=getattr(current_user, "name", "HR Admin"),
-        )
+            processed_by=1,
+            processed_by_name="HR Admin")
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
 
@@ -507,17 +470,16 @@ def process_carry_forward(
 
 @router.get("/today")
 def get_today_holidays(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Quick Actions → Today button.
     Returns holidays on today's date + current month calendar data.
     """
-    from models.holiday_calendar import Holiday
+    from model.HR_Automation.holiday_calendar import Holiday
     today    = date.today()
     holidays = db.query(Holiday).filter_by(date=today).all()
-    from services.holiday_calendar_service import _build_holiday_out
+    from services.HR_Automation.holiday_calendar_service import _build_holiday_out
     return {
         "date":         today,
         "isHoliday":    len(holidays) > 0,
@@ -532,8 +494,7 @@ def get_today_holidays(
 
 @router.post("/seed", response_model=MessageResponse)
 def seed_defaults(
-    db:          Session = Depends(get_db),
-    current_user         = Depends(get_current_user),
+    db:          Session = Depends(get_db)
 ):
     """
     Seeds: India - National Calendar (default) + 3 national holidays
@@ -547,5 +508,5 @@ def seed_defaults(
 
 # ── Private helper used by get_holiday ─────────────────────
 def _build_out(holiday):
-    from services.holiday_calendar_service import _build_holiday_out
+    from services.HR_Automation.holiday_calendar_service import _build_holiday_out
     return _build_holiday_out(holiday)
