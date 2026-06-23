@@ -844,6 +844,8 @@ Also add at top: from model.HR_Operations.exit_management import Alumni
             pdf.output(path)
             return path
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"PDF failed: {e}")
 
     @staticmethod
