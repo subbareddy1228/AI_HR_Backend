@@ -58,7 +58,6 @@ class SalaryComponentBase(BaseModel):
     base_component_id:  Optional[int] = None
     is_pro_rata:        bool = True
     rounding:           str = "nearest_1"
-    # Reimbursement extras
     max_amount:      Optional[Decimal] = None
     proof_required:  bool = False
     tax_exempt_upto: Optional[Decimal] = None

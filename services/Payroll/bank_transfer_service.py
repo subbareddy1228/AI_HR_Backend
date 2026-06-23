@@ -1,11 +1,3 @@
-"""
-services/Payroll/bank_transfer_service.py
-------------------------------------------
-Business-logic layer for the Bank Transfer & Payment Processing module.
-
-All DB mutations go through this service so that routers remain thin
-and unit tests can mock at the service boundary.
-"""
 
 from __future__ import annotations
 
@@ -59,13 +51,9 @@ from schema.Payroll.bank_transfer import (
 logger = logging.getLogger(__name__)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helper utilities
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 def _get_or_404(db: Session, model, pk: int, label: str):
-    """Fetch a row by primary key or raise 404."""
+
     obj = db.get(model, pk)
     if not obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{label} not found")
@@ -73,7 +61,7 @@ def _get_or_404(db: Session, model, pk: int, label: str):
 
 
 def _apply_filters(stmt, model, filters: Dict[str, Any]):
-    """Dynamically apply equality + range filters to a select statement."""
+
     for field, value in filters.items():
         if value is None:
             continue
@@ -84,11 +72,6 @@ def _apply_filters(stmt, model, filters: Dict[str, Any]):
         elif hasattr(model, field):
             stmt = stmt.where(getattr(model, field) == value)
     return stmt
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PaymentFile service
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class PaymentFileService:
@@ -185,18 +168,13 @@ class PaymentFileService:
         db.commit()
         logger.info("PaymentFile %s deleted", file_id)
 
-    # ── Generate payment files from a payroll run ─────────────────────────
-
     @staticmethod
     def generate_from_payroll_run(
         db: Session,
         req: GeneratePaymentFileRequest,
         generated_by: Optional[int] = None,
     ) -> List[PaymentFile]:
-        """
-        Auto-generate bank-specific payment files from a PayrollRun.
-        Groups PayrollRunDetail records by bank_name (optionally filtered).
-        """
+
         run = _get_or_404(db, PayrollRun, req.payroll_run_id, "PayrollRun")
 
         details_stmt = select(PayrollRunDetail).where(
@@ -209,18 +187,15 @@ class PaymentFileService:
                 detail="No payroll run details found for this run",
             )
 
-        # Resolve payment settings for defaults
         settings = db.execute(select(PaymentSettings)).scalar_one_or_none()
         default_payment_type = (
             req.payment_type
             or (settings.default_payment_type if settings else PaymentType.NEFT)
         )
 
-        # Group by bank (bank_name stored in salary_slips / run_details via join)
-        # We'll use a placeholder "All Banks" when bank info is unavailable on detail
         bank_groups: Dict[str, List[PayrollRunDetail]] = {}
         for d in details:
-            # If bank info is available on detail use it, else group under "ALL"
+          
             bank = getattr(d, "bank_name", None) or "ALL"
             if req.bank_names and bank not in req.bank_names and bank != "ALL":
                 continue
@@ -236,7 +211,7 @@ class PaymentFileService:
             file_name = f"SALARY_{month_str}_{bank_code}"
 
             total = sum(Decimal(str(d.net_pay)) for d in group)
-            category = "Salary"  # Default for payroll runs
+            category = "Salary" 
 
             pf = PaymentFile(
                 file_name=file_name,
@@ -255,9 +230,8 @@ class PaymentFileService:
                 status=PaymentFileStatus.GENERATED,
             )
             db.add(pf)
-            db.flush()  # get PF id
+            db.flush()
 
-            # Create entries
             for d in group:
                 entry = PaymentFileEntry(
                     payment_file_id=pf.id,
@@ -267,7 +241,7 @@ class PaymentFileService:
                     department=d.department,
                     designation=d.designation,
                     bank_name=bank_name,
-                    bank_account="UNKNOWN",   # real impl: join with bank_details
+                    bank_account="UNKNOWN",   
                     ifsc_code="UNKNOWN",
                     gross_salary=d.gross_salary,
                     deductions=d.total_deductions,
@@ -289,11 +263,9 @@ class PaymentFileService:
         )
         return created_files
 
-    # ── CSV export ────────────────────────────────────────────────────────────
-
     @staticmethod
     def export_csv(db: Session, file_id: int) -> str:
-        """Return CSV string of all entries for a payment file."""
+
         pf = _get_or_404(db, PaymentFile, file_id, "Payment file")
         entries = db.execute(
             select(PaymentFileEntry).where(PaymentFileEntry.payment_file_id == file_id)
@@ -321,10 +293,6 @@ class PaymentFileService:
             )
         return output.getvalue()
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PaymentFileEntry service
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class PaymentFileEntryService:
@@ -390,10 +358,6 @@ class PaymentFileEntryService:
         db.refresh(obj)
         return obj
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# BankTransfer service
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class BankTransferService:
@@ -521,10 +485,6 @@ class BankTransferService:
         db.commit()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PendingPayment service
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class PendingPaymentService:
 
@@ -587,7 +547,7 @@ class PendingPaymentService:
 
     @staticmethod
     def download_pending_report(db: Session) -> str:
-        """Generate CSV of all unresolved pending payments."""
+
         rows = db.execute(
             select(PendingPayment)
             .where(PendingPayment.is_resolved == False)
@@ -609,18 +569,13 @@ class PendingPaymentService:
         return output.getvalue()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PaymentSettings service
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PaymentSettingsService:
 
     @staticmethod
     def get(db: Session) -> PaymentSettings:
         obj = db.execute(select(PaymentSettings)).scalar_one_or_none()
         if not obj:
-            # Bootstrap defaults on first access
+
             obj = PaymentSettings()
             db.add(obj)
             db.commit()
@@ -643,19 +598,12 @@ class PaymentSettingsService:
         return obj
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# BankReconciliation service
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class BankReconciliationService:
 
     @staticmethod
     def run_reconciliation(db: Session, payload: BankReconciliationCreate) -> BankReconciliation:
-        """
-        Create a new reconciliation session and auto-reconcile entries by
-        matching BankTransfer records to their expected amounts.
-        """
+
         session_obj = BankReconciliation(
             payment_file_id=payload.payment_file_id,
             payroll_run_id=payload.payroll_run_id,
@@ -669,7 +617,6 @@ class BankReconciliationService:
         db.add(session_obj)
         db.flush()
 
-        # Auto-reconcile: fetch transfers linked to the payment_file
         if payload.payment_file_id:
             transfers = db.execute(
                 select(BankTransfer).where(
@@ -680,7 +627,7 @@ class BankReconciliationService:
             matched = unmatched = pending = 0
 
             for i, t in enumerate(transfers, start=1):
-                # Simple match: transfer succeeded → Matched, failed → Unmatched, else Pending
+               
                 if t.status == TransferStatus.SUCCESS:
                     rec_status = ReconciliationStatus.MATCHED
                     matched += 1
@@ -808,11 +755,6 @@ class BankReconciliationService:
         return obj
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Analytics service
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PaymentAnalyticsService:
 
     @staticmethod
@@ -841,7 +783,7 @@ class PaymentAnalyticsService:
 
     @staticmethod
     def get_analytics(db: Session, months: int = 4) -> PaymentAnalyticsResponse:
-        # ── Totals ────────────────────────────────────────────────────────────
+      
         total_amount = db.execute(
             select(func.coalesce(func.sum(BankTransfer.transfer_amount), 0))
         ).scalar_one()
@@ -854,11 +796,11 @@ class PaymentAnalyticsService:
 
         success_rate = round((success_count / total_txns * 100), 1) if total_txns else 0.0
 
-        # ── Monthly trends ────────────────────────────────────────────────────
+    
         monthly: List[MonthlyTrendItem] = []
         now = datetime.utcnow()
         for i in range(months - 1, -1, -1):
-            # Compute month start / end
+
             target = now - timedelta(days=30 * i)
             m_start = target.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             if m_start.month == 12:
@@ -897,7 +839,6 @@ class PaymentAnalyticsService:
                 )
             )
 
-        # ── Bank distribution ─────────────────────────────────────────────────
         bank_rows = db.execute(
             select(BankTransfer.bank_name, func.sum(BankTransfer.transfer_amount).label("amt"))
             .group_by(BankTransfer.bank_name)
@@ -909,7 +850,7 @@ class PaymentAnalyticsService:
             for r in bank_rows
         ]
 
-        # ── Payment type distribution ─────────────────────────────────────────
+
         pt_rows = db.execute(
             select(BankTransfer.payment_type, func.count(BankTransfer.id).label("cnt"))
             .group_by(BankTransfer.payment_type)
@@ -920,7 +861,7 @@ class PaymentAnalyticsService:
             for r in pt_rows
         ]
 
-        # ── Status summary ────────────────────────────────────────────────────
+
         def _st_count(s: TransferStatus) -> int:
             return db.execute(
                 select(func.count()).where(BankTransfer.status == s)
@@ -939,9 +880,10 @@ class PaymentAnalyticsService:
             total_amount=Decimal(str(total_amount)),
             success_rate=success_rate,
             total_transactions=total_txns,
-            avg_processing_time_hrs=2.4,  # Computed from completed_at - initiated_at in prod
+            avg_processing_time_hrs=2.4,  
             monthly_trends=monthly,
             bank_distribution=bank_dist,
             payment_type_distribution=pt_dist,
             transaction_status=status_summary,
         )
+    

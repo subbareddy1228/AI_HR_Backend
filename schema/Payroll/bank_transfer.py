@@ -1,9 +1,3 @@
-"""
-schema/Payroll/bank_transfer.py
---------------------------------
-Pydantic v2 request / response schemas for the Bank Transfer &
-Payment Processing module.
-"""
 
 from __future__ import annotations
 
@@ -14,9 +8,6 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Re-export enums so API consumers don't need to import from model layer
-# ─────────────────────────────────────────────────────────────────────────────
 
 from model.Payroll.bank_transfer import (
     DataRetentionDays,
@@ -28,9 +19,6 @@ from model.Payroll.bank_transfer import (
 )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PaymentFile schemas
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class PaymentFileCreate(BaseModel):
@@ -92,10 +80,6 @@ class PaymentFileResponse(BaseModel):
     updated_at: Optional[datetime]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PaymentFileEntry schemas
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class PaymentFileEntryCreate(BaseModel):
     payment_file_id: int
@@ -145,11 +129,6 @@ class PaymentFileEntryResponse(BaseModel):
     updated_at: Optional[datetime]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# BankTransfer schemas
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class BankTransferCreate(BaseModel):
     payroll_run_id: Optional[int] = None
     payment_file_id: Optional[int] = None
@@ -180,7 +159,7 @@ class BankTransferUpdate(BaseModel):
 
 
 class TransferStatusPayload(BaseModel):
-    """Lightweight payload for mark-success / mark-failed quick-actions."""
+ 
 
     utr_number: Optional[str] = Field(None, max_length=100)
     failure_reason: Optional[str] = None
@@ -216,10 +195,6 @@ class BankTransferResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PendingPayment schemas
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class PendingPaymentCreate(BaseModel):
@@ -270,11 +245,6 @@ class PendingPaymentResponse(BaseModel):
     updated_at: Optional[datetime]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PaymentSettings schemas
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PaymentSettingsUpsert(BaseModel):
     auto_file_encryption: bool = True
     payment_notifications: bool = True
@@ -299,10 +269,6 @@ class PaymentSettingsResponse(BaseModel):
     updated_at: Optional[datetime]
     created_at: datetime
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# BankReconciliation schemas
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class BankReconciliationCreate(BaseModel):
@@ -345,9 +311,6 @@ class BankReconciliationResponse(BaseModel):
     updated_at: Optional[datetime]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# BankReconciliationEntry schemas
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class BankReconciliationEntryCreate(BaseModel):
@@ -395,13 +358,9 @@ class BankReconciliationEntryResponse(BaseModel):
     updated_at: Optional[datetime]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Analytics / Dashboard response schemas
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class MonthlyTrendItem(BaseModel):
-    month: str                  # e.g. "Oct 2024"
+    month: str                 
     amount: Decimal
     transactions: int
     success_count: int
@@ -428,7 +387,7 @@ class TransactionStatusSummary(BaseModel):
 
 class PaymentAnalyticsResponse(BaseModel):
     total_amount: Decimal
-    success_rate: float            # e.g. 98.1
+    success_rate: float            
     total_transactions: int
     avg_processing_time_hrs: float
     monthly_trends: List[MonthlyTrendItem]
@@ -445,17 +404,17 @@ class DashboardSummaryResponse(BaseModel):
 
 
 class GeneratePaymentFileRequest(BaseModel):
-    """Request body for the 'Generate Payment File' quick action."""
+
 
     payroll_run_id: int
-    bank_names: Optional[List[str]] = None          # None = all banks
-    payment_type: Optional[PaymentType] = None       # None = use default setting
+    bank_names: Optional[List[str]] = None          
+    payment_type: Optional[PaymentType] = None       
     value_date: Optional[datetime] = None
     remarks: Optional[str] = None
 
 
 class BulkStatusUpdateRequest(BaseModel):
-    """Bulk update statuses for multiple payment file entries."""
+
 
     entry_ids: List[int] = Field(..., min_length=1)
     status: TransferStatus
@@ -465,7 +424,7 @@ class BulkStatusUpdateRequest(BaseModel):
 
 
 class ExportRequest(BaseModel):
-    """Parameters for CSV / PDF export endpoints."""
+
 
     format: str = Field(default="csv", pattern="^(csv|pdf)$")
     date_from: Optional[datetime] = None

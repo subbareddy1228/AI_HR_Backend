@@ -1,9 +1,3 @@
-"""
-Final Settlement Schemas
-========================
-Pydantic v2 — ConfigDict(from_attributes=True) on every Response model.
-All monetary fields use Decimal for precision.
-"""
 
 from __future__ import annotations
 
@@ -13,10 +7,6 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Notice Period
-# ──────────────────────────────────────────────────────────────────────────────
 
 class NoticePeriodCreate(BaseModel):
     verified: bool = False
@@ -53,10 +43,6 @@ class NoticePeriodResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Salary Breakdown
-# ──────────────────────────────────────────────────────────────────────────────
 
 class SalaryBreakdownCreate(BaseModel):
     basic: Decimal = Decimal("0")
@@ -100,10 +86,6 @@ class SalaryBreakdownResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Leave Encashment
-# ──────────────────────────────────────────────────────────────────────────────
-
 class LeaveEncashmentCreate(BaseModel):
     earned_leave_balance: Decimal = Decimal("0")
     casual_leave_balance: Decimal = Decimal("0")
@@ -134,9 +116,6 @@ class LeaveEncashmentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Bonus
-# ──────────────────────────────────────────────────────────────────────────────
 
 class BonusCreate(BaseModel):
     annual_bonus: Decimal = Decimal("0")
@@ -167,10 +146,6 @@ class BonusResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Gratuity
-# ──────────────────────────────────────────────────────────────────────────────
-
 class GratuityCreate(BaseModel):
     completed_years: Decimal = Decimal("0")
     last_drawn_basic: Decimal = Decimal("0")
@@ -197,10 +172,6 @@ class GratuityResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Deductions
-# ──────────────────────────────────────────────────────────────────────────────
 
 class DeductionCreate(BaseModel):
     loan_outstanding: Decimal = Decimal("0")
@@ -242,10 +213,6 @@ class DeductionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Asset
-# ──────────────────────────────────────────────────────────────────────────────
-
 class AssetCreate(BaseModel):
     asset_id: str
     asset_name: str
@@ -281,10 +248,6 @@ class AssetResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Payment
-# ──────────────────────────────────────────────────────────────────────────────
 
 class PaymentCreate(BaseModel):
     payment_method: str = "Bank Transfer"
@@ -331,12 +294,8 @@ class PaymentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Document
-# ──────────────────────────────────────────────────────────────────────────────
-
 class DocumentCreate(BaseModel):
-    document_type: str   # Form16, Form19, Form10C, Experience Letter, Relieving Letter
+    document_type: str   
     financial_year: Optional[str] = None
     pf_account_no: Optional[str] = None
 
@@ -366,10 +325,6 @@ class DocumentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Timeline
-# ──────────────────────────────────────────────────────────────────────────────
-
 class TimelineResponse(BaseModel):
     id: int
     settlement_id: int
@@ -380,10 +335,6 @@ class TimelineResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Approval Log
-# ──────────────────────────────────────────────────────────────────────────────
 
 class ApprovalLogResponse(BaseModel):
     id: int
@@ -398,10 +349,6 @@ class ApprovalLogResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Settlement Header — Create / Update
-# ──────────────────────────────────────────────────────────────────────────────
 
 class FinalSettlementCreate(BaseModel):
     employee_id: int
@@ -421,7 +368,6 @@ class FinalSettlementCreate(BaseModel):
     initiated_date: Optional[date] = None
     remarks: Optional[str] = None
 
-    # Optional nested sub-blocks at creation time
     notice_period: Optional[NoticePeriodCreate] = None
     salary_breakdown: Optional[SalaryBreakdownCreate] = None
     leave_encashment: Optional[LeaveEncashmentCreate] = None
@@ -439,10 +385,6 @@ class FinalSettlementUpdate(BaseModel):
     notice_period_required_days: Optional[int] = None
     remarks: Optional[str] = None
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Approval / Status actions
-# ──────────────────────────────────────────────────────────────────────────────
 
 class ApprovalPayload(BaseModel):
     approved_by: Optional[int] = None
@@ -464,10 +406,6 @@ class PaymentProcessPayload(BaseModel):
     payment_proof_url: Optional[str] = None
     remarks: Optional[str] = None
 
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Full Settlement Response (nested)
-# ──────────────────────────────────────────────────────────────────────────────
 
 class FinalSettlementResponse(BaseModel):
     id: int
@@ -501,7 +439,7 @@ class FinalSettlementResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    # Nested
+
     notice_period: Optional[NoticePeriodResponse] = None
     salary_breakdown: Optional[SalaryBreakdownResponse] = None
     leave_encashment: Optional[LeaveEncashmentResponse] = None
@@ -518,7 +456,7 @@ class FinalSettlementResponse(BaseModel):
 
 
 class FinalSettlementListItem(BaseModel):
-    """Lightweight row for list/search endpoints — no nested blocks."""
+   
     id: int
     settlement_code: str
     employee_id: int
@@ -544,12 +482,8 @@ class PaginatedSettlementList(BaseModel):
     items: List[FinalSettlementListItem]
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Stats / Dashboard
-# ──────────────────────────────────────────────────────────────────────────────
-
 class SettlementStatsResponse(BaseModel):
-    current_settlement: Decimal       # Net settlement amount (current selected)
+    current_settlement: Decimal     
     total_additions: Decimal
     total_deductions: Decimal
     approval_status: str

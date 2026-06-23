@@ -1,19 +1,4 @@
-"""
-Loan & Advance Service — Payroll Management → Advances & Loan Management
 
-Responsibilities:
-  1. Loan code generation (LN001, LN002, ...)
-  2. Apply for Loan — create PENDING request
-  3. Approve — generates the full EMI schedule (reducing balance / flat / interest-free)
-              and transitions PENDING → ACTIVE
-  4. Reject  — PENDING → REJECTED
-  5. Record repayment — updates the matching LoanRepayment row, recomputes
-              paid/pending totals, advances next_due_date, and auto-closes
-              the loan (→ COMPLETED) once all installments are paid
-  6. Listing with search / loan type / status / tab filters
-  7. Dashboard KPI stats (Total Loans, Active Loans, Total Amount, Pending Amount)
-  8. Overdue detection (marks past-due PENDING repayments as OVERDUE)
-"""
 
 from __future__ import annotations
 
@@ -41,11 +26,6 @@ from schema.Payroll.loan_advance import (
 
 TWO_PLACES = Decimal("0.01")
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Internal helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
 def _get_employee_or_404(db: Session, employee_id: int) -> Employee:
     emp = db.get(Employee, employee_id)
     if not emp:
@@ -55,7 +35,7 @@ def _get_employee_or_404(db: Session, employee_id: int) -> Employee:
 
 
 def _next_loan_code(db: Session) -> str:
-    """Format: LN{SEQ:03d} → LN001, LN002 ..."""
+
     count = db.query(func.count(LoanAdvance.id)).scalar() or 0
     return f"LN{count + 1:03d}"
 
@@ -85,17 +65,7 @@ def _build_emi_plan(
     method: str,
     issue_date: date,
 ) -> _EmiPlan:
-    """
-    Computes the EMI schedule.
 
-    - Interest Free  → principal / tenure, flat split, last installment absorbs
-                        rounding remainder.
-    - Flat Rate       → simple interest on full principal spread evenly:
-                        EMI = (P + P*r*n/12/100) / n
-    - Reducing Balance → standard amortising EMI formula:
-                        EMI = P * r * (1+r)^n / ((1+r)^n - 1)   [r = monthly rate]
-                        Falls back to flat split if rate is 0 to avoid div-by-zero.
-    """
     n = tenure_months
     monthly_rate = annual_rate_pct / Decimal("100") / Decimal("12")
 
@@ -123,7 +93,7 @@ def _build_emi_plan(
     running_total = Decimal("0")
     for i in range(1, n + 1):
         due = issue_date + relativedelta(months=i)
-        # Last installment absorbs rounding difference vs. (emi * n)
+
         if i == n:
             installment_amount = _round(principal - running_total) if method != "Reducing Balance" else emi
         else:
@@ -135,7 +105,7 @@ def _build_emi_plan(
 
 
 def _recalculate_totals(loan: LoanAdvance) -> None:
-    """Recompute total_paid / total_pending / paid_installments from repayments."""
+
     paid = sum((r.paid_amount or Decimal("0")) for r in loan.repayments if r.status == "PAID")
     pending = sum(r.emi_amount for r in loan.repayments if r.status in ("PENDING", "OVERDUE"))
     loan.total_paid = _round(Decimal(str(paid)))
@@ -151,10 +121,6 @@ def _recalculate_totals(loan: LoanAdvance) -> None:
         loan.status = "COMPLETED"
         loan.closed_date = max((r.paid_date for r in loan.repayments if r.paid_date), default=date.today())
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Apply for Loan
-# ─────────────────────────────────────────────────────────────────────────────
 
 def apply_for_loan(db: Session, payload: LoanApplicationCreate) -> LoanAdvance:
     emp = _get_employee_or_404(db, payload.employee_id)
@@ -181,10 +147,6 @@ def apply_for_loan(db: Session, payload: LoanApplicationCreate) -> LoanAdvance:
     db.refresh(loan)
     return loan
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Approve / Reject
-# ─────────────────────────────────────────────────────────────────────────────
 
 def approve_loan(db: Session, loan_id: int, payload: LoanApprovalRequest) -> LoanAdvance:
     loan = _get_loan_or_404(db, loan_id)
@@ -257,10 +219,6 @@ def reject_loan(db: Session, loan_id: int, payload: LoanRejectionRequest) -> Loa
     return loan
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Edit / Delete
-# ─────────────────────────────────────────────────────────────────────────────
-
 def update_loan(db: Session, loan_id: int, payload: LoanAdvanceUpdate) -> LoanAdvance:
     loan = _get_loan_or_404(db, loan_id)
 
@@ -288,10 +246,6 @@ def delete_loan(db: Session, loan_id: int) -> None:
     db.delete(loan)
     db.commit()
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Repayment recording
-# ─────────────────────────────────────────────────────────────────────────────
 
 def record_repayment(
     db: Session, loan_id: int, payload: RecordRepaymentRequest
@@ -337,11 +291,7 @@ def record_repayment(
 
 
 def mark_overdue_repayments(db: Session) -> int:
-    """
-    Background-safe helper: flips PENDING repayments whose due_date has passed
-    to OVERDUE. Intended to be called by a daily scheduler.
-    Returns the number of rows updated.
-    """
+
     today = date.today()
     overdue_rows = (
         db.query(LoanRepayment)
@@ -353,10 +303,6 @@ def mark_overdue_repayments(db: Session) -> int:
     db.commit()
     return len(overdue_rows)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Listing
-# ─────────────────────────────────────────────────────────────────────────────
 
 _TAB_STATUS_MAP = {
     "pending":   ["PENDING"],

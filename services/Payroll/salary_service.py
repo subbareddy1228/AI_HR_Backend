@@ -43,7 +43,7 @@ def get_salary_structure_dashboard(db: Session) -> SalaryStructureDashboard:
 
 
 def get_components_master(db: Session) -> ComponentsMasterResponse:
-    """Returns all components grouped for the Components Master tab."""
+ 
     all_comps = db.execute(
         select(SalaryComponent).where(SalaryComponent.is_active == True)
         .order_by(SalaryComponent.category, SalaryComponent.component_name)

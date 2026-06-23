@@ -1,6 +1,3 @@
-"""
-Loan & Advance Pydantic Schemas — Payroll Management → Advances & Loan Management
-"""
 
 from __future__ import annotations
 
@@ -21,12 +18,8 @@ LoanStatus     = Literal["PENDING", "APPROVED", "REJECTED", "ACTIVE", "COMPLETED
 RepaymentStatus = Literal["PENDING", "PAID", "OVERDUE", "WAIVED"]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Apply for Loan modal
-# ─────────────────────────────────────────────────────────────────────────────
-
 class LoanApplicationCreate(BaseModel):
-    """Apply for Loan button — employee/HR submits a new request."""
+  
     employee_id:      int            = Field(..., gt=0)
     loan_type:         LoanType
     amount:            Decimal        = Field(..., gt=0, decimal_places=2)
@@ -45,12 +38,8 @@ class LoanApplicationCreate(BaseModel):
         return self
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Approval / Rejection
-# ─────────────────────────────────────────────────────────────────────────────
-
 class LoanApprovalRequest(BaseModel):
-    """Approve action — sets EMI schedule and activates the loan."""
+  
     approved_by:        str            = Field(..., min_length=1, max_length=255)
     approved_amount:    Decimal        = Field(..., gt=0, decimal_places=2)
     interest_rate:      Optional[Decimal] = Field(None, ge=0, le=100, decimal_places=2)
@@ -60,7 +49,7 @@ class LoanApprovalRequest(BaseModel):
 
     @model_validator(mode="after")
     def issue_not_in_past_excessively(self) -> "LoanApprovalRequest":
-        # Allow same-day or recent backdated approvals but block far-future issue dates.
+        
         if self.issue_date > date.today():
             from datetime import timedelta
             if self.issue_date > date.today() + timedelta(days=30):
@@ -73,12 +62,8 @@ class LoanRejectionRequest(BaseModel):
     rejection_reason: str = Field(..., min_length=1)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# General update
-# ─────────────────────────────────────────────────────────────────────────────
-
 class LoanAdvanceUpdate(BaseModel):
-    """Edit action — partial update before/while loan is active."""
+   
     loan_type:          Optional[LoanType]       = None
     amount:             Optional[Decimal]        = Field(None, gt=0, decimal_places=2)
     reason:             Optional[str]            = None
@@ -92,12 +77,8 @@ class LoanAdvanceUpdate(BaseModel):
     status:             Optional[LoanStatus]      = None
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Repayment / EMI recording
-# ─────────────────────────────────────────────────────────────────────────────
-
 class RecordRepaymentRequest(BaseModel):
-    """Record a single EMI payment — typically triggered by payroll processing."""
+ 
     installment_number: Optional[int]  = Field(None, gt=0, description="If omitted, pays the next due installment")
     paid_amount:         Decimal        = Field(..., gt=0, decimal_places=2)
     paid_date:           date           = Field(default_factory=date.today)
@@ -117,10 +98,6 @@ class LoanRepaymentResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Response models
-# ─────────────────────────────────────────────────────────────────────────────
 
 class LoanAdvanceResponse(BaseModel):
     id:                  int
@@ -164,27 +141,20 @@ class LoanAdvanceResponse(BaseModel):
 
 
 class LoanAdvanceDetailResponse(LoanAdvanceResponse):
-    """Detail / drill-down view including full EMI schedule."""
+
     repayments: List[LoanRepaymentResponse] = []
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Filters & list params
-# ─────────────────────────────────────────────────────────────────────────────
 
 class LoanListFilter(BaseModel):
     search:      Optional[str]       = Field(None, description="Employee name, ID, or loan ID")
     loan_type:   Optional[LoanType]  = None
     status:      Optional[LoanStatus] = None
-    # Convenience filter matching the UI tabs: all | pending | active | completed
+
     tab:         Optional[Literal["all", "pending", "active", "completed"]] = "all"
     skip:        int = Field(default=0, ge=0)
     limit:       int = Field(default=6, ge=1, le=200)  # UI default page size = 6
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# KPI cards
-# ─────────────────────────────────────────────────────────────────────────────
 
 class LoanDashboardStats(BaseModel):
     total_loans:     int
@@ -195,9 +165,6 @@ class LoanDashboardStats(BaseModel):
     pending_amount:  Decimal
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Paginated list wrapper (for "Showing X of Y records")
-# ─────────────────────────────────────────────────────────────────────────────
 
 class PaginatedLoanResponse(BaseModel):
     items:       List[LoanAdvanceResponse]

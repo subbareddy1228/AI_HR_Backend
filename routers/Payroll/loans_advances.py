@@ -1,22 +1,3 @@
-"""
-Loan & Advance Router — /api/payroll/loans
-
-UI sections mapped to endpoint groups:
-  • KPI cards (Total Loans, Active Loans, Total Amount, Pending Amount)
-        → GET  /dashboard/stats
-  • Filter tabs (All Loans / Pending / Active / Completed)
-        → GET  /  (tab query param)
-  • Search & filter bar (employee name/ID/loan ID, loan type, status)
-        → GET  /  (search, loan_type, status query params)
-  • Apply for Loan modal
-        → POST /apply
-  • Row actions (view / edit / approve / reject / delete icons)
-        → GET /{id}, PATCH /{id}, POST /{id}/approve, POST /{id}/reject, DELETE /{id}
-  • EMI & repayment tracking
-        → POST /{id}/repayments, GET /{id}/repayments
-  • Export
-        → GET  /export
-"""
 
 from typing import List, Optional
 
@@ -54,10 +35,6 @@ from services.Payroll.loan_advance_service import (
 router = APIRouter(prefix="/loans", tags=["Loans & Advances"])
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# KPI cards
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.get(
     "/dashboard/stats",
     response_model=LoanDashboardStats,
@@ -67,9 +44,6 @@ def dashboard_stats(db: Session = Depends(get_db)):
     return get_dashboard_stats(db)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Apply for Loan
-# ─────────────────────────────────────────────────────────────────────────────
 
 @router.post(
     "/apply",
@@ -78,16 +52,9 @@ def dashboard_stats(db: Session = Depends(get_db)):
     summary="Apply for Loan — creates a PENDING loan/advance request",
 )
 def apply(payload: LoanApplicationCreate, db: Session = Depends(get_db)):
-    """
-    Generates a unique loan_code (LN001, LN002, ...) and stores the
-    requested amount, loan type, interest terms, and repayment mode.
-    """
+
     return apply_for_loan(db, payload)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# List / search / filter — main table + tabs
-# ─────────────────────────────────────────────────────────────────────────────
 
 @router.get(
     "/",
@@ -123,10 +90,6 @@ def loans_for_employee(employee_id: int, db: Session = Depends(get_db)):
     return get_loans_by_employee(db, employee_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Single record — view / edit / delete
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.get(
     "/{loan_id}",
     response_model=LoanAdvanceDetailResponse,
@@ -154,21 +117,13 @@ def remove_loan(loan_id: int, db: Session = Depends(get_db)):
     delete_loan(db, loan_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Approval workflow
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.post(
     "/{loan_id}/approve",
     response_model=LoanAdvanceDetailResponse,
     summary="Approve a pending loan — generates the EMI schedule and activates it",
 )
 def approve(loan_id: int, payload: LoanApprovalRequest, db: Session = Depends(get_db)):
-    """
-    Accepts approved_amount, interest terms, tenure (months), and issue_date.
-    Builds the complete repayment schedule (Reducing Balance / Flat Rate /
-    Interest Free) and transitions the loan PENDING → ACTIVE.
-    """
+
     return approve_loan(db, loan_id, payload)
 
 
@@ -181,21 +136,13 @@ def reject(loan_id: int, payload: LoanRejectionRequest, db: Session = Depends(ge
     return reject_loan(db, loan_id, payload)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Repayment / EMI tracking
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.post(
     "/{loan_id}/repayments",
     response_model=LoanAdvanceDetailResponse,
     summary="Record an EMI repayment — updates Paid/Pending totals and next due date",
 )
 def add_repayment(loan_id: int, payload: RecordRepaymentRequest, db: Session = Depends(get_db)):
-    """
-    If installment_number is omitted, pays off the next outstanding installment
-    (PENDING or OVERDUE) in sequence. Auto-closes the loan to COMPLETED once
-    every installment is PAID.
-    """
+
     return record_repayment(db, loan_id, payload)
 
 
@@ -218,10 +165,6 @@ def sync_overdue(db: Session = Depends(get_db)):
     return {"overdue_count": count}
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Export
-# ─────────────────────────────────────────────────────────────────────────────
-
 @router.get(
     "/export",
     summary="Export loan records matching current filters (Export button)",
@@ -233,10 +176,7 @@ def export_loans(
     tab:       Optional[str] = "all",
     db: Session = Depends(get_db),
 ):
-    """
-    Returns the full manifest matching the active filters/tab.
-    Actual XLSX/CSV file generation is delegated to a reporting / background task.
-    """
+
     f = LoanListFilter(search=search, loan_type=loan_type, status=loan_status,
                        tab=tab, skip=0, limit=10_000)
     items, total = list_loans(db, f)

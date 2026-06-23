@@ -1,19 +1,3 @@
-"""
-routers/Payroll/bank_transfer.py
----------------------------------
-FastAPI router for the Bank Transfer & Payment Processing module.
-
-All endpoints under prefix: /api/payroll/bank-transfer
-
-Endpoint groups:
-  /payment-files/          — Payment file CRUD + generate + export
-  /payment-files/{id}/entries/  — Per-file entry management + bulk ops
-  /transfers/              — Individual BankTransfer CRUD + status transitions
-  /pending-payments/       — Pending payment management + retry
-  /settings/               — PaymentSettings get + save
-  /reconciliation/         — Run & manage bank statement reconciliation
-  /analytics/              — Dashboard summary + full analytics panel
-"""
 
 from __future__ import annotations
 
@@ -81,11 +65,6 @@ router = APIRouter(
     prefix="/bank-transfer",
     tags=["Payroll – Bank Transfer & Payment Processing"],
 )
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Payment Files
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.post(
@@ -197,8 +176,6 @@ def delete_payment_file(file_id: int, db: Session = Depends(get_db)):
     PaymentFileService.delete(db, file_id)
 
 
-# ── Payment file CSV export ───────────────────────────────────────────────────
-
 
 @router.get(
     "/payment-files/{file_id}/export/csv",
@@ -215,10 +192,6 @@ def export_payment_file_csv(file_id: int, db: Session = Depends(get_db)):
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Payment File Entries
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.get(
@@ -268,10 +241,6 @@ def bulk_update_entry_statuses(
 def retry_payment_file_entry(entry_id: int, db: Session = Depends(get_db)):
     return PaymentFileEntryService.retry_entry(db, entry_id)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Individual Bank Transfers
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.post(
@@ -391,11 +360,6 @@ def delete_bank_transfer(transfer_id: int, db: Session = Depends(get_db)):
     BankTransferService.delete(db, transfer_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Pending Payments
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 @router.post(
     "/pending-payments/",
     response_model=PendingPaymentResponse,
@@ -474,11 +438,6 @@ def download_pending_report(db: Session = Depends(get_db)):
     )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Payment Settings
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 @router.get(
     "/settings/",
     response_model=PaymentSettingsResponse,
@@ -503,11 +462,6 @@ def save_payment_settings(
     db: Session = Depends(get_db),
 ):
     return PaymentSettingsService.upsert(db, payload)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Bank Reconciliation
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.post(
@@ -627,10 +581,6 @@ def export_reconciliation_report(recon_id: int, db: Session = Depends(get_db)):
         headers={"Content-Disposition": f'attachment; filename="reconciliation_{recon_id}.csv"'},
     )
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Analytics
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.get(

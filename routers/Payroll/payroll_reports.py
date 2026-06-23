@@ -1,9 +1,3 @@
-# FILE 18 of 18 | routers/Payroll/payroll_reports.py
-# Router: Payroll Reports — prefix: /payroll-reports  (mounted under /api/payroll in main.py)
-# Endpoints:
-#   GET /payroll-reports/summary                    — total gross/deductions/net grouped by dept
-#   GET /payroll-reports/employee/{employee_id}     — all payroll history for employee
-#   GET /payroll-reports/cost-breakdown/{run_id}    — full cost breakdown for a specific run
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
