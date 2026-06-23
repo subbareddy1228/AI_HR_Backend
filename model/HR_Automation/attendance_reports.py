@@ -123,7 +123,7 @@ class GeneratedReport(Base):
     filters_applied   = Column(JSONB, default={})     # date/dept/location/employee
     total_records     = Column(Integer, default=0)
     generated_at      = Column(DateTime(timezone=True), server_default=func.now(), index=True)
-    generated_by      = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    generated_by      = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     generated_by_name = Column(String(100), default="")
 
     __table_args__ = (
@@ -145,7 +145,7 @@ class AttendanceAnomaly(Base):
 
     id            = Column(Integer, primary_key=True, index=True)
     employee_id   = Column(String(20),
-                            ForeignKey("employees.employee_id", ondelete="CASCADE"),
+                            ForeignKey("employees.id", ondelete="CASCADE"),
                             nullable=False, index=True)
     anomaly_type  = Column(SAEnum(AnomalyTypeEnum), nullable=False, index=True)
     severity      = Column(SAEnum(SeverityEnum), nullable=False, default=SeverityEnum.medium)
@@ -183,7 +183,7 @@ class AttendanceException(Base):
 
     id              = Column(Integer, primary_key=True, index=True)
     employee_id     = Column(String(20),
-                              ForeignKey("employees.employee_id", ondelete="CASCADE"),
+                              ForeignKey("employees.id", ondelete="CASCADE"),
                               nullable=False, index=True)
     department      = Column(String(100), default="")
     exception_type  = Column(SAEnum(ExceptionTypeEnum), nullable=False, index=True)
@@ -235,7 +235,7 @@ class AttendanceAlert(Base):
     })
     acknowledged     = Column(Boolean, default=False, index=True)
     acknowledged_at  = Column(DateTime(timezone=True), nullable=True)
-    acknowledged_by  = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    acknowledged_by  = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
     alert_date       = Column(Date, nullable=False, default=func.current_date())
     created_at       = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 

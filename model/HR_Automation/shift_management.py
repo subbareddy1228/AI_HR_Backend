@@ -150,7 +150,7 @@ class ShiftAssignment(Base):
     __tablename__ = "shift_assignments"
 
     id          = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(String(20), ForeignKey("employees.employee_id", ondelete="CASCADE"),
+    employee_id = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
                          nullable=False, index=True)
     shift_id    = Column(Integer,  ForeignKey("shift_masters.id", ondelete="CASCADE"),
                          nullable=False)
@@ -244,7 +244,7 @@ class ShiftSwapRequest(Base):
     __tablename__ = "shift_swap_requests"
 
     id                  = Column(Integer, primary_key=True, index=True)
-    employee_id         = Column(String(20), ForeignKey("employees.employee_id", ondelete="CASCADE"),
+    employee_id         = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
                                   nullable=False, index=True)
     current_shift_id    = Column(Integer, ForeignKey("shift_masters.id", ondelete="CASCADE"),
                                   nullable=False)
@@ -282,7 +282,7 @@ class FlexibleArrangement(Base):
     __tablename__ = "flexible_arrangements"
 
     id                  = Column(Integer, primary_key=True, index=True)
-    employee_id         = Column(String(20), ForeignKey("employees.employee_id", ondelete="CASCADE"),
+    employee_id         = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
                                   nullable=False, unique=True, index=True)
     arrangement_type    = Column(SAEnum(ArrangementTypeEnum), nullable=False)
     core_hours_start    = Column(String(5), default="10:00")
@@ -418,7 +418,7 @@ class ShiftNotification(Base):
 
     id          = Column(Integer, primary_key=True, index=True)
     type        = Column(SAEnum(NotificationTypeEnum), nullable=False)
-    employee_id = Column(String(20), ForeignKey("employees.employee_id", ondelete="CASCADE"),
+    employee_id = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
                          nullable=False, index=True)
     message     = Column(Text,    nullable=False)
     payload     = Column(JSONB,   default={})    # shift names, dates, roster info

@@ -49,7 +49,7 @@ class MonthlyAttendanceCell(Base):
     id              = Column(Integer, primary_key=True, index=True)
     employee_id     = Column(
         String(20),
-        ForeignKey("employees.employee_id", ondelete="CASCADE"),
+        ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
     )
     cell_date       = Column(Date, nullable=False, index=True)  # actual date of the day
@@ -94,7 +94,7 @@ class MonthlyAttendanceSummary(Base):
     id              = Column(Integer, primary_key=True, index=True)
     employee_id     = Column(
         String(20),
-        ForeignKey("employees.employee_id", ondelete="CASCADE"),
+        ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
     )
     year            = Column(Integer, nullable=False)
