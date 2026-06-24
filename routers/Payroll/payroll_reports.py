@@ -1,21 +1,3 @@
-"""
-routers/Payroll/payroll_reports.py
-------------------------------------
-Router: Payroll Reports & Analytics
-Prefix: /payroll-reports  (mounted under /api/payroll in main.py)
-Extends the existing 3 basic endpoints with the full feature set.
-
-Tabs covered:
-  Standard Reports  → /payroll-reports/standard/
-  Compliance        → /payroll-reports/compliance/
-  Analytics         → /payroll-reports/analytics/
-  Generated         → /payroll-reports/generated/
-  Scheduled         → /payroll-reports/scheduled/
-  Configuration     → /payroll-reports/config/
-  Report Builder    → /payroll-reports/builder/
-  Data sub-reports  → /payroll-reports/data/
-  Dashboard KPI     → /payroll-reports/dashboard/
-"""
 
 from __future__ import annotations
 
@@ -96,11 +78,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/payroll-reports", tags=["Payroll"])
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ① Existing endpoints (kept exactly as-is, extended with richer logic)
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 @router.get("/summary")
 def payroll_summary(
     year: int = Query(...),
@@ -157,7 +134,7 @@ def payroll_summary(
 
 @router.get("/employee/{employee_id}")
 def employee_payroll_history(employee_id: int, db: Session = Depends(get_db)):
-    """Original endpoint — all payroll history for an employee."""
+
     slips = db.execute(
         select(SalarySlip)
         .where(SalarySlip.employee_id == employee_id)
@@ -198,7 +175,7 @@ def employee_payroll_history(employee_id: int, db: Session = Depends(get_db)):
 
 @router.get("/cost-breakdown/{run_id}")
 def cost_breakdown(run_id: int, db: Session = Depends(get_db)):
-    """Original endpoint — full cost breakdown for a specific run."""
+
     run = db.execute(select(PayrollRun).where(PayrollRun.id == run_id)).scalar_one_or_none()
     if not run:
         raise HTTPException(status_code=404, detail="Payroll run not found")
@@ -237,10 +214,6 @@ def cost_breakdown(run_id: int, db: Session = Depends(get_db)):
         ],
     }
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ② Dashboard KPI cards + AI Insights
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.get(
@@ -284,11 +257,6 @@ def dismiss_insight(
     db: Session = Depends(get_db),
 ):
     return PayrollAIInsightService.dismiss(db, insight_id, payload)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ③ Standard Reports tab
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.get(
@@ -344,10 +312,6 @@ def export_standard_report(
     )
     return {"message": "Report generation initiated", "generated_report_id": record.id}
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ④ Compliance tab
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.get(
@@ -420,10 +384,6 @@ def delete_compliance_report(report_id: int, db: Session = Depends(get_db)):
     PayrollComplianceService.delete(db, report_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ⑤ Analytics tab
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 @router.get(
     "/analytics/",
@@ -468,11 +428,6 @@ def update_analytics_dashboard(
 )
 def delete_analytics_dashboard(dashboard_id: int, db: Session = Depends(get_db)):
     PayrollAnalyticsDashboardService.delete(db, dashboard_id)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ⑥ Generated tab
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.get(
@@ -539,11 +494,6 @@ def delete_generated_report(report_id: int, db: Session = Depends(get_db)):
     PayrollGeneratedReportService.delete(db, report_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ⑦ Scheduled tab
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 @router.get(
     "/scheduled/",
     response_model=List[ReportScheduleResponse],
@@ -600,11 +550,6 @@ def delete_report_schedule(schedule_id: int, db: Session = Depends(get_db)):
     PayrollReportScheduleService.delete(db, schedule_id)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ⑧ Configuration tab
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 @router.get(
     "/config/",
     response_model=ReportConfigResponse,
@@ -650,10 +595,6 @@ def reset_report_config(
 ):
     return PayrollReportConfigService.reset_defaults(db, updated_by=updated_by)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ⑨ Report Builder tab (4-step wizard)
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.get(
@@ -744,10 +685,6 @@ def export_custom_report_csv(report_id: int, db: Session = Depends(get_db)):
         headers={"Content-Disposition": f'attachment; filename="{safe_name}.csv"'},
     )
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ⑩ Live data sub-reports  /data/
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.get(
@@ -894,9 +831,6 @@ def data_headcount_trends(db: Session = Depends(get_db)):
     return PayrollDataReportService.headcount_trends(db)
 
 
-# ── CSV exports for data sub-reports ─────────────────────────────────────────
-
-
 @router.get("/data/pf-remittance/export/csv", summary="Export PF Remittance as CSV")
 def export_pf_csv(
     month: Optional[int] = Query(None, ge=1, le=12),
@@ -943,10 +877,6 @@ def export_dept_csv(db: Session = Depends(get_db)):
         headers={"Content-Disposition": 'attachment; filename="department_wise_payroll.csv"'},
     )
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# ⑪ Top-right Export Data button
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 @router.post(

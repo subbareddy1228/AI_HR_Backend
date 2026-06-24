@@ -1,19 +1,3 @@
-"""
-model/Payroll/payroll_reports.py
----------------------------------
-ORM models for the Payroll Reports & Analytics page.
-Follows project conventions from payroll_run.py, statutory_compliance.py, etc.
-
-Tables:
-  - payroll_report_custom        : Report Builder saved definitions
-  - payroll_report_custom_col    : Selected columns per custom report
-  - payroll_report_schedule      : Scheduled reports (Scheduled tab)
-  - payroll_report_generated     : Generated report file history (Generated tab)
-  - payroll_ai_insight           : AI-Driven Insights (dashboard header)
-  - payroll_report_config        : Org-wide report settings (Configuration tab)
-  - payroll_compliance_report    : Statutory compliance reports (Compliance tab)
-  - payroll_analytics_dashboard  : Analytics dashboard cards (Analytics tab)
-"""
 
 import enum
 from datetime import datetime
@@ -35,10 +19,6 @@ from sqlalchemy import (
 
 from core.database import Base
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Enumerations
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class ReportCategory(str, enum.Enum):
@@ -113,38 +93,24 @@ class DataSource(str, enum.Enum):
     STATUTORY_DATA = "Statutory Data"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollReportCustom  — Report Builder saved definitions
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class PayrollReportCustom(Base):
-    """
-    Stores a saved Custom Report created via the Report Builder wizard
-    (4 steps: Report Details → Columns & Data → Filters & Sorting → Format & Schedule).
-    Shown in Configuration tab → Custom Reports table.
-    """
+
 
     __tablename__ = "payroll_report_custom"
 
     id = Column(Integer, primary_key=True, index=True)
-
-    # Step 1 – Report Details
     report_name = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
     category = Column(Enum(ReportCategory), nullable=False, default=ReportCategory.SALARY)
     data_source = Column(Enum(DataSource), nullable=False, default=DataSource.PAYROLL_DATA)
-
-    # Step 3 – Filters & Sorting
-    department_filter = Column(Text, nullable=True)      # JSON: ["Engineering", "HR"]
+    department_filter = Column(Text, nullable=True)      
     date_from = Column(DateTime, nullable=True)
     date_to = Column(DateTime, nullable=True)
     min_salary = Column(Numeric(12, 2), nullable=True, default=0)
     max_salary = Column(Numeric(12, 2), nullable=True, default=500000)
     sort_column = Column(String(100), nullable=True)
     sort_direction = Column(String(5), nullable=True, default="asc")
-
-    # Step 4 – Format & Schedule
     export_pdf = Column(Boolean, nullable=False, default=True)
     export_excel = Column(Boolean, nullable=False, default=True)
     export_csv = Column(Boolean, nullable=False, default=False)
@@ -163,16 +129,8 @@ class PayrollReportCustom(Base):
         return f"<PayrollReportCustom id={self.id} name={self.report_name!r}>"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollReportCustomCol  — Selected columns per custom report
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class PayrollReportCustomCol(Base):
-    """
-    Each row = one selected column for a PayrollReportCustom.
-    Maps to the 'Select Data Columns' step — Basic, Salary, Deductions, Attendance groups.
-    """
 
     __tablename__ = "payroll_report_custom_col"
 
@@ -184,10 +142,10 @@ class PayrollReportCustomCol(Base):
         index=True,
     )
 
-    column_key = Column(String(100), nullable=False)      # e.g. "basic_salary", "pf_employee"
-    column_label = Column(String(255), nullable=False)     # display label
+    column_key = Column(String(100), nullable=False)      
+    column_label = Column(String(255), nullable=False)    
     column_group = Column(Enum(ColumnGroup), nullable=False, default=ColumnGroup.BASIC)
-    data_type = Column(String(20), nullable=False, default="text")  # text|currency|number|date
+    data_type = Column(String(20), nullable=False, default="text")  
     sort_order = Column(Integer, nullable=False, default=0)
     is_selected = Column(Boolean, nullable=False, default=True)
 
@@ -199,16 +157,8 @@ class PayrollReportCustomCol(Base):
         return f"<PayrollReportCustomCol report={self.report_id} key={self.column_key}>"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollReportSchedule  — Scheduled tab
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PayrollReportSchedule(Base):
-    """
-    Scheduled report delivery. Shown in Scheduled Reports tab:
-    Report Name | Schedule | Next Run | Recipients | Format | Status | Actions
-    """
+
 
     __tablename__ = "payroll_report_schedule"
 
@@ -222,17 +172,14 @@ class PayrollReportSchedule(Base):
     frequency = Column(
         Enum(ReportFrequency), nullable=False, default=ReportFrequency.MONTHLY
     )
-    day_of_month = Column(Integer, nullable=True)   # 1-31; e.g. 1 = "1st of every month"
-    day_of_week = Column(Integer, nullable=True)    # 0=Mon…6=Sun (weekly)
-    time_of_day = Column(String(10), nullable=True)  # "HH:MM"
-
-    recipients = Column(Text, nullable=False)        # JSON: ["hr@co.com", "finance@co.com"]
-    export_format = Column(Text, nullable=False, default='["PDF","Excel"]')  # JSON list
-
+    day_of_month = Column(Integer, nullable=True)   
+    day_of_week = Column(Integer, nullable=True)    
+    time_of_day = Column(String(10), nullable=True)  
+    recipients = Column(Text, nullable=False)        
+    export_format = Column(Text, nullable=False, default='["PDF","Excel"]')  
     is_active = Column(Boolean, nullable=False, default=True)
     next_run_at = Column(DateTime, nullable=True)
     last_run_at = Column(DateTime, nullable=True)
-
     created_by = Column(Integer, ForeignKey("employees.id"), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -245,16 +192,8 @@ class PayrollReportSchedule(Base):
         return f"<PayrollReportSchedule id={self.id} name={self.report_name!r} freq={self.frequency}>"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollReportGenerated  — Generated tab (report file history)
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PayrollReportGenerated(Base):
-    """
-    Every generated report file. Shown in Generated Reports tab:
-    Report Name | Period | Generated Date | Generated By | Format | Size | Downloads | Actions
-    """
+
 
     __tablename__ = "payroll_report_generated"
 
@@ -268,7 +207,7 @@ class PayrollReportGenerated(Base):
         Integer, ForeignKey("payroll_report_schedule.id"), nullable=True
     )
 
-    period_label = Column(String(100), nullable=True)   # "March 2024", "Q4 FY 2023-24"
+    period_label = Column(String(100), nullable=True)   
     period_month = Column(Integer, nullable=True)
     period_year = Column(Integer, nullable=True)
 
@@ -277,7 +216,7 @@ class PayrollReportGenerated(Base):
     file_size_bytes = Column(Integer, nullable=True)
     download_count = Column(Integer, nullable=False, default=0)
 
-    generated_by_label = Column(String(255), nullable=True)  # "System", "HR Manager", "Finance"
+    generated_by_label = Column(String(255), nullable=True) 
     generated_by = Column(Integer, ForeignKey("employees.id"), nullable=True)
     generated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)
@@ -293,16 +232,9 @@ class PayrollReportGenerated(Base):
         return f"<PayrollReportGenerated id={self.id} name={self.report_name!r} format={self.format}>"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollAIInsight  — AI-Driven Insights section
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class PayrollAIInsight(Base):
-    """
-    AI-generated payroll insights shown on the Reports dashboard header.
-    e.g. "Unusual Overtime Pattern" (HIGH), "Attrition Risk Alert" (MEDIUM), "Salary Benchmarking" (LOW).
-    """
+
 
     __tablename__ = "payroll_ai_insight"
 
@@ -313,8 +245,8 @@ class PayrollAIInsight(Base):
     severity = Column(Enum(InsightSeverity), nullable=False, default=InsightSeverity.MEDIUM)
 
     department = Column(String(255), nullable=True)
-    metric_value = Column(String(100), nullable=True)   # "300% increase", "5 employees"
-    insight_type = Column(String(100), nullable=True)   # "overtime", "attrition", "benchmarking"
+    metric_value = Column(String(100), nullable=True)   
+    insight_type = Column(String(100), nullable=True)   
 
     is_active = Column(Boolean, nullable=False, default=True)
     is_dismissed = Column(Boolean, nullable=False, default=False)
@@ -334,16 +266,7 @@ class PayrollAIInsight(Base):
         return f"<PayrollAIInsight id={self.id} severity={self.severity} title={self.title!r}>"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollReportConfig  — Configuration tab (singleton)
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PayrollReportConfig(Base):
-    """
-    Org-wide report settings shown in Configuration tab → Report Configuration section:
-    Default Report Format | Retention Period | Auto-generate scheduled | Email notifications
-    """
 
     __tablename__ = "payroll_report_config"
 
@@ -362,17 +285,9 @@ class PayrollReportConfig(Base):
         return f"<PayrollReportConfig default_format={self.default_format}>"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollComplianceReport  — Compliance tab
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class PayrollComplianceReport(Base):
-    """
-    Statutory compliance reports shown in the Compliance tab:
-    Form 24Q | ECR | ESI Monthly Return | PT Challan | Form 16 | Salary Certificate | PF Annual Return
-    Columns: Report Name | Type | Frequency | Due Date | Status | Period | Auto | Actions
-    """
+
 
     __tablename__ = "payroll_compliance_report"
 
@@ -381,17 +296,13 @@ class PayrollComplianceReport(Base):
     report_name = Column(String(255), nullable=False, index=True)
     compliance_type = Column(Enum(ComplianceType), nullable=False)
     frequency = Column(Enum(ReportFrequency), nullable=False)
-
-    period_label = Column(String(100), nullable=True)   # "2023-24", "March 2024"
+    period_label = Column(String(100), nullable=True)   
     period_month = Column(Integer, nullable=True)
     period_year = Column(Integer, nullable=True)
-
     due_date = Column(DateTime, nullable=True)
     is_overdue = Column(Boolean, nullable=False, default=False)
-
     status = Column(Enum(ReportStatus), nullable=False, default=ReportStatus.PENDING)
     auto_generate = Column(Boolean, nullable=False, default=True)
-
     file_path = Column(String(500), nullable=True)
     generated_at = Column(DateTime, nullable=True)
     submitted_at = Column(DateTime, nullable=True)
@@ -412,18 +323,9 @@ class PayrollComplianceReport(Base):
         )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollAnalyticsDashboard  — Analytics tab cards
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class PayrollAnalyticsDashboard(Base):
-    """
-    Dashboard cards shown in the Payroll Analytics Dashboards (Analytics tab):
-    Total Payroll Cost Visualization | Average Salary by Dept/Grade |
-    Salary Distribution Analysis | Statutory Contribution Trends |
-    Payroll Cost Forecasting | Budget vs Actual | Attrition Impact
-    """
+
 
     __tablename__ = "payroll_analytics_dashboard"
 

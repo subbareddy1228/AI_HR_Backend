@@ -1,22 +1,3 @@
-"""
-services/Payroll/payroll_reports_service.py
---------------------------------------------
-Business-logic layer for Payroll Reports & Analytics.
-Follows conventions from services/Payroll/payroll_service.py,
-statutory_service.py, salary_service.py etc.
-
-Service classes:
-  - PayrollReportKPIService         : Dashboard KPI cards
-  - PayrollAIInsightService         : AI Insights CRUD + dismiss + seed
-  - StandardReportService           : Static standard report catalogue
-  - PayrollComplianceService        : Compliance report CRUD + overdue detection
-  - PayrollAnalyticsDashboardService: Analytics cards CRUD + seed
-  - PayrollGeneratedReportService   : Generated report file history
-  - PayrollReportScheduleService    : Schedule CRUD + toggle
-  - PayrollReportConfigService      : Org-wide config upsert + export + reset
-  - PayrollCustomReportService      : Report Builder CRUD + CSV export runner
-  - PayrollDataReportService        : Live data queries (dept, PF, TDS, etc.)
-"""
 
 from __future__ import annotations
 
@@ -87,10 +68,6 @@ from schema.Payroll.payroll_reports import (
 
 logger = logging.getLogger(__name__)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Seed data constants
-# ─────────────────────────────────────────────────────────────────────────────
 
 STANDARD_REPORTS: List[Dict] = [
     {"report_name": "Monthly Payroll Register",                  "category": ReportCategory.SALARY,        "report_type": "Summary",   "frequency": ReportFrequency.MONTHLY,   "department": "All",     "description": "Comprehensive monthly payroll register with all earnings and deductions"},
@@ -168,11 +145,6 @@ def _size_display(size_bytes: Optional[int]) -> Optional[str]:
     return f"{size_bytes} B"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollReportKPIService
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PayrollReportKPIService:
 
     @staticmethod
@@ -228,11 +200,6 @@ class PayrollReportKPIService:
         )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollAIInsightService
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PayrollAIInsightService:
 
     @staticmethod
@@ -282,11 +249,6 @@ class PayrollAIInsightService:
         return obj
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# StandardReportService
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class StandardReportService:
 
     @staticmethod
@@ -319,11 +281,6 @@ class StandardReportService:
                 )
             )
         return result
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollComplianceService
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class PayrollComplianceService:
@@ -392,11 +349,6 @@ class PayrollComplianceService:
         db.commit()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollAnalyticsDashboardService
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PayrollAnalyticsDashboardService:
 
     @staticmethod
@@ -456,11 +408,6 @@ class PayrollAnalyticsDashboardService:
         db.commit()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollGeneratedReportService
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PayrollGeneratedReportService:
 
     @staticmethod
@@ -504,10 +451,6 @@ class PayrollGeneratedReportService:
         db.delete(obj)
         db.commit()
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollReportScheduleService
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class PayrollReportScheduleService:
@@ -571,11 +514,6 @@ class PayrollReportScheduleService:
         db.commit()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollReportConfigService
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class PayrollReportConfigService:
 
     @staticmethod
@@ -617,11 +555,6 @@ class PayrollReportConfigService:
     @staticmethod
     def reset_defaults(db: Session, updated_by: Optional[int] = None) -> PayrollReportConfig:
         return PayrollReportConfigService.upsert(db, ReportConfigUpsert(updated_by=updated_by))
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollCustomReportService
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class PayrollCustomReportService:
@@ -755,11 +688,6 @@ class PayrollCustomReportService:
         for row in rows:
             writer.writerow([KEY_MAP.get(k, lambda _: "")(row) for k in col_keys])
         return output.getvalue()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PayrollDataReportService  — all live data sub-reports
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class PayrollDataReportService:

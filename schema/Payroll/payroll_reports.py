@@ -1,9 +1,3 @@
-"""
-schema/Payroll/payroll_reports.py
------------------------------------
-Pydantic v2 schemas for the Payroll Reports & Analytics module.
-Follows naming and style from schema/Payroll/payroll_run.py, salary_structure.py etc.
-"""
 
 from __future__ import annotations
 
@@ -26,25 +20,16 @@ from model.Payroll.payroll_reports import (
 )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Dashboard KPI cards
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class PayrollReportKPIResponse(BaseModel):
     total_payroll_cost: Decimal
-    payroll_cost_change_pct: float          # +2.3% from last month
+    payroll_cost_change_pct: float          
     statutory_deductions: Decimal
-    statutory_deductions_pct: float         # 0.0% of total
+    statutory_deductions_pct: float         
     average_salary: Decimal
-    average_salary_yoy_pct: float           # +5.2% year-on-year
-    compliance_status_pct: float            # 100.0
-    compliance_label: str                   # "All compliant"
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# AI Insights
-# ─────────────────────────────────────────────────────────────────────────────
+    average_salary_yoy_pct: float          
+    compliance_status_pct: float           
+    compliance_label: str                  
 
 
 class AIInsightCreate(BaseModel):
@@ -79,10 +64,6 @@ class AIInsightResponse(BaseModel):
     created_at: datetime
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Standard Reports
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class StandardReportItem(BaseModel):
     report_name: str
@@ -99,10 +80,6 @@ class StandardReportsResponse(BaseModel):
     total: int
     reports: List[StandardReportItem]
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Compliance Reports
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class ComplianceReportCreate(BaseModel):
@@ -148,11 +125,6 @@ class ComplianceReportResponse(BaseModel):
     updated_at: Optional[datetime]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Analytics Dashboard Cards
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 class AnalyticsDashboardCreate(BaseModel):
     title: str = Field(..., max_length=255)
     description: Optional[str] = None
@@ -185,7 +157,7 @@ class AnalyticsDashboardResponse(BaseModel):
     description: Optional[str]
     chart_type: ChartType
     frequency: ReportFrequency
-    metrics: Optional[str]          # raw JSON string
+    metrics: Optional[str]          
     access_level: Optional[str]
     sort_order: int
     is_active: bool
@@ -195,10 +167,6 @@ class AnalyticsDashboardResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Generated Reports
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class GeneratedReportCreate(BaseModel):
@@ -229,18 +197,13 @@ class GeneratedReportResponse(BaseModel):
     format: ReportFormat
     file_path: Optional[str]
     file_size_bytes: Optional[int]
-    file_size_display: Optional[str]    # computed: "2.4 MB"
+    file_size_display: Optional[str]    
     download_count: int
     generated_by_label: Optional[str]
     generated_by: Optional[int]
     generated_at: datetime
     expires_at: Optional[datetime]
     created_at: datetime
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Scheduled Reports
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class ReportScheduleCreate(BaseModel):
@@ -274,8 +237,8 @@ class ReportScheduleResponse(BaseModel):
     day_of_month: Optional[int]
     day_of_week: Optional[int]
     time_of_day: Optional[str]
-    recipients: str          # JSON string
-    export_format: str       # JSON string
+    recipients: str          
+    export_format: str      
     is_active: bool
     next_run_at: Optional[datetime]
     last_run_at: Optional[datetime]
@@ -283,10 +246,6 @@ class ReportScheduleResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Report Configuration
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class ReportConfigUpsert(BaseModel):
@@ -308,12 +267,6 @@ class ReportConfigResponse(BaseModel):
     updated_by: Optional[int]
     created_at: datetime
     updated_at: Optional[datetime]
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Custom Report Builder
-# ─────────────────────────────────────────────────────────────────────────────
-
 
 class CustomReportColumnIn(BaseModel):
     column_key: str = Field(..., max_length=100)
@@ -338,15 +291,12 @@ class CustomReportColumnResponse(BaseModel):
 
 
 class CustomReportCreate(BaseModel):
-    """Full payload from the 4-step Report Builder wizard (Create Report button)."""
-    # Step 1
+  
     report_name: str = Field(..., max_length=255)
     description: Optional[str] = None
     category: ReportCategory = ReportCategory.SALARY
     data_source: DataSource = DataSource.PAYROLL_DATA
-    # Step 2
     columns: List[CustomReportColumnIn] = Field(default_factory=list)
-    # Step 3
     department_filter: Optional[List[str]] = None
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
@@ -354,7 +304,6 @@ class CustomReportCreate(BaseModel):
     max_salary: Optional[Decimal] = Field(None, ge=0)
     sort_column: Optional[str] = None
     sort_direction: Optional[str] = Field(None, pattern="^(asc|desc)$")
-    # Step 4
     export_pdf: bool = True
     export_excel: bool = True
     export_csv: bool = False
@@ -390,7 +339,7 @@ class CustomReportResponse(BaseModel):
     description: Optional[str]
     category: ReportCategory
     data_source: DataSource
-    department_filter: Optional[str]   # JSON string
+    department_filter: Optional[str]  
     date_from: Optional[datetime]
     date_to: Optional[datetime]
     min_salary: Optional[Decimal]
@@ -407,11 +356,6 @@ class CustomReportResponse(BaseModel):
     columns: Optional[List[CustomReportColumnResponse]] = None
     created_at: datetime
     updated_at: Optional[datetime]
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Live data sub-report response schemas
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class MonthlyPayrollSummaryItem(BaseModel):
@@ -542,11 +486,6 @@ class HeadcountTrendItem(BaseModel):
     headcount: int
     total_payroll_cost: Decimal
     avg_cost_per_head: Decimal
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Misc request/response helpers
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class ExportDataRequest(BaseModel):
