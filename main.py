@@ -16,6 +16,11 @@ import model.Employee_Management.employee_master
 import model.Employee_Management.employee_document
 import model.Productivity
 from sqladmin import Admin, ModelView
+import model.Forms_Workflows.workflow_engine
+import model.Forms_Workflows.request
+import model.Forms_Workflows.custom_form
+import model.Forms_Workflows.survey
+import model.Forms_Workflows.approval
 # CREATE FASTAPI APP  (THIS MUST COME FIRST)
 
 app = FastAPI(title="AI Recruitment HR Platform")
