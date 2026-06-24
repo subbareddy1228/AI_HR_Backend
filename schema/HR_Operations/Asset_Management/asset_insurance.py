@@ -1,4 +1,6 @@
 
+# app/schemas/asset_insurance.py
+
 from pydantic import BaseModel
 from datetime import date
 

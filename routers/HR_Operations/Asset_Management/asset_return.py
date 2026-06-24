@@ -1,3 +1,5 @@
+# app/api/v1/asset_return.py
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -14,6 +16,7 @@ from model.HR_Operations.Asset_Management.asset_return import AssetReturn
 router = APIRouter(prefix="/asset-returns", tags=["Asset Returns"])
 
 
+# ✅ CREATE Return
 @router.post("/", response_model=AssetReturnResponse)
 def create_return(
     payload: AssetReturnCreate,
@@ -21,6 +24,8 @@ def create_return(
 ):
     return process_return(db, payload)
 
+
+# ✅ LIST ALL Returns
 @router.get("/", response_model=List[AssetReturnResponse])
 def list_returns(db: Session = Depends(get_db)):
     returns = (
@@ -30,6 +35,8 @@ def list_returns(db: Session = Depends(get_db)):
     )
     return returns
 
+
+# ✅ GET Return By ID
 @router.get("/{return_id}", response_model=AssetReturnResponse)
 def get_return(return_id: UUID, db: Session = Depends(get_db)):
     asset_return = (
