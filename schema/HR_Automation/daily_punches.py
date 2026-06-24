@@ -12,11 +12,11 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 from model.HR_Automation.daily_punches import (
-    PunchSourceEnum, PunchDirectionEnum,
-    PunchStatusEnum, AttendanceStatusEnum,
+    PunchSourceEnum,
+    PunchStatusEnum,
 )
-
-
+from model.HR_Automation.attendance_capture import AttendanceStatusEnum
+from model.HR_Automation.daily_attendance import PunchDirectionEnum
 # ─────────────────────────────────────────────────────────
 # INDIVIDUAL PUNCH
 # ─────────────────────────────────────────────────────────

@@ -15,7 +15,20 @@ import model.Employee_Management.employee_lifecycle
 import model.Employee_Management.employee_master
 import model.Employee_Management.employee_document
 import model.Productivity
+import model.HR_Automation.attendance_capture 
+import model.HR_Automation.attendance_reports
+import model.HR_Automation.daily_attendance
+import model.HR_Automation.manual_attendance
+import model.HR_Automation.monthly_attendance
+import model.HR_Automation.leave_correction
+import model.HR_Automation.leave_management
+import model.HR_Automation.regularization
+import model.HR_Automation.work_hour_rule
+import model.HR_Automation.holiday_calendar
+import model.HR_Automation.daily_punches
+import model.HR_Automation.shift_management
 from sqladmin import Admin, ModelView
+
 # CREATE FASTAPI APP  (THIS MUST COME FIRST)
 
 app = FastAPI(title="AI Recruitment HR Platform")
@@ -154,6 +167,7 @@ app.add_middleware(
 def on_startup():
     try:
         # Try to create tables
+        
         SQLModel.metadata.create_all(bind=engine)
         Base.metadata.create_all(bind=engine)
         print(" Database tables initialized successfully")

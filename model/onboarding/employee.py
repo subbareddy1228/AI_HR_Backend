@@ -37,6 +37,15 @@ class Employee(Base):
     holiday_swap_requests        = relationship("HolidaySwapRequest",        back_populates="employee")
     holiday_carry_forwards       = relationship("HolidayCarryForward",       back_populates="employee")
 
+
+# Payroll relationships
+    reimbursement_claims    = relationship("ReimbursementClaim",    back_populates="employee")
+    reimbursement_balances  = relationship("ReimbursementBalance",  back_populates="employee")
+    loan_advances           = relationship("LoanAdvance",           back_populates="employee")
+    final_settlements       = relationship("FinalSettlement",       back_populates="employee")
+    payment_transactions    = relationship("PaymentTransaction",    back_populates="employee")
+
+    
     onboarding_id: Mapped[int | None] = mapped_column(
         ForeignKey("onboarding_forms.id")
     )

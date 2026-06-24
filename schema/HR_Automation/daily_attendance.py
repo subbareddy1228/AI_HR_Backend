@@ -12,11 +12,10 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 from model.HR_Automation.daily_attendance import (
-    AttendanceStatusEnum, PunchTypeEnum,
-    PunchDirectionEnum, ShiftTypeEnum,
+    PunchDirectionEnum, 
 )
-
-
+from model.HR_Automation.attendance_capture import PunchTypeEnum,AttendanceStatusEnum
+from model.HR_Automation.shift_management import ShiftTypeEnum
 # ─────────────────────────────────────────────────────────
 # TIMELINE  (the 3-bar shift timeline shown on each card)
 # ─────────────────────────────────────────────────────────
@@ -140,7 +139,7 @@ class AddAttendancePunchIn(BaseModel):
     punch_time:   str        = Field(..., pattern=r"^\d{2}:\d{2}:\d{2}$",
                                      description="HH:MM:SS from the three-field input")
     direction:    PunchDirectionEnum = PunchDirectionEnum.IN
-    punch_type:   PunchTypeEnum      = PunchTypeEnum.manual
+    punch_type:   PunchTypeEnum      = PunchTypeEnum.check_in
     remarks:      str                = ""
 
     @field_validator("punch_time")

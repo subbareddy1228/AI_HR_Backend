@@ -9,7 +9,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-
+from model.HR_Automation.leave_correction import ImportStatusEnum
 
 # ─────────────────────────────────────────────────────────
 # PERIOD HELPER

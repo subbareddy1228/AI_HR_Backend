@@ -18,9 +18,9 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
-
+from model.HR_Automation.attendance_capture import PunchTypeEnum
 from core.database import Base
-
+from model.HR_Automation.attendance_reports import ReportFormatEnum
 
 # ─────────────────────────────────────────────────────────
 # ENUMS — from component's requestType options + status values
@@ -41,9 +41,9 @@ class RequestStatusEnum(str, enum.Enum):
     auto_rejected = "auto-rejected"
 
 
-class PunchTypeEnum(str, enum.Enum):
-    IN  = "IN"
-    OUT = "OUT"
+# class PunchTypeEnum(str, enum.Enum):
+#     IN  = "IN"
+#     OUT = "OUT"
 
 
 class DutyTypeEnum(str, enum.Enum):
@@ -61,10 +61,10 @@ class IssueTypeEnum(str, enum.Enum):
     other   = "other"
 
 
-class ReportFormatEnum(str, enum.Enum):
-    pdf   = "pdf"
-    excel = "excel"
-    csv   = "csv"
+# class ReportFormatEnum(str, enum.Enum):
+#     pdf   = "pdf"
+#     excel = "excel"
+#     csv   = "csv"
 
 
 # ─────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ class RegularizationRequest(Base):
 
     id               = Column(Integer, primary_key=True, index=True)
     employee_id      = Column(
-        String(20), ForeignKey("employees.id", ondelete="CASCADE"),
+        Integer, ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
 
@@ -125,9 +125,9 @@ class RegularizationRequest(Base):
 
     # Decision
     approved_at      = Column(DateTime(timezone=True), nullable=True)
-    approved_by      = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    approved_by      = Column(Integer, nullable=True)
     rejected_at      = Column(DateTime(timezone=True), nullable=True)
-    rejected_by      = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    rejected_by      = Column(Integer, nullable=True)
     rejection_reason = Column(Text, nullable=True)
     is_auto_rejected = Column(Boolean, default=False)
 
@@ -136,7 +136,7 @@ class RegularizationRequest(Base):
     submitted_by     = Column(String(100), default="")
     updated_at       = Column(DateTime(timezone=True), server_default=func.now(),
                                onupdate=func.now())
-    created_by       = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    created_by       = Column(Integer, nullable=True)
 
     employee         = relationship("Employee", back_populates="regularization_requests")
 
@@ -170,7 +170,7 @@ class AutoRejectRule(Base):
     enabled      = Column(Boolean, default=True)
     updated_at   = Column(DateTime(timezone=True), server_default=func.now(),
                            onupdate=func.now())
-    updated_by   = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    updated_by   = Column(Integer, nullable=True)
 
     def __repr__(self):
         return f"<AutoRejectRule {self.request_type} {self.days}d [{self.enabled}]>"
@@ -196,7 +196,7 @@ class BulkRegularizationProcess(Base):
     processed_count = Column(Integer, default=0)
     status          = Column(String(20), default="completed")
     processed_at    = Column(DateTime(timezone=True), server_default=func.now())
-    processed_by    = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    processed_by    = Column(Integer, nullable=True)
     processed_by_name= Column(String(100), default="HR Admin")
 
     __table_args__ = (
@@ -231,7 +231,7 @@ class RegularizationReport(Base):
     total_records = Column(Integer, default=0)
     summary       = Column(JSONB, default={})
     generated_at  = Column(DateTime(timezone=True), server_default=func.now())
-    generated_by  = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    generated_by  = Column(Integer, nullable=True)
     generated_by_name = Column(String(100), default="HR Admin")
 
     __table_args__ = (

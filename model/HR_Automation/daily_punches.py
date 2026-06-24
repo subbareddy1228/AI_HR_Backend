@@ -13,7 +13,8 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
-
+from model.HR_Automation.attendance_capture import AttendanceStatusEnum
+from model.HR_Automation.daily_attendance import PunchDirectionEnum
 from core.database import Base
 
 
@@ -36,9 +37,9 @@ class PunchSourceEnum(str, enum.Enum):
     api             = "api"              # API punch
 
 
-class PunchDirectionEnum(str, enum.Enum):
-    IN  = "IN"
-    OUT = "OUT"
+# class PunchDirectionEnum(str, enum.Enum):
+#     IN  = "IN"
+#     OUT = "OUT"
 
 
 class PunchStatusEnum(str, enum.Enum):
@@ -46,14 +47,14 @@ class PunchStatusEnum(str, enum.Enum):
     pending   = "pending"     # XX - Pending   (red/orange)
 
 
-class AttendanceStatusEnum(str, enum.Enum):
-    P  = "P"   # Present
-    A  = "A"   # Absent
-    L  = "L"   # Late
-    HD = "HD"  # Half Day
-    WO = "WO"  # Week Off
-    H  = "H"   # Holiday
-    OD = "OD"  # On Duty
+# class AttendanceStatusEnum(str, enum.Enum):
+#     P  = "P"   # Present
+#     A  = "A"   # Absent
+#     L  = "L"   # Late
+#     HD = "HD"  # Half Day
+#     WO = "WO"  # Week Off
+#     H  = "H"   # Holiday
+#     OD = "OD"  # On Duty
 
 
 # ─────────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ class EmployeePunch(Base):
     __tablename__ = "employee_punches"
 
     id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    employee_id     = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
+    employee_id     = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
 
     # Date & time
     punch_date      = Column(Date, nullable=False, index=True)
@@ -90,7 +91,7 @@ class EmployeePunch(Base):
     # HR override fields (Add Punch modal)
     remarks         = Column(Text, default="")
     is_manual       = Column(Boolean, default=False)           # Added manually by HR
-    added_by        = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    added_by        = Column(Integer, nullable=True)
 
     # Excel import reference
     import_batch_id = Column(UUID(as_uuid=True), nullable=True, index=True)
@@ -121,7 +122,7 @@ class DailyPunchSummary(Base):
     __tablename__ = "daily_punch_summaries"
 
     id                  = Column(Integer, primary_key=True, index=True)
-    employee_id         = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
+    employee_id         = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
     punch_date          = Column(Date, nullable=False, index=True)
 
     # Computed from raw punches
@@ -130,7 +131,7 @@ class DailyPunchSummary(Base):
     duration_minutes    = Column(Integer, default=0)                        # Duration column
 
     # Attendance badge (P / A / L / HD / WO / H / OD)
-    attendance_status   = Column(SAEnum(AttendanceStatusEnum), default=AttendanceStatusEnum.A)
+    attendance_status   = Column(SAEnum(AttendanceStatusEnum), default=AttendanceStatusEnum.absent)
 
     # Org filters (for the 4 dropdown filters)
     business_unit       = Column(String(100), default="Default Business Units")
@@ -174,7 +175,7 @@ class PunchImportBatch(Base):
 
     id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     filename        = Column(String(255), nullable=False)
-    uploaded_by     = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    uploaded_by     = Column(Integer, nullable=True)
     total_rows      = Column(Integer, default=0)
     success_rows    = Column(Integer, default=0)
     failed_rows     = Column(Integer, default=0)

@@ -72,9 +72,9 @@ def export_config(db: Session) -> dict:
 def get_all_components(
     db: Session,
     component_type: Optional[str] = None,
-    is_active: Optional[bool] = True,
+    is_active: Optional[bool]     = True,
 ) -> List[SalaryComponentConfig]:
-    q = db.query(SalaryComponentConfig)
+    q = db.query(SalaryComponent)
     if component_type:
         q = q.filter(SalaryComponentConfig.component_type == component_type.lower())
     if is_active is not None:
@@ -86,9 +86,7 @@ def get_all_components(
     ).all()
 
 
-def get_component_by_id(
-    db: Session, component_id: int
-) -> Optional[SalaryComponentConfig]:
+def get_component_by_id(db: Session, component_id: int) -> Optional[SalaryComponentConfig]:
     return (
         db.query(SalaryComponentConfig)
         .filter(SalaryComponentConfig.id == component_id)
@@ -96,10 +94,8 @@ def get_component_by_id(
     )
 
 
-def create_component(
-    db: Session, payload: SalaryComponentCreate
-) -> SalaryComponentConfig:
-    component = SalaryComponentConfig(**payload.model_dump())
+def create_component(db: Session, payload: SalaryComponentCreate) -> SalaryComponentConfig:
+    component = SalaryComponent(**payload.model_dump())
     db.add(component)
     db.commit()
     db.refresh(component)
