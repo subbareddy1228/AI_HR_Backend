@@ -73,29 +73,29 @@ def get_all_components(
     db: Session,
     component_type: Optional[str] = None,
     is_active: Optional[bool]     = True,
-) -> List[SalaryComponent]:
-    q = db.query(SalaryComponent)
+) -> List[SalaryComponentConfig]:
+    q = db.query(SalaryComponentConfig)
     if component_type:
-        q = q.filter(SalaryComponent.component_type == component_type.lower())
+        q = q.filter(SalaryComponentConfig.component_type == component_type.lower())
     if is_active is not None:
-        q = q.filter(SalaryComponent.is_active == is_active)
+        q = q.filter(SalaryComponentConfig.is_active == is_active)
     return q.order_by(
-        SalaryComponent.component_type.asc(),
-        SalaryComponent.display_order.asc(),
-        SalaryComponent.id.asc(),
+        SalaryComponentConfig.component_type.asc(),
+        SalaryComponentConfig.display_order.asc(),
+        SalaryComponentConfig.id.asc(),
     ).all()
 
 
-def get_component_by_id(db: Session, component_id: int) -> Optional[SalaryComponent]:
+def get_component_by_id(db: Session, component_id: int) -> Optional[SalaryComponentConfig]:
     return (
-        db.query(SalaryComponent)
-        .filter(SalaryComponent.id == component_id)
+        db.query(SalaryComponentConfig)
+        .filter(SalaryComponentConfig.id == component_id)
         .first()
     )
 
 
-def create_component(db: Session, payload: SalaryComponentCreate) -> SalaryComponent:
-    component = SalaryComponent(**payload.model_dump())
+def create_component(db: Session, payload: SalaryComponentCreate) -> SalaryComponentConfig:
+    component = SalaryComponentConfig(**payload.model_dump())
     db.add(component)
     db.commit()
     db.refresh(component)
@@ -106,7 +106,7 @@ def update_component(
     db: Session,
     component_id: int,
     payload: SalaryComponentUpdate,
-) -> Optional[SalaryComponent]:
+) -> Optional[SalaryComponentConfig]:
     component = get_component_by_id(db, component_id)
     if not component:
         return None
@@ -126,12 +126,12 @@ def delete_component(db: Session, component_id: int) -> bool:
     return True
 
 
-def seed_default_components(db: Session) -> List[SalaryComponent]:
+def seed_default_components(db: Session) -> List[SalaryComponentConfig]:
     """
     Seed the default salary components visible in the UI.
     Call this once during initial setup / migration.
     """
-    existing = db.query(SalaryComponent).count()
+    existing = db.query(SalaryComponentConfig).count()
     if existing > 0:
         return get_all_components(db, is_active=None)
 
@@ -154,7 +154,7 @@ def seed_default_components(db: Session) -> List[SalaryComponent]:
 
     components = []
     for d in defaults:
-        c = SalaryComponent(**d)
+        c = SalaryComponentConfig(**d)
         db.add(c)
         components.append(c)
 
