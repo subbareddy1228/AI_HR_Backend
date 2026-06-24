@@ -164,7 +164,7 @@ class DeviceSyncLog(Base):
     error_message  = Column(Text, default="")
     started_at     = Column(DateTime(timezone=True), server_default=func.now())
     completed_at   = Column(DateTime(timezone=True), nullable=True)
-    initiated_by   = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    initiated_by   = Column(Integer, nullable=True)
 
     device = relationship("BiometricDevice", back_populates="sync_logs")
 
@@ -201,7 +201,7 @@ class AttendancePunch(Base):
     __tablename__ = "attendance_punches"
 
     id                  = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    employee_id         = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
+    employee_id         = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
     punch_time          = Column(DateTime(timezone=True), nullable=False, index=True)
     punch_type          = Column(SAEnum(PunchTypeEnum), nullable=False)
     capture_method      = Column(SAEnum(CaptureMethodEnum), nullable=False)
@@ -223,7 +223,7 @@ class AttendancePunch(Base):
     is_valid            = Column(Boolean, default=True)
     notes               = Column(Text, default="")
     created_at          = Column(DateTime(timezone=True), server_default=func.now())
-    created_by          = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    created_by          = Column(Integer, nullable=True)
 
     employee         = relationship("Employee", back_populates="punches")
     biometric_device = relationship("BiometricDevice", back_populates="punches")
@@ -232,9 +232,9 @@ class AttendancePunch(Base):
     __table_args__ = (
         Index("ix_punch_employee_time", "employee_id", "punch_time"),
         Index("ix_punch_method", "capture_method"),
-        Index("ix_punch_date", func.date("punch_time")),
+        
     )
-
+# Index("ix_punch_date", func.date("punch_time")),
 
 # ─────────────────────────────────────────────────────────
 # ATTENDANCE RECORD
@@ -244,7 +244,7 @@ class AttendanceRecord(Base):
     __tablename__ = "attendance_records"
 
     id                      = Column(Integer, primary_key=True, index=True)
-    employee_id             = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
+    employee_id             = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
     date                    = Column(Date, nullable=False, index=True)
     status                  = Column(SAEnum(AttendanceStatusEnum), default=AttendanceStatusEnum.absent)
 
@@ -258,7 +258,7 @@ class AttendanceRecord(Base):
     late_minutes            = Column(Integer, default=0)
     is_early_checkout       = Column(Boolean, default=False)
     is_regularized          = Column(Boolean, default=False)
-    regularized_by          = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    regularized_by          = Column(Integer, nullable=True)
     regularization_reason   = Column(Text, default="")
 
     punch_count             = Column(Integer, default=0)
@@ -297,7 +297,7 @@ class OfflinePunchQueue(Base):
     __tablename__ = "offline_punch_queue"
 
     id             = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    employee_id    = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
+    employee_id    = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
     punch_time     = Column(DateTime(timezone=True), nullable=False)
     punch_type     = Column(SAEnum(PunchTypeEnum), nullable=False)
     capture_method = Column(SAEnum(CaptureMethodEnum), nullable=False)
@@ -359,7 +359,7 @@ class AttendanceSettings(Base):
     auto_checkout_enabled        = Column(Boolean, default=False)
     checkin_reminder_enabled     = Column(Boolean, default=False)
     updated_at                       = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    updated_by                       = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    updated_by                       = Column(Integer, nullable=True)
 
 
 # ─────────────────────────────────────────────────────────
@@ -370,7 +370,7 @@ class FieldEmployee(Base):
     __tablename__ = "field_employees"
 
     id            = Column(Integer, primary_key=True, index=True)
-    employee_id   = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
+    employee_id   = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"),
                            nullable=False, unique=True)
     location      = Column(String(200), default="")
     latitude      = Column(Numeric(10, 7), nullable=True)
@@ -394,12 +394,12 @@ class WFHRequest(Base):
     __tablename__ = "wfh_requests"
 
     id            = Column(Integer, primary_key=True, index=True)
-    employee_id   = Column(String(20), ForeignKey("employees.id", ondelete="CASCADE"),
+    employee_id   = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"),
                            nullable=False)
     date          = Column(Date, nullable=False)
     reason        = Column(Text, default="")
     status        = Column(SAEnum(WFHStatusEnum), default=WFHStatusEnum.pending, index=True)
-    approved_by   = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    approved_by   = Column(Integer, nullable=True)
     approved_at   = Column(DateTime(timezone=True), nullable=True)
     created_at    = Column(DateTime(timezone=True), server_default=func.now())
 

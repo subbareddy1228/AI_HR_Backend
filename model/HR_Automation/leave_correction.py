@@ -44,7 +44,7 @@ class LeaveCorrectionRecord(Base):
 
     id               = Column(Integer, primary_key=True, index=True)
     employee_id      = Column(
-        String(20),
+        Integer,
         ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False, index=True,
     )
@@ -71,7 +71,7 @@ class LeaveCorrectionRecord(Base):
 
     # Save state (green circle button)
     is_saved         = Column(Boolean, default=False)
-    saved_by         = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    saved_by         = Column(Integer, nullable=True)
     saved_at         = Column(DateTime(timezone=True), nullable=True)
 
     # Audit
@@ -117,7 +117,7 @@ class LeaveCorrectionImport(Base):
     failed_rows     = Column(Integer, default=0)
     error_log       = Column(JSONB, default=[])     # [{row, employee_id, error}]
     status          = Column(SAEnum(ImportStatusEnum), default=ImportStatusEnum.success)
-    uploaded_by     = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    uploaded_by     = Column(Integer, nullable=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (

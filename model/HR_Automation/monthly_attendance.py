@@ -48,7 +48,7 @@ class MonthlyAttendanceCell(Base):
 
     id              = Column(Integer, primary_key=True, index=True)
     employee_id     = Column(
-        String(20),
+        Integer,
         ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
     )
@@ -93,7 +93,7 @@ class MonthlyAttendanceSummary(Base):
 
     id              = Column(Integer, primary_key=True, index=True)
     employee_id     = Column(
-        String(20),
+        Integer,
         ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
     )

@@ -11,11 +11,11 @@ from uuid import UUID
 from pydantic import BaseModel, Field, model_validator
 
 from model.HR_Automation.regularization import (
-    RequestTypeEnum, RequestStatusEnum, PunchTypeEnum,
-    DutyTypeEnum, IssueTypeEnum, ReportFormatEnum,
+    RequestTypeEnum, RequestStatusEnum,
+    DutyTypeEnum, IssueTypeEnum,
 )
-
-
+from model.HR_Automation.attendance_capture import PunchTypeEnum
+from model.HR_Automation.attendance_reports import ReportFormatEnum
 # ─────────────────────────────────────────────────────────
 # APPROVAL WORKFLOW STEP
 # ─────────────────────────────────────────────────────────

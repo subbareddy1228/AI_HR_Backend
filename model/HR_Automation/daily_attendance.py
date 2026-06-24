@@ -18,31 +18,31 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
-
+from model.HR_Automation.attendance_capture import PunchTypeEnum, AttendanceStatusEnum
 from core.database import Base
-
+from model.HR_Automation.shift_management import ShiftTypeEnum
 
 # ─────────────────────────────────────────────────────────
 # ENUMS
 # ─────────────────────────────────────────────────────────
 
-class AttendanceStatusEnum(str, enum.Enum):
-    Present  = "Present"
-    Absent   = "Absent"
-    Late     = "Late"
-    Half_Day = "Half Day"
-    Week_Off = "Week Off"
-    Holiday  = "Holiday"
-    On_Duty  = "On Duty"
+# class AttendanceStatusEnum(str, enum.Enum):
+#     Present  = "Present"
+#     Absent   = "Absent"
+#     Late     = "Late"
+#     Half_Day = "Half Day"
+#     Week_Off = "Week Off"
+#     Holiday  = "Holiday"
+#     On_Duty  = "On Duty"
 
 
-class PunchTypeEnum(str, enum.Enum):
-    selfie  = "selfie"
-    remote  = "remote"
-    manual  = "manual"
-    qr_scan = "qr_scan"
-    api     = "api"
-    biometric = "biometric"
+# class PunchTypeEnum(str, enum.Enum):
+#     selfie  = "selfie"
+#     remote  = "remote"
+#     manual  = "manual"
+#     qr_scan = "qr_scan"
+#     api     = "api"
+#     biometric = "biometric"
 
 
 class PunchDirectionEnum(str, enum.Enum):
@@ -50,12 +50,12 @@ class PunchDirectionEnum(str, enum.Enum):
     OUT = "OUT"
 
 
-class ShiftTypeEnum(str, enum.Enum):
-    general  = "General"
-    morning  = "Morning"
-    evening  = "Evening"
-    night    = "Night"
-    flexible = "Flexible"
+# class ShiftTypeEnum(str, enum.Enum):
+#     general  = "General"
+#     morning  = "Morning"
+#     evening  = "Evening"
+#     night    = "Night"
+#     flexible = "Flexible"
 
 
 # ─────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ class DailyAttendanceRecord(Base):
 
     id                  = Column(Integer, primary_key=True, index=True)
     employee_id         = Column(
-        String(20),
+        Integer,
         ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
     )
@@ -76,7 +76,7 @@ class DailyAttendanceRecord(Base):
 
     # ── Status & note (left panel of the card) ──
     status              = Column(SAEnum(AttendanceStatusEnum), nullable=False,
-                                 default=AttendanceStatusEnum.Absent)
+                                 default=AttendanceStatusEnum.absent)
     note                = Column(Text, default="")   # e.g. "Present marked as at least one time-punch was found"
 
     # ── Org metadata (shown in card header: location / designation / dept) ──
@@ -145,13 +145,13 @@ class AttendancePunchEntry(Base):
         ForeignKey("daily_attendance_records.id", ondelete="CASCADE"),
         nullable=False,
     )
-    employee_id     = Column(String(20), nullable=False, index=True)
+    employee_id     = Column(Integer, nullable=False, index=True)
     punch_time      = Column(DateTime(timezone=True), nullable=False)
     direction       = Column(SAEnum(PunchDirectionEnum), nullable=False)
-    punch_type      = Column(SAEnum(PunchTypeEnum), default=PunchTypeEnum.manual)
+    punch_type      = Column(SAEnum(PunchTypeEnum), default=PunchTypeEnum.check_in)
     remarks         = Column(Text, default="")
     is_manual       = Column(Boolean, default=False)   # added via modal
-    added_by        = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    added_by        = Column(Integer, nullable=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
 
     daily_record    = relationship("DailyAttendanceRecord", back_populates="punches")
