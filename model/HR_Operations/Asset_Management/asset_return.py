@@ -1,6 +1,6 @@
 # app/models/asset_return.py
 
-from sqlalchemy import Column, String, ForeignKey, Text, DateTime
+from sqlalchemy import Column, String, ForeignKey, Text, DateTime, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
@@ -25,6 +25,9 @@ class AssetReturn(Base):
 
     missing_items = Column(Text)
     damage_details = Column(Text)
+
+    # auto-calculated penalty for missing/damaged items, see asset_return_service
+    penalty_amount = Column(Numeric(12, 2), nullable=False, server_default="0")
 
     returned_at = Column(DateTime, default=datetime.utcnow)
 

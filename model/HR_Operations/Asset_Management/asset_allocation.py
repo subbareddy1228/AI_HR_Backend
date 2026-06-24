@@ -24,7 +24,9 @@ class AssetAllocation(Base):
     allocation_reason = Column(Text, nullable=False)
 
     allocated_at = Column(DateTime, default=datetime.utcnow)
-    status = Column(String, nullable=False, default="Available")
+    # ACTIVE | RETURNED  -- tracks this allocation record's own lifecycle
+    # (separate from Asset.status, which tracks the asset itself)
+    status = Column(String, nullable=False, default="ACTIVE")
 
 
     asset = relationship("Asset")
