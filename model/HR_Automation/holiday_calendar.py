@@ -18,7 +18,8 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
-
+from model.HR_Automation.shift_management import SwapStatusEnum
+from model.HR_Automation.leave_management import ApplicationStatusEnum
 from core.database import Base
 
 
@@ -43,16 +44,16 @@ class CategoryEnum(str, enum.Enum):
     restricted_holiday = "Restricted Holiday"
 
 
-class ApplicationStatusEnum(str, enum.Enum):
-    Pending  = "Pending"
-    Approved = "Approved"
-    Rejected = "Rejected"
+# class ApplicationStatusEnum(str, enum.Enum):
+#     Pending  = "Pending"
+#     Approved = "Approved"
+#     Rejected = "Rejected"
 
 
-class SwapStatusEnum(str, enum.Enum):
-    pending  = "pending"
-    approved = "approved"
-    rejected = "rejected"
+# class SwapStatusEnum(str, enum.Enum):
+#     pending  = "pending"
+#     approved = "approved"
+#     rejected = "rejected"
 
 
 class CarryForwardStatusEnum(str, enum.Enum):
@@ -87,7 +88,7 @@ class Holiday(Base):
 
     # Audit
     created_at            = Column(DateTime(timezone=True), server_default=func.now())
-    created_by            = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    created_by            = Column(Integer, nullable=True)
     updated_at            = Column(DateTime(timezone=True), server_default=func.now(),
                                    onupdate=func.now())
 
@@ -111,7 +112,7 @@ class OptionalHolidayApplication(Base):
     id              = Column(Integer, primary_key=True, index=True)
     holiday_id      = Column(Integer, ForeignKey("holidays.id", ondelete="CASCADE"),
                               nullable=False)
-    employee_id     = Column(String(20),
+    employee_id     = Column(Integer,
                               ForeignKey("employees.id", ondelete="CASCADE"),
                               nullable=False, index=True)
     employee_name   = Column(String(100), default="")   # denormalized for display
@@ -122,7 +123,7 @@ class OptionalHolidayApplication(Base):
     applied_date    = Column(Date, nullable=False)
     reason          = Column(Text, default="")
     status          = Column(SAEnum(ApplicationStatusEnum),
-                              default=ApplicationStatusEnum.Pending, index=True)
+                              default=ApplicationStatusEnum.pending, index=True)
 
     # Approval workflow
     approval_required   = Column(Boolean, default=True)
@@ -170,7 +171,7 @@ class HolidayCalendar(Base):
     is_default      = Column(Boolean, default=False, index=True)
     is_active       = Column(Boolean, default=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
-    created_by      = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    created_by      = Column(Integer, nullable=True)
     updated_at      = Column(DateTime(timezone=True), server_default=func.now(),
                               onupdate=func.now())
 
@@ -186,7 +187,7 @@ class HolidaySwapRequest(Base):
     __tablename__ = "holiday_swap_requests"
 
     id              = Column(Integer, primary_key=True, index=True)
-    employee_id     = Column(String(20),
+    employee_id     = Column(Integer,
                               ForeignKey("employees.id", ondelete="CASCADE"),
                               nullable=False, index=True)
     holiday_date    = Column(Date, nullable=False)   # date they want to work
@@ -214,7 +215,7 @@ class HolidaySwapRequest(Base):
     employee        = relationship("Employee", back_populates="holiday_swap_requests")
 
     __table_args__ = (
-        Index("ix_swap_status",       "status"),
+        Index("ix_hc_swap_status",       "status"),
         Index("ix_swap_holiday_date", "holiday_date"),
     )
 
@@ -233,7 +234,7 @@ class HolidayCarryForward(Base):
     __tablename__ = "holiday_carry_forwards"
 
     id              = Column(Integer, primary_key=True, index=True)
-    employee_id     = Column(String(20),
+    employee_id     = Column(Integer,
                               ForeignKey("employees.id", ondelete="CASCADE"),
                               nullable=False, index=True)
     from_year       = Column(Integer, nullable=False)
@@ -243,7 +244,7 @@ class HolidayCarryForward(Base):
     status          = Column(SAEnum(CarryForwardStatusEnum),
                               default=CarryForwardStatusEnum.processed)
     processed_at    = Column(DateTime(timezone=True), server_default=func.now())
-    processed_by    = Column(Integer, ForeignKey("user.id", ondelete="SET NULL"), nullable=True)
+    processed_by    = Column(Integer, nullable=True)
     processed_by_name = Column(String(100), default="HR Admin")
 
     employee        = relationship("Employee", back_populates="holiday_carry_forwards")

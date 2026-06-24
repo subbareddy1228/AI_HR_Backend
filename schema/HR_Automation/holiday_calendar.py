@@ -9,10 +9,10 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, model_validator
 
 from model.HR_Automation.holiday_calendar import (
-    HolidayTypeEnum, ApplicationStatusEnum, SwapStatusEnum, CarryForwardStatusEnum,
+    HolidayTypeEnum, CarryForwardStatusEnum,
 )
-
-
+from model.HR_Automation.leave_management import ApplicationStatusEnum
+from model.HR_Automation.shift_management import SwapStatusEnum
 # ══════════════════════════════════════════════════════════
 # TAB 1 — HOLIDAY MASTER
 # ══════════════════════════════════════════════════════════
