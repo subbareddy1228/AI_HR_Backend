@@ -10,7 +10,7 @@ from schema.Payroll.payroll_processing import (
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Payroll Config  (single-row — get or create on first access)
+# Payroll Config (single-row — get or create on first access)
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _get_or_create_config(db: Session) -> PayrollConfig:
@@ -57,45 +57,49 @@ def unlock_payroll(db: Session) -> tuple:
 
 
 def export_config(db: Session) -> dict:
-    config     = _get_or_create_config(db)
+    config = _get_or_create_config(db)
     components = get_all_components(db, is_active=None)
     return {
-        "config"            : config,
-        "salary_components" : components,
+        "config": config,
+        "salary_components": components,
     }
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Salary Components config
+# Salary Components config
 # ══════════════════════════════════════════════════════════════════════════════
 
 def get_all_components(
     db: Session,
     component_type: Optional[str] = None,
-    is_active: Optional[bool]     = True,
-) -> List[SalaryComponent]:
-    q = db.query(SalaryComponent)
+    is_active: Optional[bool] = True,
+) -> List[SalaryComponentConfig]:
+    q = db.query(SalaryComponentConfig)
     if component_type:
-        q = q.filter(SalaryComponent.component_type == component_type.lower())
+        q = q.filter(SalaryComponentConfig.component_type == component_type.lower())
     if is_active is not None:
-        q = q.filter(SalaryComponent.is_active == is_active)
+        q = q.filter(SalaryComponentConfig.is_active == is_active)
     return q.order_by(
-        SalaryComponent.component_type.asc(),
-        SalaryComponent.display_order.asc(),
-        SalaryComponent.id.asc(),
+        SalaryComponentConfig.component_type.asc(),
+        SalaryComponentConfig.display_order.asc(),
+        SalaryComponentConfig.id.asc(),
     ).all()
 
 
-def get_component_by_id(db: Session, component_id: int) -> Optional[SalaryComponent]:
+def get_component_by_id(
+    db: Session, component_id: int
+) -> Optional[SalaryComponentConfig]:
     return (
-        db.query(SalaryComponent)
-        .filter(SalaryComponent.id == component_id)
+        db.query(SalaryComponentConfig)
+        .filter(SalaryComponentConfig.id == component_id)
         .first()
     )
 
 
-def create_component(db: Session, payload: SalaryComponentCreate) -> SalaryComponent:
-    component = SalaryComponent(**payload.model_dump())
+def create_component(
+    db: Session, payload: SalaryComponentCreate
+) -> SalaryComponentConfig:
+    component = SalaryComponentConfig(**payload.model_dump())
     db.add(component)
     db.commit()
     db.refresh(component)
@@ -106,7 +110,7 @@ def update_component(
     db: Session,
     component_id: int,
     payload: SalaryComponentUpdate,
-) -> Optional[SalaryComponent]:
+) -> Optional[SalaryComponentConfig]:
     component = get_component_by_id(db, component_id)
     if not component:
         return None
@@ -126,35 +130,71 @@ def delete_component(db: Session, component_id: int) -> bool:
     return True
 
 
-def seed_default_components(db: Session) -> List[SalaryComponent]:
+def seed_default_components(db: Session) -> List[SalaryComponentConfig]:
     """
     Seed the default salary components visible in the UI.
     Call this once during initial setup / migration.
     """
-    existing = db.query(SalaryComponent).count()
+    existing = db.query(SalaryComponentConfig).count()
     if existing > 0:
         return get_all_components(db, is_active=None)
 
     defaults = [
         # ── Earnings ──────────────────────────────────────────────────────────
-        dict(component_name="Basic Salary",          component_type="earnings",
-             calculation_type="percentage", value=50.0,   is_taxable=True,  display_order=1),
-        dict(component_name="House Rent Allowance",  component_type="earnings",
-             calculation_type="percentage", value=40.0,   is_taxable=True,  display_order=2),
-        dict(component_name="Conveyance Allowance",  component_type="earnings",
-             calculation_type="fixed",      value=1600.0, is_taxable=False, display_order=3),
-        dict(component_name="Medical Allowance",     component_type="earnings",
-             calculation_type="fixed",      value=1250.0, is_taxable=False, display_order=4),
+        dict(
+            component_name="Basic Salary",
+            component_type="earnings",
+            calculation_type="percentage",
+            value=50.0,
+            is_taxable=True,
+            display_order=1,
+        ),
+        dict(
+            component_name="House Rent Allowance",
+            component_type="earnings",
+            calculation_type="percentage",
+            value=40.0,
+            is_taxable=True,
+            display_order=2,
+        ),
+        dict(
+            component_name="Conveyance Allowance",
+            component_type="earnings",
+            calculation_type="fixed",
+            value=1600.0,
+            is_taxable=False,
+            display_order=3,
+        ),
+        dict(
+            component_name="Medical Allowance",
+            component_type="earnings",
+            calculation_type="fixed",
+            value=1250.0,
+            is_taxable=False,
+            display_order=4,
+        ),
         # ── Deductions ────────────────────────────────────────────────────────
-        dict(component_name="Provident Fund",        component_type="deductions",
-             calculation_type="percentage", value=12.0,   is_taxable=False, display_order=1),
-        dict(component_name="Professional Tax",      component_type="deductions",
-             calculation_type="fixed",      value=200.0,  is_taxable=False, display_order=2),
+        dict(
+            component_name="Provident Fund",
+            component_type="deductions",
+            calculation_type="percentage",
+            value=12.0,
+            is_taxable=False,
+            display_order=1,
+        ),
+        dict(
+            component_name="Professional Tax",
+            component_type="deductions",
+            calculation_type="fixed",
+            value=200.0,
+            is_taxable=False,
+            display_order=2,
+        ),
     ]
 
     components = []
     for d in defaults:
-        c = SalaryComponent(**d)
+        c = SalaryComponentConfig(**d)
         db.add(c)
         components.append(c)
 
