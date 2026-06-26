@@ -27,6 +27,20 @@ import model.HR_Automation.work_hour_rule
 import model.HR_Automation.holiday_calendar
 import model.HR_Automation.daily_punches
 import model.HR_Automation.shift_management
+import model.Payroll.payroll_processing
+import model.Payroll.salary_structure
+import model.Payroll.salary_slip
+import model.Payroll.slip_distribution
+import model.Payroll.loan_advance
+import model.Payroll.reimbursement
+import model.Payroll.bank_transfer
+import model.Payroll.final_settlement
+import model.Payroll.statutory_compliance
+import model.Payroll.payroll_reports
+import model.Payroll.payroll_integration
+import model.Payroll.payroll_run
+
+
 from sqladmin import Admin, ModelView
 
 # CREATE FASTAPI APP  (THIS MUST COME FIRST)

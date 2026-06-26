@@ -74,7 +74,7 @@ def get_all_components(
     component_type: Optional[str] = None,
     is_active: Optional[bool]     = True,
 ) -> List[SalaryComponentConfig]:
-    q = db.query(SalaryComponent)
+    q = db.query(SalaryComponentConfig)
     if component_type:
         q = q.filter(SalaryComponentConfig.component_type == component_type.lower())
     if is_active is not None:
@@ -95,7 +95,7 @@ def get_component_by_id(db: Session, component_id: int) -> Optional[SalaryCompon
 
 
 def create_component(db: Session, payload: SalaryComponentCreate) -> SalaryComponentConfig:
-    component = SalaryComponent(**payload.model_dump())
+    component = SalaryComponentConfig(**payload.model_dump())
     db.add(component)
     db.commit()
     db.refresh(component)
