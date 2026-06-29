@@ -10,7 +10,7 @@ from schema.Payroll.payroll_processing import (
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Payroll Config  (single-row — get or create on first access)
+# Payroll Config (single-row — get or create on first access)
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _get_or_create_config(db: Session) -> PayrollConfig:
@@ -57,16 +57,16 @@ def unlock_payroll(db: Session) -> tuple:
 
 
 def export_config(db: Session) -> dict:
-    config     = _get_or_create_config(db)
+    config = _get_or_create_config(db)
     components = get_all_components(db, is_active=None)
     return {
-        "config"            : config,
-        "salary_components" : components,
+        "config": config,
+        "salary_components": components,
     }
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Salary Components config
+# Salary Components config
 # ══════════════════════════════════════════════════════════════════════════════
 
 def get_all_components(
@@ -137,19 +137,55 @@ def seed_default_components(db: Session) -> List[SalaryComponentConfig]:
 
     defaults = [
         # ── Earnings ──────────────────────────────────────────────────────────
-        dict(component_name="Basic Salary",          component_type="earnings",
-             calculation_type="percentage", value=50.0,   is_taxable=True,  display_order=1),
-        dict(component_name="House Rent Allowance",  component_type="earnings",
-             calculation_type="percentage", value=40.0,   is_taxable=True,  display_order=2),
-        dict(component_name="Conveyance Allowance",  component_type="earnings",
-             calculation_type="fixed",      value=1600.0, is_taxable=False, display_order=3),
-        dict(component_name="Medical Allowance",     component_type="earnings",
-             calculation_type="fixed",      value=1250.0, is_taxable=False, display_order=4),
+        dict(
+            component_name="Basic Salary",
+            component_type="earnings",
+            calculation_type="percentage",
+            value=50.0,
+            is_taxable=True,
+            display_order=1,
+        ),
+        dict(
+            component_name="House Rent Allowance",
+            component_type="earnings",
+            calculation_type="percentage",
+            value=40.0,
+            is_taxable=True,
+            display_order=2,
+        ),
+        dict(
+            component_name="Conveyance Allowance",
+            component_type="earnings",
+            calculation_type="fixed",
+            value=1600.0,
+            is_taxable=False,
+            display_order=3,
+        ),
+        dict(
+            component_name="Medical Allowance",
+            component_type="earnings",
+            calculation_type="fixed",
+            value=1250.0,
+            is_taxable=False,
+            display_order=4,
+        ),
         # ── Deductions ────────────────────────────────────────────────────────
-        dict(component_name="Provident Fund",        component_type="deductions",
-             calculation_type="percentage", value=12.0,   is_taxable=False, display_order=1),
-        dict(component_name="Professional Tax",      component_type="deductions",
-             calculation_type="fixed",      value=200.0,  is_taxable=False, display_order=2),
+        dict(
+            component_name="Provident Fund",
+            component_type="deductions",
+            calculation_type="percentage",
+            value=12.0,
+            is_taxable=False,
+            display_order=1,
+        ),
+        dict(
+            component_name="Professional Tax",
+            component_type="deductions",
+            calculation_type="fixed",
+            value=200.0,
+            is_taxable=False,
+            display_order=2,
+        ),
     ]
 
     components = []

@@ -18,11 +18,13 @@ class AssetMaintenance(Base):
 
     maintenance_type = Column(String, nullable=False)
     maintenance_date = Column(DateTime, nullable=False)
+    next_maintenance_date = Column(DateTime, nullable=True)
 
     cost = Column(Float, nullable=False)
     performed_by = Column(String, nullable=False)
 
     description = Column(Text, nullable=False)
+    warranty_covered = Column(String, nullable=True)   # e.g. "Under Warranty" | "Out of Warranty"
 
     created_at = Column(DateTime, default=datetime.utcnow)
 

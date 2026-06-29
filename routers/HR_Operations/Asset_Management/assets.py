@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, or_
+from typing import Optional
 
 from core.database import get_db
 from model.HR_Operations.Asset_Management.asset import Asset
@@ -33,8 +34,36 @@ def create_asset(payload: AssetCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[AssetResponse])
-def list_assets(db: Session = Depends(get_db)):
-    result = db.execute(select(Asset))
+def list_assets(
+    search: Optional[str] = Query(None, description="Search by asset name, serial number, make, or model"),
+    category: Optional[str] = Query(None),
+    status_filter: Optional[str] = Query(None, alias="status", description="AVAILABLE | ALLOCATED | UNDER_MAINTENANCE | RETIRED"),
+    department: Optional[str] = Query(None),
+    condition: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    query = select(Asset)
+
+    if search:
+        like = f"%{search}%"
+        query = query.where(
+            or_(
+                Asset.asset_name.ilike(like),
+                Asset.serial_number.ilike(like),
+                Asset.make.ilike(like),
+                Asset.model.ilike(like),
+            )
+        )
+    if category:
+        query = query.where(Asset.category == category)
+    if status_filter:
+        query = query.where(Asset.status == status_filter.upper())
+    if department:
+        query = query.where(Asset.department.ilike(f"%{department}%"))
+    if condition:
+        query = query.where(Asset.condition == condition)
+
+    result = db.execute(query.order_by(Asset.id.desc()))
     return result.scalars().all()
 
 

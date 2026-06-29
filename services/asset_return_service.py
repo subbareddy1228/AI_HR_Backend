@@ -1,4 +1,6 @@
 
+# app/services/asset_return_service.py
+
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
@@ -24,8 +26,17 @@ def process_return(db: Session, data):
         raise HTTPException(400, "Asset already returned or invalid state")
 
     asset.status = "AVAILABLE"
+    allocation.status = "RETURNED"
 
-    asset_return = AssetReturn(**data.model_dump())
+    # simple penalty rule: flat charge if items are missing or damage is reported,
+    # proportional to the asset's purchase price so high-value assets cost more to damage
+    penalty_amount = 0
+    if data.missing_items or data.condition_at_return.upper() in ("DAMAGED", "LOST"):
+        penalty_amount = round(float(asset.purchase_price) * 0.10, 2)  # 10% of purchase price
+    elif data.damage_details:
+        penalty_amount = round(float(asset.purchase_price) * 0.05, 2)  # 5% for minor damage
+
+    asset_return = AssetReturn(**data.model_dump(), penalty_amount=penalty_amount)
 
     db.add(asset_return)
     db.commit()
