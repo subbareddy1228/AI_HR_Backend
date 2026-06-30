@@ -1,8 +1,3 @@
-"""
-Assets Router
-Covers: Asset Master tab, Dashboard, Depreciation tab, Reports tab.
-All endpoints are prefixed with /assets.
-"""
 
 from typing import List, Optional
 
@@ -32,23 +27,15 @@ from services.asset_service import (
 router = APIRouter(prefix="/assets", tags=["Asset Management"])
 
 
-# ── Dashboard ─────────────────────────────────────────────────────────────────
-
 @router.get(
     "/dashboard/stats",
     response_model=AssetDashboardStats,
     summary="Get Asset Management dashboard statistics",
 )
 def asset_dashboard_stats(db: Session = Depends(get_db)):
-    """
-    Returns all counters shown on the Asset Management Dashboard:
-    total, allocated, available, under repair, retired, pending returns,
-    upcoming maintenance, expiring insurance, total value, and utilisation rate.
-    """
+
     return get_dashboard_stats(db)
 
-
-# ── Asset Master ──────────────────────────────────────────────────────────────
 
 @router.post(
     "/",
@@ -104,8 +91,6 @@ def remove_asset(asset_id: int, db: Session = Depends(get_db)):
     delete_asset(db, asset_id)
 
 
-# ── Depreciation ──────────────────────────────────────────────────────────────
-
 @router.get(
     "/depreciation/schedule",
     response_model=List[DepreciationScheduleItem],
@@ -117,16 +102,9 @@ def depreciation_schedule(
     search: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    """
-    Returns a row per asset with:
-    Purchase Price, Depreciation Rate & Method, Useful Life,
-    Current Value, Yearly Depreciation, Accumulated, Net Book Value,
-    Next Calculation Date.
-    """
+
     return get_depreciation_schedule(db, skip, limit, search)
 
-
-# ── Reports ───────────────────────────────────────────────────────────────────
 
 @router.get(
     "/reports/full",

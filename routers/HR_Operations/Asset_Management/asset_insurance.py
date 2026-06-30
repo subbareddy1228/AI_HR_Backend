@@ -1,8 +1,3 @@
-"""
-Asset Insurance Router
-Covers: Insurance tab — list policies, add, update, file claim,
-expiring policies alert, auto-expire sync.
-"""
 
 from decimal import Decimal
 from typing import List, Optional
@@ -73,10 +68,7 @@ def expiring_policies(
     response_model=dict,
 )
 def sync_expired(db: Session = Depends(get_db)):
-    """
-    Should be called by a scheduler (cron / Celery beat) daily.
-    Returns count of newly expired policies.
-    """
+
     count = sync_expired_policies(db)
     return {"expired_count": count}
 
