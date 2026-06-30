@@ -1,9 +1,3 @@
-"""
-Asset Service
-Handles: CRUD, dashboard statistics, depreciation calculations,
-and reports for the Asset Management module.
-"""
-
 from __future__ import annotations
 
 import math
@@ -29,14 +23,9 @@ from schema.HR_Operations.Asset_Management.asset import (
 )
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
 
 def _compute_depreciation(asset: Asset) -> dict:
-    """
-    Returns computed depreciation figures for one asset.
-    Supports Straight Line and Declining Balance methods.
-    Written-Down-Value is treated as Declining Balance here.
-    """
+    
     today         = date.today()
     purchase_date = asset.purchase_date
     price         = Decimal(str(asset.purchase_price))
@@ -50,13 +39,13 @@ def _compute_depreciation(asset: Asset) -> dict:
         accumulated = min(price, (yearly * Decimal(str(years_held))).quantize(Decimal("0.01"), ROUND_HALF_UP))
         current_val = max(Decimal("0"), price - accumulated)
 
-        # Next calculation is same month next year from purchase_date anniversary
+        
         next_calc = date(today.year + 1, purchase_date.month, purchase_date.day)
         if next_calc <= today:
             next_calc = date(today.year + 1, purchase_date.month, purchase_date.day)
 
     else:
-        # Declining Balance / Written-Down-Value
+       
         yearly      = (price * rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
         factor      = (Decimal("1") - rate) ** Decimal(str(math.floor(years_held)))
         current_val = (price * factor).quantize(Decimal("0.01"), ROUND_HALF_UP)
@@ -72,10 +61,10 @@ def _compute_depreciation(asset: Asset) -> dict:
     }
 
 
-# ── CRUD ──────────────────────────────────────────────────────────────────────
+
 
 def create_asset(db: Session, payload: AssetCreate) -> Asset:
-    # Unique serial number check
+   
     if db.query(Asset).filter(Asset.serial_number == payload.serial_number).first():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -143,11 +132,11 @@ def delete_asset(db: Session, asset_id: int) -> None:
     db.commit()
 
 
-# ── Dashboard Statistics ──────────────────────────────────────────────────────
+
 
 def get_dashboard_stats(db: Session) -> AssetDashboardStats:
     today        = date.today()
-    warning_days = 30  # Flag insurance expiring within 30 days
+    warning_days = 30 
 
     status_counts = (
         db.query(Asset.status, func.count(Asset.id))
@@ -162,7 +151,7 @@ def get_dashboard_stats(db: Session) -> AssetDashboardStats:
     under_rep  = counts.get("UNDER_MAINTENANCE", 0)
     retired    = counts.get("RETIRED", 0)
 
-    # Total declared purchase value (not depreciated — matches UI ₹0 when empty)
+    
     total_value = db.query(func.coalesce(func.sum(Asset.purchase_price), 0)).scalar()
 
     pending_returns = (
@@ -207,7 +196,7 @@ def get_dashboard_stats(db: Session) -> AssetDashboardStats:
     )
 
 
-# ── Depreciation Schedule ─────────────────────────────────────────────────────
+
 
 def get_depreciation_schedule(
     db: Session,
@@ -241,7 +230,7 @@ def get_depreciation_schedule(
     return result
 
 
-# ── Reports ───────────────────────────────────────────────────────────────────
+
 
 def get_asset_report(
     db: Session,
@@ -249,10 +238,8 @@ def get_asset_report(
     status: Optional[str] = None,
     department: Optional[str] = None,
 ) -> List[AssetReportRow]:
-    """
-    Full asset report joining latest allocation to get current holder.
-    """
-    # Subquery: latest active allocation per asset
+    
+    
     latest_alloc = (
         db.query(
             AssetAllocation.asset_id,

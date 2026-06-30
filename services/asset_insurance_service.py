@@ -1,9 +1,3 @@
-"""
-Asset Insurance Service
-Handles: CRUD for insurance policies, filing claims, expiry alerts,
-and policy status lifecycle management.
-"""
-
 from __future__ import annotations
 
 from datetime import date, timedelta
@@ -22,12 +16,12 @@ from schema.HR_Operations.Asset_Management.asset_insurance import (
 
 
 def create_insurance(db: Session, payload: AssetInsuranceCreate) -> AssetInsurance:
-    # Asset must exist
+   
     asset = db.query(Asset).filter(Asset.id == payload.asset_id).first()
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found.")
 
-    # Duplicate policy number
+    
     if db.query(AssetInsurance).filter(AssetInsurance.policy_number == payload.policy_number).first():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -88,7 +82,7 @@ def file_claim(
     claim_amount: Decimal,
     claim_notes: str,
 ) -> AssetInsurance:
-    """Register a new insurance claim and increment claim counter."""
+    
     ins = get_insurance(db, insurance_id)
     if ins.status not in ("Active",):
         raise HTTPException(
@@ -108,7 +102,7 @@ def list_expiring_policies(
     db: Session,
     days_ahead: int = 30,
 ) -> List[AssetInsurance]:
-    """Return active policies expiring within the next `days_ahead` days."""
+    
     today = date.today()
     return (
         db.query(AssetInsurance)
@@ -123,10 +117,7 @@ def list_expiring_policies(
 
 
 def sync_expired_policies(db: Session) -> int:
-    """
-    Background-safe helper: auto-expire policies whose end_date has passed.
-    Returns count of updated records.
-    """
+   
     today   = date.today()
     expired = (
         db.query(AssetInsurance)

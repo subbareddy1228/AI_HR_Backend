@@ -214,7 +214,7 @@ class DailyAttendanceService:
     
 
     def create_record(self, db: Session, payload: DailyAttendanceCreate) -> DailyAttendanceOut:
-        # Prevent duplicate
+        
         existing = db.query(DailyAttendanceRecord).filter(
             DailyAttendanceRecord.employee_id == payload.employee_id,
             DailyAttendanceRecord.att_date    == payload.att_date,
@@ -263,7 +263,7 @@ class DailyAttendanceService:
         for k, v in payload.model_dump(exclude_unset=True).items():
             setattr(rec, k, v)
 
-        # Recompute worked hours and status if punch times changed
+        
         if payload.check_in is not None or payload.check_out is not None:
             rec.worked_hours = _calc_worked_hours(rec.check_in, rec.check_out)
             status, is_late, is_half = _infer_status(rec.check_in, rec.check_out, rec.worked_hours)

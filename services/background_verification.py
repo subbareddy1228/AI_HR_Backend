@@ -36,7 +36,7 @@ DEFAULT_DOCUMENTS = [
 
 
 def get_bgv_kpi(db: Session) -> dict:
-    """4 KPI counts — Total, Pending, In Progress, Completed."""
+    
     total       = db.query(func.count(BGVRequest.id)).scalar() or 0
     pending     = db.query(func.count(BGVRequest.id)).filter(BGVRequest.status == BGVStatus.pending).scalar() or 0
     in_progress = db.query(func.count(BGVRequest.id)).filter(BGVRequest.status == BGVStatus.in_progress).scalar() or 0

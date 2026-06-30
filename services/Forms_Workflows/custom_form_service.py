@@ -457,7 +457,7 @@ def duplicate_form(
     else:
         db.add(FormConfiguration(form_id=new_form.id))
 
-    # History
+   
     db.add(FormVersionHistory(
         form_id    = new_form.id,
         version    = 1,

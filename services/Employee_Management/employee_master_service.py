@@ -137,9 +137,7 @@ def list_employees(
 
 
 def get_departments(db: Session) -> list:
-    """
-    Returns distinct department names for the 'All Departments' dropdown.
-    """
+    
     rows = db.execute(
         select(func.distinct(Employee.department))
         .where(Employee.department != None)
@@ -193,7 +191,7 @@ def create_master(db: Session, payload: EmployeeMasterCreate) -> EmployeeMaster:
 
 
 def get_master_by_employee_id(db: Session, employee_id: int) -> EmployeeMaster:
-    """Returns raw EmployeeMaster record by employee_id. 404 if not found."""
+    
     obj = db.execute(
         select(EmployeeMaster).where(EmployeeMaster.employee_id == employee_id)
     ).scalar_one_or_none()

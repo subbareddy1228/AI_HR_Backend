@@ -522,7 +522,7 @@ def submit_response(
     if s.status != SurveyStatus.ACTIVE:
         raise HTTPException(status_code=400, detail="Survey is not active")
 
-    # Prevent duplicate completion for identified surveys
+    
     if not payload.is_anonymous and payload.employee_id:
         existing = db.execute(
             select(SurveyResponse).where(

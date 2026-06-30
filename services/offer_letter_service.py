@@ -171,7 +171,7 @@ def get_offer_kpi(db: Session) -> dict:
             if key != "total_offers" and s == key:
                 counts[key] += 1
                 break
-            # OfferStatus.rejected → 'declined'
+            
             if key == "declined" and s in ("rejected", "declined"):
                 counts["declined"] += 1
                 break

@@ -1,4 +1,3 @@
-
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import Optional, List

@@ -727,7 +727,7 @@ class BankReconciliationService:
 
     @staticmethod
     def mark_all_verified(db: Session, recon_id: int) -> BankReconciliation:
-        """Mark all Pending entries as Matched and verify the session."""
+        
         _get_or_404(db, BankReconciliation, recon_id, "Reconciliation")
         pending_entries = db.execute(
             select(BankReconciliationEntry).where(
@@ -759,7 +759,7 @@ class PaymentAnalyticsService:
 
     @staticmethod
     def get_dashboard_summary(db: Session) -> DashboardSummaryResponse:
-        # Current month totals
+        
         now = datetime.utcnow()
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 

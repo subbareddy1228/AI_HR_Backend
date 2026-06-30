@@ -73,7 +73,7 @@ def _is_due_this_week(conf: EmployeeConfirmation) -> bool:
 
 
 def _confirmation_status_display(conf: EmployeeConfirmation) -> str:
-    """Derive the badge shown in the 'Confirmation Status' column."""
+    
     if conf.status == "CONFIRMED":
         conf_date = conf.confirmation_date
         return f"Confirmed"

@@ -16,10 +16,7 @@ def upsert_data_privacy(
     data:      DataPrivacyCreate,
     actor_id:  Optional[int] = None,
 ) -> DataPrivacySetting:
-    """
-    Create or update data privacy settings (one record per tenant).
-    Consent nested model is flattened into DB columns.
-    """
+   
     setting = _get_setting(db, tenant_id)
 
     flat = {

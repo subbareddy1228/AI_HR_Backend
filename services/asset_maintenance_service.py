@@ -1,9 +1,3 @@
-"""
-Asset Maintenance Service
-Handles: create maintenance records, update status, fetch upcoming/overdue
-maintenance, and asset status transitions for maintenance lifecycle.
-"""
-
 from __future__ import annotations
 
 from datetime import date, timedelta
@@ -79,7 +73,7 @@ def update_maintenance(
     m    = get_maintenance(db, maintenance_id)
     data = payload.model_dump(exclude_unset=True)
 
-    # When maintenance is completed, free the asset if it was under maintenance
+    
     if data.get("status") == "Completed":
         asset = db.query(Asset).filter(Asset.id == m.asset_id).first()
         if asset and asset.status == "UNDER_MAINTENANCE":
@@ -96,7 +90,7 @@ def list_upcoming_maintenance(
     db: Session,
     days_ahead: int = 30,
 ) -> List[AssetMaintenance]:
-    """Return all maintenance due within the next `days_ahead` days."""
+    
     today = date.today()
     return (
         db.query(AssetMaintenance)
@@ -111,7 +105,7 @@ def list_upcoming_maintenance(
 
 
 def list_overdue_maintenance(db: Session) -> List[AssetMaintenance]:
-    """Return all past-due maintenance records."""
+    
     today = date.today()
     return (
         db.query(AssetMaintenance)

@@ -161,7 +161,7 @@ class PayrollIntegrationService:
         )
 
     def get_impact_analysis(self, db: Session, filters: IntegrationFilter) -> PayrollImpactAnalysis:
-        """Chart data for 'Payroll Impact Analysis' — grouped by department."""
+        
         depts = db.query(Employee.department).filter(
             Employee.is_active == True, Employee.department != None
         ).distinct().all()

@@ -288,7 +288,7 @@ def record_communication(db: Session, payload: BuddyCommunicationCreate) -> Budd
     comm = BuddyCommunication(**payload.model_dump())
     db.add(comm)
 
-    # Keep last_checkin up to date on the pairing
+    
     if not pairing.last_checkin or payload.date > pairing.last_checkin:
         pairing.last_checkin = payload.date
 
@@ -361,7 +361,7 @@ def get_program_analytics(db: Session, program_id: int) -> ProgramAnalyticsOut:
         avg_match_score=avg_match,
         feedback_count=fb_count,
         satisfaction_score=avg_rating,
-        time_to_productivity_days=28,   # extend with actual onboarding milestone data
+        time_to_productivity_days=28,  
         department_distribution=dept_dist,
         location_distribution=loc_dist,
     )

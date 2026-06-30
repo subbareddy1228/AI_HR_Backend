@@ -1,8 +1,3 @@
-# services/Employee_Management/all_employees_service.py
-#
-# Business logic for the "All Employees" page.
-# Handles the rich 5-tab employee object the frontend sends/expects.
-
 from datetime import datetime, date
 from typing import Optional
 from sqlalchemy.orm import Session
@@ -628,7 +623,7 @@ def create_employee(db: Session, payload: dict) -> dict:
         bonus_amount=bonus.get("amount", 0),
     ))
 
-    # Bank accounts
+    
     primary_bank = bank_accounts_data.get("primary", {})
     if primary_bank.get("accountNumber"):
         db.add(EmployeeBankAccount(
@@ -1071,7 +1066,7 @@ def update_employee(db: Session, employee_id: int, payload: dict) -> dict:
         if shops_data.get("registrationDate"): stat.shops_registration_date = _parse_date(shops_data["registrationDate"])
         stat.updated_at = datetime.utcnow()
 
-    # Also sync EmployeeMaster
+
     master = db.execute(
         select(EmployeeMaster).where(EmployeeMaster.employee_id == employee_id)
     ).scalar_one_or_none()

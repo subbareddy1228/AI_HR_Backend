@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from calendar import month_name as _MONTH_NAMES

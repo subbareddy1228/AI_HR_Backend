@@ -1,5 +1,3 @@
-# services/HR_Automation/monthly_attendance_service.py
-
 import io
 import csv
 import calendar

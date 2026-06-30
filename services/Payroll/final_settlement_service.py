@@ -236,7 +236,7 @@ def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
         lv.encashable_days   = enc_days
         lv.total_encashment  = leave_enc
 
-    # 4. Pro-rata bonus
+    
     pro_rata_bonus = Decimal("0")
     if bon and bon.is_eligible:
         annual = _round2(bon.annual_bonus or 0)
@@ -308,7 +308,7 @@ def recalculate(db: Session, settlement: FinalSettlement) -> FinalSettlement:
 
 
 def create_settlement(db: Session, payload: FinalSettlementCreate) -> FinalSettlement:
-    # Duplicate guard
+   
     existing = db.execute(
         select(FinalSettlement).where(FinalSettlement.employee_id == payload.employee_id)
     ).scalar_one_or_none()

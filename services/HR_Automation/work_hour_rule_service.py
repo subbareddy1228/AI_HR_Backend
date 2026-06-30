@@ -121,7 +121,7 @@ def update_breaks_tab(db: Session, rule_id: int, breaks_payload: dict) -> WorkHo
 
 
 def update_settings_tab(db: Session, rule_id: int, settings_payload: dict) -> WorkHourRule:
-    """Partial update scoped to just the Settings tab fields."""
+    
     rule = get_rule_or_404(db, rule_id)
     allowed_keys = {
         "currency", "time_format", "week_start_day", "backup_frequency",

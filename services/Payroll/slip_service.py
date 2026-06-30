@@ -1,4 +1,3 @@
-
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, func
 from typing import List, Optional
@@ -79,7 +78,7 @@ def generate_slip(db: Session, req: GenerateSlipRequest) -> SalarySlip:
             ),
         )
 
-    # Check for existing slip — respect revision rules
+    
     existing = _get_existing_slip(db, req.employee_id, req.pay_period_month, req.pay_period_year)
     if existing:
         config = _get_or_create_config(db)
@@ -119,7 +118,7 @@ def generate_slip(db: Session, req: GenerateSlipRequest) -> SalarySlip:
     db.commit()
     db.refresh(slip)
 
-    # Auto-send if configured
+   
     cfg = _get_or_create_config(db)
     dist_settings = _get_or_create_distribution_settings(db)
     if cfg.auto_send_on_generation and dist_settings.send_automatic_email:
@@ -407,7 +406,7 @@ def update_distribution_settings(
 
 
 def reset_distribution_settings(db: Session) -> DistributionSettings:
-    """Reset to Default button."""
+    
     obj = _get_or_create_distribution_settings(db)
     obj.send_automatic_email   = True
     obj.cc_hr_department       = True

@@ -735,7 +735,7 @@ class WorkflowEngineService:
 
         wf = _load_full_workflow(db, instance.workflow_id)
 
-        # Determine current stage
+       
         current_stage = next(
             (s for s in wf.stages if s.stage_order == instance.current_stage_order),
             None,

@@ -9,9 +9,7 @@ from model.onboarding.employee import Employee
 from schema.HR_Automation.leave import LeaveRequestCreate, LeaveRequestUpdate
 
 
-# Maps the leave_type codes used on the Leave Types tab (CL, SL, EL...) to display names.
-# Kept here rather than as a DB join since Leave Types config doesn't have its own
-# table yet in this backend.
+
 LEAVE_TYPE_NAMES = {
     "CL": "Casual Leave",
     "SL": "Sick Leave",
@@ -87,7 +85,7 @@ def list_applications(
     search: Optional[str] = None,
     status: Optional[str] = None,
 ) -> dict:
-    """Powers the Applications tab table: search box + status filter dropdown."""
+    
     stmt = select(LeaveRequest)
 
     if status and status not in ("All Status", "All", ""):
@@ -122,7 +120,7 @@ def get_leave(db: Session, leave_id: int) -> dict:
 
 
 def update_leave_status(db: Session, leave_id: int, payload: LeaveRequestUpdate) -> dict:
-    """Used for the Approve / Reject actions in the Applications tab."""
+    
     leave = db.execute(
         select(LeaveRequest).where(LeaveRequest.id == leave_id)
     ).scalar_one_or_none()

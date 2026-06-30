@@ -5,7 +5,7 @@ def identify_productivity_bottlenecks(activities: List[dict]):
    
     unproductive = [a.get("app_name") or a.get("website_url") for a in activities if a.get("productive")=="No"]
     counter = Counter(unproductive)
-    return counter.most_common(5)  # Top 5 bottlenecks
+    return counter.most_common(5)  
 
 def workload_distribution(activities: List[dict]):
    

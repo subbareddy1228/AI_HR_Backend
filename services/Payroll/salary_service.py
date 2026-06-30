@@ -1,4 +1,3 @@
-
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, func
 from typing import List, Optional

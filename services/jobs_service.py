@@ -1,4 +1,3 @@
-
 from sqlmodel import Session, select
 from model.models import Job, Candidate
 from typing import List

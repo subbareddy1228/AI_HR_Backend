@@ -1,9 +1,3 @@
-"""
-Asset Return Service
-Handles: process return (closes allocation, frees asset),
-certificate issuance, penalty management, and dispute resolution.
-"""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -23,7 +17,7 @@ from schema.HR_Operations.Asset_Management.asset_return import (
 
 
 def process_return(db: Session, payload: AssetReturnCreate) -> AssetReturn:
-    # 1. Validate allocation exists and is active
+    
     alloc = (
         db.query(AssetAllocation)
         .filter(AssetAllocation.id == payload.allocation_id)
@@ -37,7 +31,7 @@ def process_return(db: Session, payload: AssetReturnCreate) -> AssetReturn:
             detail=f"Cannot return asset — allocation status is '{alloc.status}'.",
         )
 
-    # 2. Prevent duplicate return for same allocation
+    
     existing = (
         db.query(AssetReturn)
         .filter(AssetReturn.allocation_id == payload.allocation_id)
@@ -49,14 +43,14 @@ def process_return(db: Session, payload: AssetReturnCreate) -> AssetReturn:
             detail="A return record already exists for this allocation.",
         )
 
-    # 3. Persist return record
+   
     asset_return = AssetReturn(**payload.model_dump())
     db.add(asset_return)
 
-    # 4. Close allocation
+    
     alloc.status = "Returned"
 
-    # 5. Transition asset status
+    
     asset = db.query(Asset).filter(Asset.id == alloc.asset_id).first()
     if asset:
         if payload.condition_at_return in ("Damaged", "Missing Parts", "Beyond Repair"):
@@ -105,7 +99,7 @@ def update_return(
 def issue_certificate(
     db: Session, return_id: UUID, issued_by: str
 ) -> AssetReturn:
-    """Issue clearance certificate for a processed return."""
+    
     ret = get_return(db, return_id)
     if ret.status not in ("Processed",):
         raise HTTPException(
@@ -126,7 +120,7 @@ def issue_certificate(
 
 
 def resolve_dispute(db: Session, return_id: UUID, resolution_notes: str) -> AssetReturn:
-    """Resolve a disputed return, marking it as Processed."""
+    
     ret = get_return(db, return_id)
     if ret.status != "Disputed":
         raise HTTPException(

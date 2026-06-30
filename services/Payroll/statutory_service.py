@@ -1,5 +1,3 @@
-
-
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 from typing import List, Optional
@@ -70,7 +68,7 @@ def get_statutory_dashboard(db: Session, month: int, year: int) -> StatutoryDash
 
 
 def get_compliance_page(db: Session, month: int, year: int) -> StatutoryCompliancePageResponse:
-    """Single call that populates every section of the Statutory Compliance Engine page."""
+   
     config = _get_or_create_config(db)
     rule   = db.execute(
         select(PFEligibilityRule).where(PFEligibilityRule.config_id == config.id)

@@ -24,7 +24,7 @@ from schema.Employee_Management.employee_document import (
 
 
 def _get_or_404(db: Session, doc_id: int) -> EmployeeDocument:
-    """Fetch a document by PK or raise 404."""
+    
     obj = db.execute(
         select(EmployeeDocument).where(EmployeeDocument.id == doc_id)
     ).scalar_one_or_none()
@@ -40,7 +40,7 @@ def upload_document(
     db: Session,
     payload: EmployeeDocumentCreate,
 ) -> EmployeeDocument:
-    """Single document upload — POST /documents/"""
+    
     obj = EmployeeDocument(**payload.model_dump())
     if obj.upload_date is None:
         obj.upload_date = date.today()

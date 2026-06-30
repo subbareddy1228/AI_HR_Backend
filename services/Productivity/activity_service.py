@@ -1,5 +1,3 @@
-
-
 from typing import List, Optional
 from datetime import datetime
 
@@ -34,7 +32,7 @@ async def create_activity(db: AsyncSession, act_in: ActivityCreate) -> Productiv
     return act
 
 async def list_activities(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[ProductivityActivity]:
-    """List all activities with pagination (async)."""
+    
     q = await db.execute(select(ProductivityActivity).offset(skip).limit(limit))
     return q.scalars().all()
 
@@ -62,7 +60,7 @@ async def list_activities_by_employee(
 
 
 def log_activity(db: Session, ProductivityActivity: ActivityCreate) -> ProductivityActivity:
-    """Record employee ProductivityActivity (sync)."""
+    
     logger.info(f"Logging ProductivityActivity type={ProductivityActivity.activity_type} for employee_id={ProductivityActivity.employee_id}")
     db_activity = ProductivityActivity(**ProductivityActivity.dict())
     db.add(db_activity)

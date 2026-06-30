@@ -1,20 +1,3 @@
-"""
-services/Forms_Workflows/approvals_dashboard_service.py
-
-Business-logic layer for the Approvals Dashboard.
-All database interactions live here; the router stays thin.
-
-Responsibilities:
-  • Approval code generation       → APR-YYYY-NNNNNN
-  • SLA due-date calculation       → based on sla_days_allowed
-  • SLA status recomputation       → On Track / At Risk / SLA Breached
-  • Status-transition guard        → only valid transitions allowed
-  • History logging                → every status change is recorded
-  • Dashboard stats aggregation    → 4-card totals + breakdowns
-  • Delegation resolution          → find active delegate for a manager
-  • Escalation auto-trigger        → called by a scheduler on SLA breach
-"""
-
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone

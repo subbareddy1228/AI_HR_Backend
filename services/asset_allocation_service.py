@@ -1,8 +1,3 @@
-"""
-Asset Allocation Service
-Handles: create allocation, approve, list, update, and guard asset status transitions.
-"""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -21,7 +16,7 @@ from schema.HR_Operations.Asset_Management.asset_allocation import (
 
 
 def create_allocation(db: Session, payload: AssetAllocationCreate) -> AssetAllocation:
-    # 1. Asset must exist and be AVAILABLE
+   
     asset = db.query(Asset).filter(Asset.id == payload.asset_id).first()
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found.")
@@ -31,7 +26,7 @@ def create_allocation(db: Session, payload: AssetAllocationCreate) -> AssetAlloc
             detail=f"Asset is not available for allocation (current status: {asset.status}).",
         )
 
-    # 2. No duplicate active allocation for same asset
+   
     existing = (
         db.query(AssetAllocation)
         .filter(
@@ -49,7 +44,7 @@ def create_allocation(db: Session, payload: AssetAllocationCreate) -> AssetAlloc
     allocation = AssetAllocation(**payload.model_dump())
     db.add(allocation)
 
-    # 3. Transition asset → ALLOCATED
+    
     asset.status = "ALLOCATED"
     db.commit()
     db.refresh(allocation)
@@ -90,7 +85,7 @@ def update_allocation(
     alloc = get_allocation(db, allocation_id)
     data  = payload.model_dump(exclude_unset=True)
 
-    # Auto-stamp approved_at when approved_by is set for the first time
+    
     if "approved_by" in data and data["approved_by"] and not alloc.approved_at:
         data.setdefault("approved_at", datetime.now(timezone.utc))
 
@@ -102,7 +97,7 @@ def update_allocation(
 
 
 def approve_allocation(db: Session, allocation_id: UUID, approved_by: str) -> AssetAllocation:
-    """Shortcut endpoint: mark an allocation as approved by a named approver."""
+    
     alloc = get_allocation(db, allocation_id)
     if alloc.approved_by:
         raise HTTPException(
@@ -124,7 +119,7 @@ def transfer_allocation(
     new_department: str,
     approved_by: Optional[str] = None,
 ) -> AssetAllocation:
-    """Transfer an allocated asset to a different employee without returning it."""
+    
     alloc = get_allocation(db, allocation_id)
     if alloc.status != "Active":
         raise HTTPException(

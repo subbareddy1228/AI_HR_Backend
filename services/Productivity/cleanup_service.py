@@ -1,7 +1,7 @@
 
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from app.core import config
+from core import config
 from model.Productivity.screenshot import Screenshot
 from utils.productivity.s3 import delete_from_s3
 import logging
