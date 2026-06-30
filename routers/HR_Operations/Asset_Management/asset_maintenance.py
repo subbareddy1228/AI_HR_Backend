@@ -1,8 +1,3 @@
-"""
-Asset Maintenance Router
-Covers: Maintenance tab — list history, add record, update status,
-upcoming alerts, overdue alerts.
-"""
 
 from typing import List, Optional
 from uuid import UUID
@@ -35,11 +30,7 @@ router = APIRouter(prefix="/asset-maintenances", tags=["Asset Maintenance"])
     summary="Add a maintenance record",
 )
 def add_maintenance(payload: AssetMaintenanceCreate, db: Session = Depends(get_db)):
-    """
-    Creates a maintenance record.
-    For Scheduled / In Progress status, transitions asset → UNDER_MAINTENANCE.
-    For Completed, asset remains / returns to AVAILABLE.
-    """
+
     return create_maintenance(db, payload)
 
 
@@ -100,8 +91,5 @@ def edit_maintenance(
     payload: AssetMaintenanceUpdate,
     db: Session = Depends(get_db),
 ):
-    """
-    Completing a maintenance record (status=Completed) will automatically
-    transition the asset back to AVAILABLE if it was UNDER_MAINTENANCE.
-    """
+
     return update_maintenance(db, maintenance_id, payload)

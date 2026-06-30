@@ -1,7 +1,3 @@
-"""
-Asset Allocation Router
-Covers: Allocations tab — list, create, approve, transfer.
-"""
 
 from typing import List, Optional
 from uuid import UUID
@@ -34,10 +30,7 @@ router = APIRouter(prefix="/asset-allocations", tags=["Asset Allocations"])
     summary="Create a new asset allocation",
 )
 def new_allocation(payload: AssetAllocationCreate, db: Session = Depends(get_db)):
-    """
-    Allocates an AVAILABLE asset to an employee.
-    Automatically transitions asset status → ALLOCATED.
-    """
+
     return create_allocation(db, payload)
 
 

@@ -1,7 +1,3 @@
-"""
-Asset Return Router
-Covers: Returns tab — list returns, process return, issue certificate, resolve dispute.
-"""
 
 from typing import List, Optional
 from uuid import UUID
@@ -34,10 +30,7 @@ router = APIRouter(prefix="/asset-returns", tags=["Asset Returns"])
     summary="Process an asset return",
 )
 def new_return(payload: AssetReturnCreate, db: Session = Depends(get_db)):
-    """
-    Closes the active allocation and transitions the asset back to
-    AVAILABLE (or UNDER_MAINTENANCE if damaged).
-    """
+
     return process_return(db, payload)
 
 
