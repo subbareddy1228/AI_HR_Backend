@@ -11,8 +11,8 @@ from sqlalchemy.orm import Session
 from utils.productivity.logger import get_logger
 logger = get_logger(__name__)
 
-from model.Productivity.ProductivityActivity import ProductivityActivity
-from schema.Productivity.ProductivityActivity import ActivityCreate
+from model.Productivity.activity import ProductivityActivity
+from schema.Productivity.activity import ActivityCreate
 
 
 

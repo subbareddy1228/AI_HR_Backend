@@ -15,7 +15,6 @@ import model.Employee_Management.org_hierarchy
 import model.Employee_Management.employee_lifecycle
 import model.Employee_Management.employee_master
 import model.Employee_Management.employee_document
-import model.Productivity
 import model.Payroll.Payroll_Processing
 from sqladmin import Admin, ModelView
 
@@ -107,7 +106,6 @@ from routers.admin_users.send_assessment_email import router as email_router
 from routers.offers.offer_template_router import router as offer_template_router
 from routers.offers.offer_tracking_router import router as offer_tracking_router
 from routers.HR_Automation.Onboarding.routers import candidates as onboard_candidates, uploads
-from routers.HR_Automation.attendance.routers import leave
 from routers.AI_Interview_Bot.routes import interviews
 from routers.CRM import contacts, company, deals, leads, pipelines, activities, analytics,projects, clients, tasks
 from routers.onboarding.admin_candidates import router as admin_candidates_router
@@ -118,7 +116,12 @@ from routers.Payroll import Payroll_Processing
 from routers.Payroll import salary_structure, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt, payroll_integration
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
 from routers.HR_Operations import exit_management, letter_generation, notice_period, hr_helpdesk, employee_confirmation, transfers, promotions
-from routers.HR_Automation.attendance.routers import shift_management, holiday_calendar, work_hour_rules, attendance_reports, monthly_attendance,leave as att_rpt, attendance_capture, daily_punches, daily_attendance, manual_attendance, leave_correction,monthly_attendance,leave, regularization
+from routers.HR_Automation.attendance.routers import (
+    shift_management, holiday_calendar, work_hour_rules,
+    attendance_reports, monthly_attendance, leave,
+    attendance_capture, daily_punches, daily_attendance,
+    manual_attendance, leave_correction, regularization
+)
 from routers.HR_Automation.attendance.routers import attendance as basic_attendance
 from routers.Reports import employee_reports, attendance_reports as rep_att, leave_reports, payroll_reports as rep_pay, compliance_reports, custom_report_builder, executive_dashboard, ai_insights
 from routers.Forms_Workflows import custom_form_builder, workflow_engine, request_management, surveys, approvals
@@ -333,7 +336,7 @@ app.include_router(promotions.router,            prefix="/api/hr-ops", tags=["HR
 app.include_router(shift_management.router,       prefix="/api/attendance", tags=["Attendance"])
 app.include_router(holiday_calendar.router,       prefix="/api/attendance", tags=["Attendance"])
 app.include_router(work_hour_rules.router,        prefix="/api/attendance", tags=["Attendance"])
-app.include_router(att_rpt.router,                prefix="/api/attendance", tags=["Attendance"])
+# app.include_router(att_rpt.router,                prefix="/api/attendance", tags=["Attendance"])
 app.include_router(attendance_capture.router,     prefix="/api/attendance", tags=["Attendance"])
 app.include_router(daily_punches.router,          prefix="/api/attendance", tags=["Attendance"])
 app.include_router(daily_attendance.router,       prefix="/api/attendance", tags=["Attendance"])

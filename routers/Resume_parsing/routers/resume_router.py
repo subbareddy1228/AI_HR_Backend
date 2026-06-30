@@ -216,7 +216,7 @@ def sync_candidate_stages_endpoint(db: Session = Depends(get_db)):
         print(f" Updated {records_updated} candidate_records")
         
         
-        print("\ Syncing candidate table stages from candidate_records...")
+        print("\\ Syncing candidate table stages from candidate_records...")
         sync_candidates_query = text("""
             UPDATE candidate c
             SET stage = cr.stage

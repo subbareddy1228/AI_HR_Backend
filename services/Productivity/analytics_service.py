@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from model.Productivity.ProductivityActivity import ProductivityActivity
+from model.Productivity.activity import ProductivityActivity
 from model.onboarding.employee import Employee
 from model.Employee_Management.org_hierarchy import Department
 from datetime import datetime
