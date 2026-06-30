@@ -42,15 +42,14 @@ import model.Payroll.payroll_run
 
 
 from sqladmin import Admin, ModelView
-<<<<<<< HEAD
+
 import model.Forms_Workflows.workflow_engine
 import model.Forms_Workflows.request
 import model.Forms_Workflows.custom_form
 import model.Forms_Workflows.survey
 import model.Forms_Workflows.approval
-=======
 
->>>>>>> e0915c9e2bbc58e84a127bcff2910d055440fd9d
+
 # CREATE FASTAPI APP  (THIS MUST COME FIRST)
 
 app = FastAPI(title="AI Recruitment HR Platform")
