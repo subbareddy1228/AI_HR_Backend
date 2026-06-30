@@ -9,9 +9,6 @@ import model.models
 router = APIRouter(prefix="/profile", tags=["Profile"])
 
 
-# =====================================================
-# READ PROFILE
-# =====================================================
 @router.get("/", response_model=schemas.Profile)
 async def read_profile(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Profile))
@@ -23,9 +20,7 @@ async def read_profile(db: AsyncSession = Depends(get_db)):
     return profile
 
 
-# =====================================================
-# CREATE PROFILE
-# =====================================================
+
 @router.post("/", response_model=schemas.Profile)
 async def create_profile(
     profile: schemas.Profile,

@@ -152,7 +152,7 @@ class LoanListFilter(BaseModel):
 
     tab:         Optional[Literal["all", "pending", "active", "completed"]] = "all"
     skip:        int = Field(default=0, ge=0)
-    limit:       int = Field(default=6, ge=1, le=200)  # UI default page size = 6
+    limit:       int = Field(default=6, ge=1, le=200) 
 
 
 

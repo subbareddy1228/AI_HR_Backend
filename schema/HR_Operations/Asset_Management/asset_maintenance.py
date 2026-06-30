@@ -1,8 +1,4 @@
-"""
-Asset Maintenance Pydantic Schemas
-Covers: Maintenance tab — Maintenance ID, Asset Details, Type, Date, Cost,
-Performed By, Description, Warranty, Next Due, Status, Actions.
-"""
+
 
 from __future__ import annotations
 

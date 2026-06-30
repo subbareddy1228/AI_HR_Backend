@@ -14,7 +14,7 @@ class TaskBase(BaseModel):
 
 
 
-# CREATE TASK
+
 
 
 class TaskCreate(TaskBase):
@@ -22,7 +22,7 @@ class TaskCreate(TaskBase):
 
 
 
-# UPDATE TASK (PATCH)
+
 
 
 class TaskUpdate(BaseModel):
@@ -34,7 +34,7 @@ class TaskUpdate(BaseModel):
 
 
 
-# RESPONSE SCHEMA (what API returns)
+
 
 
 class Task(BaseModel):
@@ -50,4 +50,4 @@ class Task(BaseModel):
     completed_at: Optional[datetime]
 
     class Config:
-        from_attributes = True  #  Pydantic v2
+        from_attributes = True  

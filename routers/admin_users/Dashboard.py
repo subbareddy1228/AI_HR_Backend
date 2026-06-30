@@ -10,16 +10,16 @@ from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
-#  Role check dependency 
+
 def recruiter_or_admin(user: User = Depends(get_current_user)):
     if user.role.lower() not in ["recruiter", "admin"]:
         raise HTTPException(status_code=403, detail="Access forbidden")
     return user
 
-#  Dashboard Widgets 
+
 @router.get("/widgets")
 def dashboard_widgets(user: User = Depends(recruiter_or_admin), db: Session = Depends(get_db)):
-    # Count active jobs (status contains "Open" or "Published")
+    
     active_jobs = db.exec(
         select(Job).where(Job.recruiter_id == user.id, Job.status.ilike("%Open%"))
     ).all()
@@ -33,14 +33,14 @@ def dashboard_widgets(user: User = Depends(recruiter_or_admin), db: Session = De
             "candidates_in_pipeline": 0
         }
 
-    # Get all applications for user's jobs
+    
     applications = db.exec(select(Application).where(Application.job_id.in_(job_ids))).all()
     candidate_ids = list(set([app.candidate_id for app in applications if app.candidate_id]))
     
-    # Count all applications for user's jobs
+    
     applications_received = len(applications)
 
-    # Count candidates in pipeline (stage not "Hired")
+    
     if candidate_ids:
         candidates_in_pipeline = db.exec(
             select(Candidate).where(Candidate.id.in_(candidate_ids), Candidate.stage != "Hired")
@@ -54,7 +54,6 @@ def dashboard_widgets(user: User = Depends(recruiter_or_admin), db: Session = De
         "candidates_in_pipeline": len(candidates_in_pipeline)
     }
 
-#  Create Job 
 @router.post("/jobs", response_model=JobRead)
 def create_job(payload: JobCreate, user: User = Depends(recruiter_or_admin), db: Session = Depends(get_db)):
     job = Job(**payload.dict(), recruiter_id=user.id, created_at=datetime.utcnow(), updated_at=datetime.utcnow())
@@ -63,7 +62,7 @@ def create_job(payload: JobCreate, user: User = Depends(recruiter_or_admin), db:
     db.refresh(job)
     return job
 
-#  List Jobs with filters 
+
 @router.get("/jobs", response_model=List[JobRead])
 def list_jobs(
     status: Optional[str] = Query(None),
@@ -89,7 +88,7 @@ def list_jobs(
 
     return db.exec(query).all()
 
-#  Job Detail 
+
 @router.get("/jobs/{job_id}", response_model=JobRead)
 def job_detail(job_id: int, user: User = Depends(recruiter_or_admin), db: Session = Depends(get_db)):
     job = db.get(Job, job_id)
@@ -99,7 +98,7 @@ def job_detail(job_id: int, user: User = Depends(recruiter_or_admin), db: Sessio
         raise HTTPException(status_code=403, detail="Access forbidden")
     return job
 
-#  Bulk Delete Jobs 
+
 @router.delete("/jobs/bulk")
 def bulk_delete_jobs(job_ids: List[int], user: User = Depends(recruiter_or_admin), db: Session = Depends(get_db)):
     for job_id in job_ids:
@@ -109,7 +108,7 @@ def bulk_delete_jobs(job_ids: List[int], user: User = Depends(recruiter_or_admin
     db.commit()
     return {"msg": "Jobs deleted successfully"}
 
-#  Candidates Endpoints 
+
 @router.get("/candidates", response_model=List[CandidateRead])
 def list_candidates(
     skills: Optional[str] = Query(None),
@@ -118,7 +117,7 @@ def list_candidates(
     db: Session = Depends(get_db),
     user: User = Depends(recruiter_or_admin)
 ):
-    # Get all job IDs for the current recruiter (unless admin)
+    
     if user.role.lower() == "admin":
         job_ids = list(db.exec(select(Job.id)).all())
     else:
@@ -127,13 +126,13 @@ def list_candidates(
     if not job_ids:
         return []
     
-    # Filter by job_id if provided
+    
     if job_id:
         if job_id not in job_ids and user.role.lower() != "admin":
             raise HTTPException(status_code=403, detail="Access forbidden")
         job_ids = [job_id]
     
-    # Get all applications for these jobs
+   
     application_statement = select(Application).where(Application.job_id.in_(job_ids))
     applications = db.exec(application_statement).all()
     candidate_ids = list(set([app.candidate_id for app in applications if app.candidate_id]))
@@ -141,7 +140,7 @@ def list_candidates(
     if not candidate_ids:
         return []
     
-    # Get candidates for these IDs
+   
     query = select(Candidate).where(Candidate.id.in_(candidate_ids))
     if stage:
         query = query.where(Candidate.stage == stage)
@@ -157,11 +156,11 @@ def bulk_assign_candidates(candidate_ids: List[int], job_id: int, user: User = D
     if not job or (job.recruiter_id != user.id and user.role.lower() != "admin"):
         raise HTTPException(status_code=403, detail="Access forbidden")
     
-    # Create or update applications for candidates
+    
     for cid in candidate_ids:
         candidate = db.get(Candidate, cid)
         if candidate:
-            # Check if application already exists
+            
             existing_app = db.exec(
                 select(Application).where(
                     Application.candidate_id == cid,
@@ -170,7 +169,7 @@ def bulk_assign_candidates(candidate_ids: List[int], job_id: int, user: User = D
             ).first()
             
             if not existing_app:
-                # Create new application
+                
                 application = Application(
                     job_id=job_id,
                     candidate_id=cid,
@@ -189,14 +188,14 @@ def candidate_detail(candidate_id: int, user: User = Depends(recruiter_or_admin)
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
     
-    # Check if user has access to this candidate through their jobs
+    
     if user.role.lower() != "admin":
-        # Get all applications for this candidate
+       
         applications = db.exec(select(Application).where(Application.candidate_id == candidate_id)).all()
         if not applications:
             raise HTTPException(status_code=403, detail="Access forbidden")
         
-        # Check if any of the jobs belong to this recruiter
+       
         job_ids = [app.job_id for app in applications]
         recruiter_jobs = db.exec(select(Job.id).where(Job.id.in_(job_ids), Job.recruiter_id == user.id)).all()
         if not recruiter_jobs:
@@ -204,7 +203,7 @@ def candidate_detail(candidate_id: int, user: User = Depends(recruiter_or_admin)
     
     return candidate
 
-#  Analytics 
+
 @router.get("/analytics/applications-over-time")
 def applications_over_time(days: int = 30, user: User = Depends(recruiter_or_admin), db: Session = Depends(get_db)):
     start_date = datetime.utcnow() - timedelta(days=days)
@@ -213,7 +212,7 @@ def applications_over_time(days: int = 30, user: User = Depends(recruiter_or_adm
     if not job_ids:
         return []
 
-    # Get applications for these jobs
+    
     applications = db.exec(select(Application).where(Application.job_id.in_(job_ids))).all()
     candidate_ids = list(set([app.candidate_id for app in applications if app.candidate_id]))
 

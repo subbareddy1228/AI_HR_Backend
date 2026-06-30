@@ -14,9 +14,7 @@ from model.models import (
 router = APIRouter(prefix="/applications", tags=["Applications"])
 
 
-# =====================================================
-# CREATE APPLICATION
-# =====================================================
+
 @router.post("/", response_model=schemas.Applications)
 async def create_application(
     application: schemas.ApplicationsCreate,
@@ -35,17 +33,12 @@ async def create_application(
     return db_app
 
 
-# =====================================================
-# READ APPLICATIONS (PIPELINE VIEW)
-# =====================================================
 @router.get("/")
 async def read_applications(db: AsyncSession = Depends(get_db)):
     email_to_record: dict[str, dict] = {}
 
     try:
-        # ---------------------------------------------
-        # Applications + Candidate
-        # ---------------------------------------------
+        
         stmt = (
             select(Application)
             .options(selectinload(Application.candidate))
@@ -77,9 +70,7 @@ async def read_applications(db: AsyncSession = Depends(get_db)):
                 "source": "application",
             }
 
-        # ---------------------------------------------
-        # Candidate table (fallback)
-        # ---------------------------------------------
+       
         result = await db.execute(select(Candidate))
         candidates = result.scalars().all()
 
@@ -104,9 +95,7 @@ async def read_applications(db: AsyncSession = Depends(get_db)):
                     "source": "candidate",
                 }
 
-        # ---------------------------------------------
-        # CandidateRecord (HIGHEST PRIORITY)
-        # ---------------------------------------------
+
         result = await db.execute(select(CandidateRecord))
         records = result.scalars().all()
 
@@ -137,9 +126,7 @@ async def read_applications(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# =====================================================
-# DELETE APPLICATION
-# =====================================================
+
 @router.delete("/{app_id}", status_code=204)
 async def delete_application(
     app_id: int,

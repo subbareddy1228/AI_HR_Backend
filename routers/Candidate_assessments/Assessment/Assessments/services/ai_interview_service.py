@@ -6,12 +6,12 @@ from typing import List
 
 
 def create_template(db: Session, data: AIInterviewTemplateCreate, user_id: int):
-    # Convert Pydantic Question objects to dicts
+
     template_data = data.dict()
     if template_data.get('questions'):
         template_data['questions'] = [q if isinstance(q, dict) else q.dict() for q in template_data['questions']]
     
-    # Add the authenticated user's ID
+    
     template_data['created_by'] = user_id
     
     template = AIInterviewTemplate(**template_data)
@@ -35,9 +35,9 @@ def update_template(db: Session, template_id: int, data: AIInterviewTemplateUpda
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
 
-    update_data = data.dict(exclude_unset=True)  # ✅ only update provided fields
+    update_data = data.dict(exclude_unset=True) 
     
-    # Convert questions to dicts if present
+    
     if 'questions' in update_data and update_data['questions']:
         update_data['questions'] = [q if isinstance(q, dict) else q.dict() for q in update_data['questions']]
     
@@ -55,4 +55,4 @@ def delete_template(db: Session, template_id: int):
 
     db.delete(template)
     db.commit()
-    return {"message": "Template deleted successfully"}  # ✅ return JSON response
+    return {"message": "Template deleted successfully"}  

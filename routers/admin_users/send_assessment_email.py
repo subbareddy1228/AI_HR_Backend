@@ -12,7 +12,7 @@ load_dotenv()
 
 router = APIRouter()
 
-# Email configuration from environment
+
 EMAIL_USER = os.getenv("EMAIL_USER", "your-email@gmail.com")
 EMAIL_PASS = os.getenv("EMAIL_PASS", "your-app-password")
 
@@ -31,13 +31,13 @@ async def send_assessment_email(request: AssessmentEmailRequest):
     Send assessment link to candidate via email
     """
     try:
-        # Create message
+        
         msg = MIMEMultipart('alternative')
         msg['Subject'] = request.subject
         msg['From'] = EMAIL_USER
         msg['To'] = request.to_email
         
-        # Create HTML version of the email
+       
         html_body = f"""
         <html>
             <head>
@@ -107,14 +107,14 @@ async def send_assessment_email(request: AssessmentEmailRequest):
         </html>
         """
         
-        # Attach both plain text and HTML versions
+        
         text_part = MIMEText(request.body, 'plain')
         html_part = MIMEText(html_body, 'html')
         
         msg.attach(text_part)
         msg.attach(html_part)
         
-        # Send email via SMTP
+        
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(EMAIL_USER, EMAIL_PASS)
             server.send_message(msg)

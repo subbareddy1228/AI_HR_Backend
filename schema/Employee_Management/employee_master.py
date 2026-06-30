@@ -160,7 +160,7 @@ class EmployeeDetailResponse(BaseModel):
     confirmation_date: Optional[str]
     is_active: bool
 
-    # From EmployeeMaster table
+   
     salary: Optional[Decimal]
     currency: Optional[str]
     employment_type: Optional[str]
@@ -174,7 +174,7 @@ class EmployeeDetailResponse(BaseModel):
 
 class StatsResponse(BaseModel):
   
-    total_employees: int        # "Total Employees — 8"
-    active_employees: int       # "Active Employees — 6"
-    departments: int            # "Departments — 7"
-    avg_salary: Optional[float] # "Avg. Salary — $70,750"
+    total_employees: int        
+    active_employees: int      
+    departments: int            
+    avg_salary: Optional[float] 

@@ -5,7 +5,7 @@ import re
 
 load_dotenv()
 
-# Initialize OpenAI client
+
 try:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
@@ -25,10 +25,10 @@ def score_answer(question: str, answer: str) -> int:
     Falls back to simple length-based scoring if AI is unavailable.
     """
     
-    # Fallback if OpenAI is not available
+   
     if not client:
         print(" Using fallback scoring (no OpenAI)")
-        # Simple length-based scoring as fallback
+        
         if not answer or len(answer.strip()) < 10:
             return 0
         elif len(answer.strip()) < 50:
@@ -39,7 +39,7 @@ def score_answer(question: str, answer: str) -> int:
             return 8
     
     try:
-        # Enhanced prompt for better AI scoring
+        
         prompt = f"""You are an expert interviewer. Score this interview answer on a scale of 0 to 10.
 Consider: relevance, completeness, clarity, and depth.
 
@@ -49,7 +49,7 @@ Answer: {answer}
 Provide ONLY a number between 0 and 10 as your response (e.g., "7" or "8.5")."""
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Using mini for cost efficiency
+            model="gpt-4o-mini", 
             messages=[
                 {"role": "system", "content": "You are an expert interviewer who scores answers objectively. Always respond with just a number from 0 to 10."},
                 {"role": "user", "content": prompt}
@@ -60,20 +60,20 @@ Provide ONLY a number between 0 and 10 as your response (e.g., "7" or "8.5")."""
         
         score_text = response.choices[0].message.content.strip()
         
-        # Extract number from response (handles formats like "8", "8.5", "Score: 8", etc.)
+        
         numbers = re.findall(r'\d+\.?\d*', score_text)
         if numbers:
             score = float(numbers[0])
-            # Ensure score is between 0 and 10
+            
             score = max(0, min(10, score))
             return int(round(score))
         else:
             print(f" Could not parse AI score from: {score_text}")
-            return 5  # Default middle score if parsing fails
+            return 5  
             
     except Exception as e:
         print(f" Error in AI scoring: {str(e)}")
-        # Fallback to length-based scoring
+        
         if not answer or len(answer.strip()) < 10:
             return 0
         elif len(answer.strip()) < 50:

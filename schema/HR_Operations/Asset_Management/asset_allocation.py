@@ -1,7 +1,4 @@
-"""
-Asset Allocation Pydantic Schemas
-Covers: Allocations tab — all visible columns + create/update operations.
-"""
+
 
 from __future__ import annotations
 
@@ -28,7 +25,6 @@ class AssetAllocationCreate(BaseModel):
 
 
 class AssetAllocationUpdate(BaseModel):
-    """Partial update — e.g., approve an allocation."""
     approved_by:       Optional[str]            = None
     approved_at:       Optional[datetime]        = None
     insurance_covered: Optional[bool]            = None

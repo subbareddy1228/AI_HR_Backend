@@ -9,9 +9,7 @@ from model.models import SavedJob
 router = APIRouter(prefix="/saved-jobs", tags=["SavedJobs"])
 
 
-# =====================================================
-# CREATE SAVED JOB
-# =====================================================
+
 @router.post("/", response_model=schemas.SavedJobs)
 async def create_saved_job(
     job: schemas.SavedJobsCreate,
@@ -30,18 +28,14 @@ async def create_saved_job(
     return db_job
 
 
-# =====================================================
-# READ SAVED JOBS
-# =====================================================
+
 @router.get("/", response_model=list[schemas.SavedJobs])
 async def read_saved_jobs(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(SavedJob))
     return result.scalars().all()
 
 
-# =====================================================
-# DELETE SAVED JOB
-# =====================================================
+
 @router.delete("/{job_id}", status_code=204)
 async def delete_saved_job(
     job_id: int,

@@ -47,15 +47,15 @@ def assign_questions(student_id: int, question_count: int = 25):
     """
     db: Session = SessionLocal()
     set_no = (student_id - 1) % 10 + 1
-    # Get all questions from the set
+    
     all_set_questions = db.query(LegacyQuestion).filter(LegacyQuestion.set_no == set_no).all()
     
-    # If we have enough questions, randomly select the requested number
+    
     if len(all_set_questions) >= question_count:
         import random
         questions = random.sample(all_set_questions, question_count)
     else:
-        # If not enough questions, return all available
+       
         questions = all_set_questions
     
     db.close()

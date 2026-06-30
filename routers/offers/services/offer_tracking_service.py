@@ -66,11 +66,11 @@ def update_offer_status(
     offer.status = status
     offer.updated_at = datetime.utcnow()
     
-    # Update sent_date when status changes to "Sent"
+    
     if status == OfferStatus.sent and not offer.sent_date:
         offer.sent_date = datetime.utcnow()
     
-    # Update response_date when status changes to "Accepted" or "Rejected"
+    
     if status in [OfferStatus.accepted, OfferStatus.rejected] and not offer.response_date:
         offer.response_date = datetime.utcnow()
     
@@ -90,7 +90,7 @@ def delete_offer(db: Session, offer_id: int) -> bool:
 def get_offer_stats(db: Session, user: Optional[User] = None) -> dict:
     query = db.query(OfferTracking)
     
-    # Filter by recruiter (unless admin)
+    
     if user and user.role.lower() != "admin":
         query = query.filter(OfferTracking.created_by == user.id)
     

@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/candidates",tags=["candidates"])
 
 @router.get("/", response_model=list[schemas.CandidateSchema])
 def read_candidates(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    # Get all job IDs for the current recruiter (unless admin)
+    
     if user.role.lower() == "admin":
         return db.query(model.models.Candidate).all()
     
@@ -21,14 +21,14 @@ def read_candidates(db: Session = Depends(get_db), user: User = Depends(get_curr
     if not job_ids:
         return []
     
-    # Get all applications for these jobs
+    
     applications = db.exec(select(Application).where(Application.job_id.in_(job_ids))).all()
     candidate_ids = list(set([app.candidate_id for app in applications if app.candidate_id]))
     
     if not candidate_ids:
         return []
     
-    # Get candidates for these IDs
+   
     return db.query(model.models.Candidate).filter(model.models.Candidate.id.in_(candidate_ids)).all()
 
 @router.get("/{candidate_id}", response_model=schemas.CandidateSchema)

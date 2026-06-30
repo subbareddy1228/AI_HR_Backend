@@ -16,7 +16,7 @@ UPLOAD_FOLDER = "uploads/logos"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
-#  CREATE
+
 @router.post("/", response_model=company.CompanyResponse)
 def create_company(
     company_name: str = Form(...),
@@ -60,7 +60,7 @@ def create_company(
         file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
         with open(file_path, "wb") as f:
             shutil.copyfileobj(logo.file, f)
-        # Store relative path
+        
         logo_filename = file_path.replace("\\", "/")
 
     new_company = model.Company(
@@ -104,7 +104,7 @@ def create_company(
     return convert_company_output(new_company)
 
 
-# UTIL: Convert DB Model → Frontend JSON 
+ 
 def convert_company_output(db_company):
     """Convert DB fields into frontend-friendly structure."""
     if not db_company:
@@ -112,9 +112,9 @@ def convert_company_output(db_company):
 
     company_dict = db_company.__dict__.copy()
 
-    # Normalize logo path
+    
     if db_company.logo:
-        # Normalize path separators and ensure it starts with /
+        
         normalized_path = db_company.logo.replace("\\", "/")
         if not normalized_path.startswith("/"):
             company_dict["logo"] = f"/{normalized_path}"
@@ -127,14 +127,14 @@ def convert_company_output(db_company):
     return company_dict
 
 
-#  READ ALL
+
 @router.get("/", response_model=List[company.CompanyResponse])
 def read_companies(db: Session = Depends(get_db)):
     db_companies = db.query(model.Company).all()
     return [convert_company_output(c) for c in db_companies]
 
 
-#  READ ONE
+
 @router.get("/{company_id}", response_model=company.CompanyResponse)
 def read_company(company_id: int, db: Session = Depends(get_db)):
     company_obj = db.query(model.Company).filter(model.Company.id == company_id).first()
@@ -143,7 +143,7 @@ def read_company(company_id: int, db: Session = Depends(get_db)):
     return convert_company_output(company_obj)
 
 
-#  UPDATE
+
 @router.put("/{company_id}", response_model=company.CompanyResponse)
 def update_company(
     company_id: int,
@@ -184,17 +184,17 @@ def update_company(
     if not db_company:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    # LOGO
+   
     if logo:
         file_extension = os.path.splitext(logo.filename)[1] if logo.filename else '.png'
         unique_filename = f"company_{company_id}_{uuid.uuid4().hex[:8]}{file_extension}"
         file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
         with open(file_path, "wb") as f:
             shutil.copyfileobj(logo.file, f)
-        # Store relative path
+        
         db_company.logo = file_path.replace("\\", "/")
 
-    # FIELDS 
+    
     updates = {
         "company_name": company_name,
         "phone_number": phone_number,
@@ -237,7 +237,7 @@ def update_company(
     return convert_company_output(db_company)
 
 
-#  UPDATE LOGO  
+
 @router.put("/{company_id}/logo")
 def update_company_logo(
     company_id: int,
@@ -255,13 +255,13 @@ def update_company_logo(
     with open(logo_path, "wb") as f:
         f.write(file.file.read())
 
-    # Store relative path
+   
     relative_path = logo_path.replace("\\", "/")
     db_company.logo = relative_path
     db.commit()
     db.refresh(db_company)
 
-    # Return normalized path for frontend
+    
     normalized_path = relative_path
     if not normalized_path.startswith("/"):
         normalized_path = f"/{normalized_path}"
@@ -269,7 +269,7 @@ def update_company_logo(
     return {"message": "Logo updated successfully", "logo": normalized_path}
 
 
-#  DELETE  
+
 @router.delete("/{company_id}")
 def delete_company(company_id: int, db: Session = Depends(get_db)):
     db_company = db.query(model.Company).filter(model.Company.id == company_id).first()

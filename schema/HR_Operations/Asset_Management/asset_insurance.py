@@ -1,8 +1,4 @@
-"""
-Asset Insurance Pydantic Schemas
-Covers: Insurance tab — Policy ID, Asset Details, Provider, Policy Number,
-Coverage Amount, Premium, Coverage Type, Validity, Claims, Status, Actions.
-"""
+
 
 from __future__ import annotations
 

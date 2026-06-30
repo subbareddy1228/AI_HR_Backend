@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 _reset_tokens: dict = {}
 
-# ---------------- PASSWORD ----------------
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_password_hash(password: str) -> str:
@@ -29,14 +29,14 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
-# ---------------- JWT ----------------
+
 SECRET_KEY = "your_super_secret_key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
-# ---------------- SCHEMAS ----------------
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -73,14 +73,14 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 
-# ---------------- TOKEN ----------------
+
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# ---------------- CURRENT USER ----------------
+
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
@@ -102,7 +102,7 @@ def get_current_user(
 
     return user
 
-# ---------------- ROLE GUARD ----------------
+
 def require_roles(allowed_roles: List[str]):
     def checker(user: User = Depends(get_current_user)):
         if user.role not in allowed_roles:
@@ -110,7 +110,7 @@ def require_roles(allowed_roles: List[str]):
         return user
     return checker
 
-# ---------------- SIGNUP ----------------
+
 @router.post("/signup", status_code=201)
 def signup(payload: SignupRequest, db: Session = Depends(get_db)):
     existing_user = db.execute(
@@ -127,7 +127,7 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)):
         role=payload.role,
         company_name=payload.company_name,
         company_website=payload.company_website,
-        is_active=False  # admin approval required
+        is_active=False  
     )
 
     db.add(user)
@@ -160,7 +160,7 @@ def create_superadmin(db: Session = Depends(get_db)):
 
     return {"message": "Superadmin created successfully"}
 
-# ---------------- LOGIN JSON (Frontend) ----------------
+
 @router.post("/login-json", response_model=TokenResponse)
 def login_json(payload: LoginJSON, db: Session = Depends(get_db)):
     user = db.execute(
@@ -182,7 +182,6 @@ def login_json(payload: LoginJSON, db: Session = Depends(get_db)):
         "refresh_token": None,
     }
 
-# ---------------- LOGIN FORM (Swagger) ----------------
 @router.post("/login", response_model=TokenResponse)
 def login_form(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -226,7 +225,7 @@ async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(
         select(User).where(User.email == payload.email)
     ).scalar_one_or_none()
 
-    # Always return success to prevent email enumeration
+   
     if not user:
         return {"message": "If that email exists, a reset link has been sent."}
 
@@ -246,7 +245,7 @@ async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(
         fm = FastMail(mail_config)
         await fm.send_message(message)
     except Exception:
-        pass  # Don't expose email errors
+        pass  
 
     return {"message": "If that email exists, a reset link has been sent."}
 

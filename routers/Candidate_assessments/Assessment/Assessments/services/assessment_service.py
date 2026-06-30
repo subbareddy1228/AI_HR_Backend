@@ -1,9 +1,9 @@
 # backend/services/assessment_service.py
 from sqlalchemy.orm import Session
-from schema.assessment import AssessmentCreate   # absolute import
+from schema.assessment import AssessmentCreate   
 from model.models import Assessment, User
 from typing import Optional
- # instead of 'app.schemas.assessment'
+
 
 def create_assessment(db: Session, data: AssessmentCreate):
     assessment = Assessment(**data.dict())
@@ -15,7 +15,7 @@ def create_assessment(db: Session, data: AssessmentCreate):
 def get_assessments(db: Session, skill: str = None, difficulty: str = None, role: str = None, user: Optional[User] = None):
     query = db.query(Assessment)
     
-    # Filter by recruiter (unless admin)
+
     if user and user.role.lower() != "admin":
         query = query.filter(Assessment.created_by == user.id)
     

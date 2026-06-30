@@ -1,7 +1,4 @@
-"""
-Asset Pydantic Schemas
-Covers full lifecycle: create, update, response, and depreciation schedule response.
-"""
+
 
 from __future__ import annotations
 
@@ -12,14 +9,13 @@ from typing import Optional, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-# ── Enumerations (kept as Literal for strict validation) ──────────────────────
 
 AssetStatus = Literal["AVAILABLE", "ALLOCATED", "UNDER_MAINTENANCE", "RETIRED"]
 AssetCondition = Literal["New", "Good", "Fair", "Poor"]
 DepreciationMethod = Literal["Straight Line", "Declining Balance", "Written-Down-Value"]
 
 
-# ── Base ──────────────────────────────────────────────────────────────────────
+
 
 class AssetBase(BaseModel):
     asset_name:          str  = Field(..., min_length=1, max_length=255)
@@ -55,7 +51,7 @@ class AssetCreate(AssetBase):
 
 
 class AssetUpdate(BaseModel):
-    """All fields optional — PATCH semantics."""
+    
     asset_name:          Optional[str]               = None
     category:            Optional[str]               = None
     make:                Optional[str]               = None
@@ -83,10 +79,10 @@ class AssetResponse(AssetBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ── Depreciation Schedule (used in Depreciation tab) ─────────────────────────
+
 
 class DepreciationScheduleItem(BaseModel):
-    """One row in the Depreciation Schedule table."""
+    
     asset_id:            int
     asset_name:          str
     serial_number:       str
@@ -95,7 +91,7 @@ class DepreciationScheduleItem(BaseModel):
     depreciation_method: str
     useful_life_years:   Optional[int]
 
-    # Computed on-the-fly by the service
+
     current_value:        Decimal
     yearly_depreciation:  Decimal
     accumulated:          Decimal
@@ -105,7 +101,6 @@ class DepreciationScheduleItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ── Dashboard statistics schema ───────────────────────────────────────────────
 
 class AssetDashboardStats(BaseModel):
     total_assets:       int
@@ -117,10 +112,10 @@ class AssetDashboardStats(BaseModel):
     upcoming_maintenance: int
     expiring_insurance: int
     total_asset_value:  Decimal
-    utilization_rate:   float   # 0.0 – 100.0
+    utilization_rate:   float   
 
 
-# ── Asset Reports schema ──────────────────────────────────────────────────────
+
 
 class AssetReportRow(BaseModel):
     asset_id:        int

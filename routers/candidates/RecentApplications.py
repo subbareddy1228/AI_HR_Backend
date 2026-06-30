@@ -9,9 +9,7 @@ import model.models
 router = APIRouter(prefix="/recent-applications", tags=["RecentApplications"])
 
 
-# =====================================================
-# CREATE RECENT APPLICATION
-# =====================================================
+
 @router.post("/", response_model=schemas.RecentApplications)
 async def create_recent_application(
     application: schemas.RecentApplicationsCreate,
@@ -31,18 +29,14 @@ async def create_recent_application(
     return db_app
 
 
-# =====================================================
-# READ RECENT APPLICATIONS
-# =====================================================
+
 @router.get("/", response_model=list[schemas.RecentApplications])
 async def read_recent_applications(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(RecentApplications))
     return result.scalars().all()
 
 
-# =====================================================
-# DELETE RECENT APPLICATION
-# =====================================================
+
 @router.delete("/{app_id}", status_code=204)
 async def delete_recent_application(
     app_id: int,

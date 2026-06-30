@@ -16,12 +16,12 @@ router = APIRouter()
 UPLOAD_DIR = "uploads/"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Run migration on module load to ensure columns exist
+
 def ensure_answer_columns():
     """Ensure all required columns exist in the answers table."""
     try:
         with engine.begin() as conn:
-            # Check if question_text column exists
+            
             result = conn.execute(text("""
                 SELECT COUNT(*) 
                 FROM information_schema.columns 
@@ -36,7 +36,7 @@ def ensure_answer_columns():
                 """))
                 print("Added 'question_text' column to answers table")
             
-            # Check if template_question_index column exists
+          
             result = conn.execute(text("""
                 SELECT COUNT(*) 
                 FROM information_schema.columns 
@@ -51,7 +51,7 @@ def ensure_answer_columns():
                 """))
                 print("Added 'template_question_index' column to answers table")
             
-            # Check if audio_path column exists
+            
             result = conn.execute(text("""
                 SELECT COUNT(*) 
                 FROM information_schema.columns 
@@ -100,8 +100,7 @@ def ensure_answer_columns():
         import traceback
         traceback.print_exc()
 
-# Initialize database columns lazily (only when needed, not at import time)
-# This prevents startup failures if database is not available
+
 def init_db_columns():
     """Initialize database columns. Call this when database is ready."""
     try:
@@ -109,8 +108,7 @@ def init_db_columns():
     except Exception as e:
         print(f"⚠ Warning: Could not initialize database columns: {e}")
 
-# Don't call at import time - let it be called lazily when routes are accessed
-# ensure_answer_columns()  # Removed - will be called on first route access if needed
+
 
 class OTPRequest(BaseModel):
     email: EmailStr
@@ -232,16 +230,16 @@ def get_questions(
     Otherwise, use the first available template.
     """
     
-    # If template_id is provided, fetch that specific template
+    
     if template_id:
         template = db.query(AIInterviewTemplate).filter(AIInterviewTemplate.id == template_id).first()
         if not template:
             raise HTTPException(status_code=404, detail=f"Template with ID {template_id} not found")
     else:
-        # Get the first available template
+        
         template = db.query(AIInterviewTemplate).first()
         
-        # If no template exists, return an error
+        
         if not template:
             raise HTTPException(
                 status_code=404, 
@@ -293,17 +291,17 @@ def submit_answer(
     audio_path = None
     video_path = None
     
-    # Handle video file (primary for video/audio recording)
+    
     if video:
         try:
-            # Generate unique filename with timestamp
+            
             timestamp = int(datetime.utcnow().timestamp())
             
-            # Get file extension from filename or default to .webm
+           
             if video.filename:
                 file_extension = os.path.splitext(video.filename)[1] or '.webm'
             else:
-                # Check content type if filename is not available
+                
                 content_type = getattr(video, 'content_type', '') or ''
                 if 'mp4' in content_type:
                     file_extension = '.mp4'
@@ -312,17 +310,17 @@ def submit_answer(
             
             video_filename = f"video_{candidate_id}_{question_id}_{timestamp}{file_extension}"
             video_path_full = os.path.join(UPLOAD_DIR, video_filename)
-            # Store relative path for database (uploads/filename)
+            
             video_path = os.path.join("uploads", video_filename).replace("\\", "/")
             
-            # Ensure upload directory exists
+           
             os.makedirs(UPLOAD_DIR, exist_ok=True)
             
-            # Save video file
+            
             with open(video_path_full, "wb") as buffer:
                 shutil.copyfileobj(video.file, buffer)
             
-            # Verify file was saved
+           
             if os.path.exists(video_path_full) and os.path.getsize(video_path_full) > 0:
                 print(f" Video saved successfully: {video_path_full} (size: {os.path.getsize(video_path_full)} bytes)")
                 print(f"   Database path: {video_path}")
@@ -335,16 +333,16 @@ def submit_answer(
             traceback.print_exc()
             video_path = None
     
-    # Handle audio file (if provided separately)
+    
     if audio:
         try:
             timestamp = int(datetime.utcnow().timestamp())
             
-            # Get file extension from filename or default to .webm
+            
             if audio.filename:
                 file_extension = os.path.splitext(audio.filename)[1] or '.webm'
             else:
-                # Check content type if filename is not available
+                
                 content_type = getattr(audio, 'content_type', '') or ''
                 if 'mp4' in content_type or 'm4a' in content_type:
                     file_extension = '.m4a'
@@ -353,17 +351,16 @@ def submit_answer(
             
             audio_filename = f"audio_{candidate_id}_{question_id}_{timestamp}{file_extension}"
             audio_path_full = os.path.join(UPLOAD_DIR, audio_filename)
-            # Store relative path for database (uploads/filename)
+           
             audio_path = os.path.join("uploads", audio_filename).replace("\\", "/")
             
-            # Ensure upload directory exists
+            
             os.makedirs(UPLOAD_DIR, exist_ok=True)
             
-            # Save audio file
+            
             with open(audio_path_full, "wb") as buffer:
                 shutil.copyfileobj(audio.file, buffer)
             
-            # Verify file was saved
             if os.path.exists(audio_path_full) and os.path.getsize(audio_path_full) > 0:
                 print(f" Audio saved successfully: {audio_path_full} (size: {os.path.getsize(audio_path_full)} bytes)")
                 print(f"   Database path: {audio_path}")
@@ -376,7 +373,7 @@ def submit_answer(
             traceback.print_exc()
             audio_path = None
 
-    # Calculate AI score if text answer is provided
+    
     score = None
     if answer_text and question_text:
         try:
@@ -384,26 +381,24 @@ def submit_answer(
             print(f"AI Score for candidate {candidate_id}, question {question_id}: {score}/10")
         except Exception as e:
             print(f" Error calculating AI score: {str(e)}")
-            score = 0  # Default score if AI fails
+            score = 0  
 
-    # Save answer to database
-    # For template questions, question_id is just an index, not a foreign key
-    # So we store question_text directly and set question_id to None
+   
     ans = Answer(
         candidate_id=candidate_id,
-        question_id=None,  # Template questions don't have Question records
-        question_text=question_text,  # Store question text directly
-        template_question_index=question_id,  # Store the index from template
+        question_id=None,  
+        question_text=question_text,
+        template_question_index=question_id,  
         answer_text=answer_text,
-        audio_path=audio_path,  # Store audio path (if provided separately)
-        video_path=video_path,  # Store video path (primary for video/audio recording)
+        audio_path=audio_path,  
+        video_path=video_path,  
         score=score
     )
     db.add(ans)
     db.commit()
     db.refresh(ans)
     
-    # Log saved answer details for debugging
+   
     print(f" Answer saved to database:")
     print(f"   - Answer ID: {ans.id}")
     print(f"   - Candidate ID: {candidate_id}")
@@ -429,27 +424,27 @@ def get_interview_results(db: Session = Depends(get_db), user: User = Depends(ge
     """
     print(f" Fetching interview results for user: {user.id} (role: {user.role})")
     
-    # Get recruiter's candidate emails
+    
     recruiter_candidate_emails = set()
     recruiter_has_jobs = False
     
     if user.role.lower() != "admin":
-        # Get all job IDs for this recruiter
+       
         job_ids = list(db.exec(select(Job.id).where(Job.recruiter_id == user.id)).all())
         print(f" Recruiter {user.id} has {len(job_ids)} jobs")
         recruiter_has_jobs = len(job_ids) > 0
         
         if job_ids:
-            # Get all applications for these jobs
+            
             applications = db.exec(select(Application).where(Application.job_id.in_(job_ids))).all()
             print(f"🔍 Found {len(applications)} applications for recruiter's jobs")
             
-            # Get unique candidate emails from applications
+            
             for app in applications:
                 if app.candidate_email:
                     recruiter_candidate_emails.add(app.candidate_email.lower().strip())
             
-            # Also get emails from Candidate table
+            
             candidate_ids = list(set([app.candidate_id for app in applications if app.candidate_id]))
             if candidate_ids:
                 candidates = db.exec(select(Candidate).where(Candidate.id.in_(candidate_ids))).all()
@@ -462,12 +457,12 @@ def get_interview_results(db: Session = Depends(get_db), user: User = Depends(ge
             sample_emails = list(recruiter_candidate_emails)[:5]
             print(f" Sample emails: {sample_emails}")
     
-    # Get all candidates who have submitted answers
+    
     query = db.query(InterviewCandidate).join(
         Answer, InterviewCandidate.id == Answer.candidate_id
     ).distinct()
     
-    # Filter by recruiter's candidate emails (unless admin)
+    
     if user.role.lower() != "admin":
         if recruiter_candidate_emails:
             query = query.filter(
@@ -477,11 +472,11 @@ def get_interview_results(db: Session = Depends(get_db), user: User = Depends(ge
             )
             print(f" Filtering interview candidates by {len(recruiter_candidate_emails)} emails from applications")
         elif recruiter_has_jobs:
-            # Recruiter has jobs but no applications yet - return empty
+            
             print(f" Recruiter {user.id} has jobs but no applications, returning empty results")
             return []
         else:
-            # No jobs at all - return empty
+            
             print(f" Recruiter {user.id} has no jobs, returning empty results")
             return []
     
@@ -490,15 +485,15 @@ def get_interview_results(db: Session = Depends(get_db), user: User = Depends(ge
     
     results = []
     for candidate in candidates_with_answers:
-        # Get all answers for this candidate
+        
         answers = db.query(Answer).filter(Answer.candidate_id == candidate.id).all()
         
-        # Calculate statistics
+        
         total_score = sum(a.score or 0 for a in answers)
         max_score = len(answers) * 10
         avg_score = (total_score / max_score * 100) if max_score > 0 else 0
         
-        # Format answers
+        
         formatted_answers = []
         for answer in answers:
             formatted_answers.append({
@@ -537,12 +532,12 @@ def get_candidate_interview_result(candidate_id: int, db: Session = Depends(get_
     if not answers:
         raise HTTPException(status_code=404, detail="No interview answers found for this candidate")
     
-    # Calculate statistics
+   
     total_score = sum(a.score or 0 for a in answers)
     max_score = len(answers) * 10
     avg_score = (total_score / max_score * 100) if max_score > 0 else 0
     
-    # Format answers with question details
+    
     formatted_answers = []
     for answer in answers:
         formatted_answers.append({

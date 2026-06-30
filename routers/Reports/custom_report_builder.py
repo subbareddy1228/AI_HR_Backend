@@ -57,10 +57,6 @@ def list_features(
     page:     int = Query(1, ge=1),
     per_page: int = Query(8, ge=1, le=100),
 ):
-    """
-    Paginated feature list shown in the table.
-    Supports: search by name, filter by category, filter by status.
-    """
     q = select(ReportFeature).where(ReportFeature.is_active == True)
 
     if search:

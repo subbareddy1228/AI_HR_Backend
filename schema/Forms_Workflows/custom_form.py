@@ -72,7 +72,7 @@ class FormPageResponse(FormPageCreate):
 
 
 class FormSectionCreate(BaseModel):
-    client_id:     Optional[str] = None   # "section_<ts>" from frontend
+    client_id:     Optional[str] = None  
     page_number:   int           = 1
     title:         str           = "Section"
     description:   Optional[str] = None
@@ -240,7 +240,7 @@ class VersionHistoryResponse(BaseModel):
 
 class CustomFormCreate(BaseModel):
    
-    client_form_id: Optional[str]  = None   # "form_<ts>"
+    client_form_id: Optional[str]  = None   
     title:          str
     description:    Optional[str]  = None
     category:       str            = "General"
@@ -338,7 +338,7 @@ class CustomFormResponse(BaseModel):
 
 
 class AnswerCreate(BaseModel):
-    """One field's answer inside a submission."""
+    
     field_id:        Optional[int]  = None  
     client_field_id: Optional[str] = None   
     value:           Any           

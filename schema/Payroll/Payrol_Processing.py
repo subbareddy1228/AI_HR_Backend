@@ -18,13 +18,13 @@ from model.Payroll.Payroll_Processing import (
 
 
 class PayrollConfigCreate(BaseModel):
-    # Cycle Settings
+    
     cycle_type:       CycleType = CycleType.MONTHLY
     pay_period:       PayPeriod = PayPeriod.STANDARD_MONTH
     period_start_day: Optional[int] = Field(None, ge=1, le=31)
     period_end_day:   Optional[int] = Field(None, ge=1, le=31)
 
-    # Schedule
+    
     processing_day: int = Field(25, ge=1, le=31,
                                 description="Day of month payroll is processed")
     payment_day:    int = Field(30, ge=1, le=31,

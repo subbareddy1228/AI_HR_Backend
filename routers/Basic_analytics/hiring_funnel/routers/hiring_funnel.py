@@ -9,7 +9,7 @@ from model.models import Candidate
 
 router = APIRouter()
 
-# Create tables automatically (can also move to startup in main.py)
+
 @router.on_event("startup")
 def startup():
     try:
@@ -20,7 +20,7 @@ def startup():
         print("  Database may not be available. The application will continue.")
         print("  Please ensure PostgreSQL is running and DATABASE_URL is correct.")
 
-# Dependency to get DB session
+
 def get_db():
     db = SessionLocal()
     try:
@@ -28,7 +28,7 @@ def get_db():
     finally:
         db.close()
 
-# Helper to convert Yes/No/True/False to float
+
 def yes_no_to_float(value):
     if not value:
         return 0.0
@@ -37,7 +37,7 @@ def yes_no_to_float(value):
         return 1.0
     return 0.0
 
-# CSV upload endpoint
+
 @router.post("/upload-file")
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
     content = await file.read()
@@ -49,7 +49,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
 
     for i, row in enumerate(reader, start=2):
         try:
-            # Parse date
+            
             applied_date_str = row.get("Applied_Date", "")
             try:
                 applied_date = datetime.strptime(applied_date_str, "%Y-%m-%d")

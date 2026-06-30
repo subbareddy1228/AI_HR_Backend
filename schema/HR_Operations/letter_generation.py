@@ -9,9 +9,9 @@ class LetterTemplateCreate(BaseModel):
     template_code: str
     name: str
     description: Optional[str] = None
-    category: str                          # Employment | Financial | Exit | Legal | Career | Disciplinary
+    category: str                          
     body_template: str
-    required_approvals: Optional[str] = None   # "Manager,HR,Finance"
+    required_approvals: Optional[str] = None  
     auto_approve: bool = False
     is_ai_optimised: bool = True
 
@@ -94,7 +94,7 @@ class LetterGenerationCreate(BaseModel):
 class LetterGenerationUpdate(BaseModel):
     subject: Optional[str] = None
     body: Optional[str] = None
-    status: Optional[str] = None           # DRAFT | ISSUED | REVOKED
+    status: Optional[str] = None           
     digital_signature: Optional[bool] = None
     is_signed: Optional[bool] = None
 
@@ -133,7 +133,7 @@ class LetterWorkflowCreate(BaseModel):
 
 
 class LetterWorkflowUpdate(BaseModel):
-    status: Optional[str] = None           # Pending | Approved | Rejected | Skipped
+    status: Optional[str] = None           
     remarks: Optional[str] = None
     approver_id: Optional[int] = None
 
@@ -158,7 +158,7 @@ class LetterWorkflowResponse(BaseModel):
 class LetterSystemSettingsUpdate(BaseModel):
     default_digital_signature: Optional[str] = None
     audit_trail_retention_days: Optional[int] = None
-    default_letter_format: Optional[str] = None        # PDF | DOCX
+    default_letter_format: Optional[str] = None        
     default_workflow_sla_hours: Optional[int] = None
     high_priority_sla_hours: Optional[int] = None
     medium_priority_sla_hours: Optional[int] = None

@@ -73,7 +73,7 @@ class JobRead(JobBase):
     class Config:
         orm_mode = True
 
-# Candidates
+
 class CandidateCreate(BaseModel):
     name: str
     role: str
@@ -312,7 +312,7 @@ class LeaveRequestOut(BaseModel):
 
 
 
-# Document Schemas
+
 class DocumentBase(BaseModel):
     title: str
 
@@ -329,7 +329,7 @@ class Document(DocumentBase):
 
 
 
-# Signature Schemas
+
 class SignatureBase(BaseModel):
     name: str
 
@@ -344,7 +344,7 @@ class Signature(SignatureBase):
     class Config:
         orm_mode = True
 
-# Candidate schemas
+
 class CandidateCreate(BaseModel):
     first_name: str
     last_name: str
@@ -357,7 +357,7 @@ class CandidateOut(CandidateCreate):
     class Config:
         orm_mode = True
 
-# Document schemas
+
 class DocumentCreate(BaseModel):
     name: str
 
@@ -366,7 +366,7 @@ class DocumentOut(DocumentCreate):
     class Config:
         orm_mode = True
 
-# Upload schemas
+
 class UploadCreate(BaseModel):
     candidate_id: int
     document_id: int
@@ -377,7 +377,7 @@ class UploadOut(UploadCreate):
     class Config:
         orm_mode = True
 
-# Task schemas
+
 
 class TaskStatus(str, Enum):
     pending = "Pending"

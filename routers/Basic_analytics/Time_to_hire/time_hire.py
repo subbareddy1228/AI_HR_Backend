@@ -20,7 +20,7 @@ async def upload_file(file: UploadFile = File(...)):
     if not required_cols.issubset(df.columns):
         raise HTTPException(status_code=400, detail=f"CSV must contain columns: {required_cols}")
 
-    # Parse dates safely
+  
     for col in ["application_date", "hire_date"]:
         df[col] = pd.to_datetime(df[col], errors="coerce")
     df = df.dropna(subset=["application_date", "hire_date"])
@@ -28,15 +28,15 @@ async def upload_file(file: UploadFile = File(...)):
     if df.empty:
         raise HTTPException(status_code=400, detail="No valid rows found in dataset")
 
-    # Calculate hiring time
+    
     df["hiring_time"] = (df["hire_date"] - df["application_date"]).dt.days
 
-    # Stats
+    
     avg_time = round(df["hiring_time"].mean(), 2)
     fastest = int(df["hiring_time"].min())
     longest = int(df["hiring_time"].max())
 
-    # Charts
+    
     bar_data = {
         "labels": df["name"].tolist(),
         "values": df["hiring_time"].tolist()
@@ -52,7 +52,7 @@ async def upload_file(file: UploadFile = File(...)):
         "values": [fastest, avg_time, longest]
     }
 
-    # Line chart: hires per month
+    
     df["hire_month"] = df["hire_date"].dt.to_period("M").astype(str)
     line_group = df.groupby("hire_month").size()
     line_data = {

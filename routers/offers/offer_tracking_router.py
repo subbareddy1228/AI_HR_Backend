@@ -139,7 +139,7 @@ def send_offer_endpoint(request: SendOfferRequest, db: Session = Depends(get_db)
         
         actual_candidate_id = request.candidate_id
         if request.candidate_email:
-            # Try to find candidate in main candidate table by email
+           
             candidate = db.query(Candidate).filter(
                 func.lower(func.trim(Candidate.email)) == request.candidate_email.lower().strip()
             ).first()
@@ -148,9 +148,9 @@ def send_offer_endpoint(request: SendOfferRequest, db: Session = Depends(get_db)
                 actual_candidate_id = candidate.id
                 print(f" Found candidate in main table: ID={candidate.id}, Email={candidate.email}")
             else:
-                # If candidate doesn't exist in main table, create one or use None
+               
                 print(f" Candidate with email {request.candidate_email} not found in main candidate table")
-                # Set candidate_id to None - the offer will still be created with candidate_name and candidate_email
+                
                 actual_candidate_id = None
         
         expiry_date = None

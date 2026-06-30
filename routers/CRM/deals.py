@@ -10,7 +10,7 @@ import crud_ops
 router = APIRouter()
 
 
-#  Create a deal
+
 @router.post("/", response_model=DealOut, status_code=201)
 def create_deal(payload: DealCreate, db: Session = Depends(get_db)):
     """Create a new deal."""
@@ -20,7 +20,7 @@ def create_deal(payload: DealCreate, db: Session = Depends(get_db)):
     db.refresh(deal)
     return deal
 
-#  List all deals (with optional search)
+
 @router.get("/", response_model=List[DealOut])
 def list_deals(db: Session = Depends(get_db), q: Optional[str] = None):
     """Get all deals, optionally filter by deal_name."""
@@ -29,7 +29,7 @@ def list_deals(db: Session = Depends(get_db), q: Optional[str] = None):
         query = query.filter(Deal.deal_name.ilike(f"%{q}%"))
     return query.all()
 
-#  Get a single deal
+
 @router.get("/{deal_id}", response_model=DealOut)
 def get_deal(deal_id: int, db: Session = Depends(get_db)):
     """Fetch a deal by ID."""
@@ -38,7 +38,7 @@ def get_deal(deal_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Deal not found")
     return deal
 
-#  Update a deal
+
 @router.patch("/{deal_id}", response_model=DealOut)
 def update_deal(deal_id: int, payload: DealUpdate, db: Session = Depends(get_db)):
     """Update an existing deal."""
@@ -53,7 +53,7 @@ def update_deal(deal_id: int, payload: DealUpdate, db: Session = Depends(get_db)
     db.refresh(deal)
     return deal
 
-#  Delete a deal
+
 @router.delete("/{deal_id}", status_code=204, response_class=Response)
 def delete_deal(deal_id: int, db: Session = Depends(get_db)):
     """Delete a deal by ID."""

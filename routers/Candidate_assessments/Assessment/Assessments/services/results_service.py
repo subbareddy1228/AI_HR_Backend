@@ -18,7 +18,7 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
     Groups results by candidate email and returns all three stages.
     Filtered by recruiter if user is provided.
     """
-    # Get recruiter's candidate emails
+   
     recruiter_candidate_emails = set()
     
     if user and user.role.lower() != "admin":
@@ -42,21 +42,21 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
         if recruiter_candidate_emails:
             print(f"🔍 Sample emails: {list(recruiter_candidate_emails)[:5]}")
     
-    # If user is not admin and has no candidates, return empty list
+   
     if user and user.role.lower() != "admin" and not recruiter_candidate_emails:
         print(f"⚠️ Recruiter {user.id} has no candidates, returning empty results")
         return []
     
     candidate_results_map = {}
     
-    # 1. Fetch Aptitude Results
+    
     try:
         query = db.query(LegacyCandidate).filter(
             LegacyCandidate.status.isnot(None),
             LegacyCandidate.status != ''
         )
         
-        # Filter by recruiter's candidate emails (unless admin)
+        
         if user and user.role.lower() != "admin" and recruiter_candidate_emails:
             from sqlalchemy import func
             query = query.filter(
@@ -65,8 +65,8 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
                 )
             )
         elif user and user.role.lower() != "admin":
-            # Non-admin with no candidates should get no results
-            query = query.filter(False)  # This will return empty results
+            
+            query = query.filter(False) 
         
         aptitude_results = query.all()
         
@@ -84,29 +84,29 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
                     "coding": None
                 }
             
-            # Calculate question count from answers
-            question_count = 25  # default
+       
+            question_count = 25 
             if result.answers:
                 if isinstance(result.answers, dict):
                     question_count = len(result.answers)
             
             candidate_results_map[email]["aptitude"] = {
                 "score": result.score,
-                "status": "Completed",  # If status exists, test is completed
-                "test_status": result.status,  # Qualified/Regret
+                "status": "Completed",  
+                "test_status": result.status,
                 "question_count": question_count,
-                "completed_at": None  # Aptitude table doesn't have timestamp
+                "completed_at": None  
             }
     except Exception as e:
         print(f"❌ Error fetching aptitude results: {e}")
         import traceback
         traceback.print_exc()
     
-    # 2. Fetch Communication Results
+    
     try:
         if user and user.role.lower() != "admin":
             if recruiter_candidate_emails:
-                # Filter by recruiter's candidate emails
+                
                 placeholders = ','.join([f':email{i}' for i in range(len(recruiter_candidate_emails))])
                 params = {f'email{i}': email for i, email in enumerate(recruiter_candidate_emails)}
                 comm_results = db.execute(
@@ -119,10 +119,10 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
                     params
                 ).fetchall()
             else:
-                # Non-admin with no candidates should get no results
+                
                 comm_results = []
         else:
-            # Admin gets all results
+            
             comm_results = db.execute(
                 text("""
                     SELECT email, name, total_score, passed, submitted_at
@@ -145,7 +145,6 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
                     "coding": None
                 }
             
-            # Handle passed field - could be boolean, string, or integer
             passed_value = row[3]
             is_passed = False
             if passed_value is True or passed_value == 1 or (isinstance(passed_value, str) and passed_value.lower() in ['true', '1', 'yes']):
@@ -155,7 +154,7 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
                 "score": float(row[2]) if row[2] is not None else 0,
                 "status": "Completed",
                 "test_status": "Qualified" if is_passed else "Regret",
-                "question_count": None,  # Communication doesn't track question count
+                "question_count": None,  
                 "completed_at": row[4].isoformat() if row[4] else None
             }
     except Exception as e:
@@ -163,11 +162,11 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
         import traceback
         traceback.print_exc()
     
-    # 3. Fetch Coding Results
+    
     try:
         if user and user.role.lower() != "admin":
             if recruiter_candidate_emails:
-                # Filter by recruiter's candidate emails
+                
                 placeholders = ','.join([f':email{i}' for i in range(len(recruiter_candidate_emails))])
                 params = {f'email{i}': email for i, email in enumerate(recruiter_candidate_emails)}
                 coding_results = db.execute(
@@ -183,10 +182,10 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
                     params
                 ).fetchall()
             else:
-                # Non-admin with no candidates should get no results
+                
                 coding_results = []
         else:
-            # Admin gets all results
+            
             coding_results = db.execute(
                 text("""
                     SELECT candidate_email, candidate_name,
@@ -220,7 +219,7 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
                     "score": int(success_count),
                     "status": "Completed",
                     "test_status": "Qualified" if success_count >= 1 else "Regret",
-                    "question_count": None,  # Coding doesn't track question count in results
+                    "question_count": None,  
                     "completed_at": row[4].isoformat() if row[4] else None,
                     "submission_count": int(submission_count),
                     "success_count": int(success_count)
@@ -230,7 +229,7 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
         import traceback
         traceback.print_exc()
     
-    # Add candidate_id by looking up from candidate_records
+    
     try:
         for email, candidate_data in candidate_results_map.items():
             candidate_record = db.execute(
@@ -245,7 +244,7 @@ def get_all_assessment_results(db: Session, user: Optional[User] = None) -> List
     except Exception as e:
         print(f"⚠️ Warning: Could not fetch candidate_id for some candidates: {e}")
     
-    # Convert map to list
+   
     results_list = list(candidate_results_map.values())
     
     print(f"✅ Fetched results for {len(results_list)} candidates")

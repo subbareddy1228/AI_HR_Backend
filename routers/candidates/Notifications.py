@@ -9,9 +9,7 @@ import model.models
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 
-# =====================================================
-# CREATE NOTIFICATION
-# =====================================================
+
 @router.post("/", response_model=schemas.Notifications)
 async def create_notification(
     notification: schemas.NotificationsCreate,
@@ -29,18 +27,14 @@ async def create_notification(
     return notif
 
 
-# =====================================================
-# READ NOTIFICATIONS
-# =====================================================
+
 @router.get("/", response_model=list[schemas.Notifications])
 async def read_notifications(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Notifications))
     return result.scalars().all()
 
 
-# =====================================================
-# MARK NOTIFICATION AS READ
-# =====================================================
+
 @router.put("/{notif_id}", response_model=schemas.Notifications)
 async def mark_as_read(
     notif_id: int,

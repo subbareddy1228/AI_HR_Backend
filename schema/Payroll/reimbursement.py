@@ -31,7 +31,7 @@ class ReimbursementTypeCreate(BaseModel):
 
 
 class ReimbursementTypeUpdate(BaseModel):
-    """Body for PATCH /types/{id}  (Edit button → Save)"""
+    
     name:         Optional[str]     = Field(None, min_length=1, max_length=255)
     description:  Optional[str]     = None
     category:     Optional[str]     = Field(
@@ -252,7 +252,7 @@ class TopEmployeeRow(BaseModel):
 
 
 class ReimbursementReports(BaseModel):
-    """Full Reports tab payload"""
+    
     by_type:       List[ClaimsByTypeRow]
     tax_analysis:  TaxAnalysis
     monthly_trend: List[MonthlyTrendRow]
@@ -260,7 +260,7 @@ class ReimbursementReports(BaseModel):
 
 
 class ClaimExportRow(BaseModel):
-    """Flat row for CSV / Excel export (Export button in Claims tab)"""
+    
     id:             int
     employee:       str
     employee_id:    str

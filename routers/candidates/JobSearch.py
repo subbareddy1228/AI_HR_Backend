@@ -9,9 +9,7 @@ import model.models
 router = APIRouter(prefix="/job-search", tags=["JobSearch"])
 
 
-# =====================================================
-# CREATE JOB SEARCH
-# =====================================================
+
 @router.post("/", response_model=schemas.JobSearch)
 async def create_jobsearch(
     job: schemas.JobSearchCreate,
@@ -30,18 +28,13 @@ async def create_jobsearch(
     return db_job
 
 
-# =====================================================
-# READ JOB SEARCH LIST
-# =====================================================
 @router.get("/", response_model=list[schemas.JobSearch])
 async def read_jobsearch(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(JobSearch))
     return result.scalars().all()
 
 
-# =====================================================
-# DELETE JOB SEARCH
-# =====================================================
+
 @router.delete("/{job_id}", status_code=204)
 async def delete_jobsearch(
     job_id: int,

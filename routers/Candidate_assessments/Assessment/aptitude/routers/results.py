@@ -16,22 +16,22 @@ router = APIRouter(prefix="/results", tags=["Aptitude Results"])
 @router.get("/all")
 def get_all_results(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Get all aptitude test results filtered by recruiter"""
-    # Get recruiter's candidate emails
+    
     recruiter_candidate_emails = set()
     
     if user.role.lower() != "admin":
-        # Get all job IDs for this recruiter
+        
         job_ids = list(db.exec(select(Job.id).where(Job.recruiter_id == user.id)).all())
         
         if job_ids:
-            # Get all applications for these jobs
+            
             applications = db.exec(select(Application).where(Application.job_id.in_(job_ids))).all()
-            # Get unique candidate emails from applications
+            
             for app in applications:
                 if app.candidate_email:
                     recruiter_candidate_emails.add(app.candidate_email.lower().strip())
             
-            # Also get emails from Candidate table
+            
             candidate_ids = list(set([app.candidate_id for app in applications if app.candidate_id]))
             if candidate_ids:
                 from model.models import Candidate as CandidateModel
@@ -40,10 +40,10 @@ def get_all_results(db: Session = Depends(get_db), user: User = Depends(get_curr
                     if candidate.email:
                         recruiter_candidate_emails.add(candidate.email.lower().strip())
     
-    # Query candidates
+   
     query = db.query(Candidate).filter(Candidate.verified == 1)
     
-    # Filter by recruiter's candidate emails (unless admin)
+   
     if user.role.lower() != "admin" and recruiter_candidate_emails:
         from sqlalchemy import func
         query = query.filter(
@@ -109,7 +109,7 @@ def get_result_by_id(candidate_id: int, db: Session = Depends(get_db)):
 @router.get("/statistics")
 def get_statistics(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Get overall aptitude test statistics filtered by recruiter"""
-    # Get recruiter's candidate emails (same logic as get_all_results)
+    
     recruiter_candidate_emails = set()
     
     if user.role.lower() != "admin":

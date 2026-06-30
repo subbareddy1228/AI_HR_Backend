@@ -1,8 +1,3 @@
-# schema/Employee_Management/all_employees_schema.py
-#
-# Pydantic schemas for the All Employees module.
-# Covers every field visible in the 5-tab Add/Edit Employee modal:
-#   Personal Info · Employment · Service History · Salary & Compensation · Statutory & Compliance
 
 from __future__ import annotations
 from pydantic import BaseModel, EmailStr, field_validator, model_validator, ConfigDict
@@ -11,9 +6,7 @@ from decimal import Decimal
 from datetime import date
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Shared tiny schemas
-# ─────────────────────────────────────────────────────────────────────
+
 
 class AddressSchema(BaseModel):
     line1:   Optional[str] = None
@@ -29,15 +22,15 @@ class EmergencyContactSchema(BaseModel):
     name:     str
     relation: Optional[str] = None
     phone:    Optional[str] = None
-    priority: Optional[str] = "Primary"   # Primary / Secondary / Tertiary
+    priority: Optional[str] = "Primary"   
 
 
 class FamilyMemberSchema(BaseModel):
     id:          Optional[int] = None
     name:        str
     relation:    Optional[str] = None
-    dateOfBirth: Optional[str] = None     # ISO date string
-    dob:         Optional[str] = None     # alias accepted from frontend
+    dateOfBirth: Optional[str] = None     
+    dob:         Optional[str] = None     
     contactNo:   Optional[str] = None
 
 
@@ -51,9 +44,7 @@ class NomineeSchema(BaseModel):
     isNomineeAccepted:  Optional[bool] = False
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Identification (inside Personal Info tab)
-# ─────────────────────────────────────────────────────────────────────
+
 
 class PanSchema(BaseModel):
     number:   Optional[str] = None
@@ -83,9 +74,7 @@ class IdentificationSchema(BaseModel):
     voterId:  Optional[VoterIdSchema]  = None
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Tab 1 — Personal Info
-# ─────────────────────────────────────────────────────────────────────
+
 
 class PersonalInfoSchema(BaseModel):
     dateOfBirth:       Optional[str]   = None
@@ -94,7 +83,7 @@ class PersonalInfoSchema(BaseModel):
     maritalStatus:     Optional[str]   = None
     nationality:       Optional[str]   = None
     languages:         Optional[list[str]] = None
-    profilePhoto:      Optional[str]   = None   # base64 data-URL
+    profilePhoto:      Optional[str]   = None   
     personalEmail:     Optional[str]   = None
     phonePrimary:      Optional[str]   = None
     phoneSecondary:    Optional[str]   = None
@@ -106,14 +95,12 @@ class PersonalInfoSchema(BaseModel):
     nominees:          Optional[list[NomineeSchema]]          = None
     identification:    Optional[IdentificationSchema]         = None
 
-    # PAN / Aadhaar also accepted at top level (from Statutory tab mirror)
+    
     panNumber:     Optional[str] = None
     aadhaarNumber: Optional[str] = None
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Tab 2 — Employment
-# ─────────────────────────────────────────────────────────────────────
+
 
 class ReportingManagerSchema(BaseModel):
     direct:     Optional[str] = None
@@ -124,7 +111,7 @@ class EmploymentInfoSchema(BaseModel):
     employeeId:         Optional[str]  = None
     dateOfJoining:      Optional[str]  = None
     confirmationDate:   Optional[str]  = None
-    probationPeriod:    Optional[int]  = 6       # months
+    probationPeriod:    Optional[int]  = 6       
     employmentType:     Optional[str]  = "Permanent"
     employmentStatus:   Optional[str]  = "Active"
     department:         Optional[str]  = None
@@ -132,27 +119,25 @@ class EmploymentInfoSchema(BaseModel):
     costCenter:         Optional[str]  = None
     designation:        Optional[str]  = None
     grade:              Optional[str]  = None
-    level:              Optional[str]  = None    # Junior / Mid / Senior
+    level:              Optional[str]  = None    
     location:           Optional[str]  = None
-    workplaceType:      Optional[str]  = "Office"  # Office / Remote / Hybrid
+    workplaceType:      Optional[str]  = "Office"  
     workEmail:          Optional[str]  = None
     extensionNumber:    Optional[str]  = None
     deskLocation:       Optional[str]  = None
     employeeCategory:   Optional[str]  = "Staff"
-    noticePeriod:       Optional[int]  = 30      # days
+    noticePeriod:       Optional[int]  = 30     
     reportingManager:   Optional[ReportingManagerSchema] = None
     hrBusinessPartner:  Optional[str]  = None
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Tab 3 — Service History
-# ─────────────────────────────────────────────────────────────────────
+
 
 class JobHistoryItemSchema(BaseModel):
     id:              Optional[int]     = None
-    date:            Optional[str]     = None    # start date ISO
-    endDate:         Optional[str]     = None    # end date ISO or 'Present'
-    type:            Optional[str]     = None    # Joining / Promotion / Transfer…
+    date:            Optional[str]     = None    
+    endDate:         Optional[str]     = None    
+    type:            Optional[str]     = None   
     organisation:    Optional[str]     = None
     department:      Optional[str]     = None
     designation:     Optional[str]     = None
@@ -164,9 +149,7 @@ class JobHistoryItemSchema(BaseModel):
     reasonForLeaving: Optional[str]   = None
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Tab 4 — Salary & Compensation
-# ─────────────────────────────────────────────────────────────────────
+
 
 class CTCBreakdownSchema(BaseModel):
     basic:               Optional[Decimal] = Decimal("0")
@@ -185,7 +168,7 @@ class BankAccountSchema(BaseModel):
     ifscCode:      Optional[str] = None
     bankName:      Optional[str] = None
     branch:        Optional[str] = None
-    accountType:   Optional[str] = "Savings"   # Savings / Current / Salary
+    accountType:   Optional[str] = "Savings"   
 
 
 class BankAccountsSchema(BaseModel):
@@ -194,7 +177,7 @@ class BankAccountsSchema(BaseModel):
 
 
 class TaxDeclarationSchema(BaseModel):
-    regime:   Optional[str]  = "New"   # New / Old
+    regime:   Optional[str]  = "New"   
     declared: Optional[bool] = False
 
 
@@ -234,9 +217,7 @@ class SalaryInfoSchema(BaseModel):
     salaryRevisionHistory: Optional[list[SalaryRevisionItemSchema]] = None
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Tab 5 — Statutory & Compliance
-# ─────────────────────────────────────────────────────────────────────
+
 
 class StatutoryPanSchema(BaseModel):
     number:       Optional[str]  = None
@@ -255,7 +236,7 @@ class PFMembershipSchema(BaseModel):
     accountNumber:  Optional[str]  = None
     uan:            Optional[str]  = None
     enrollmentDate: Optional[str]  = None
-    accountType:    Optional[str]  = None   # Regular / Exempted / Voluntary
+    accountType:    Optional[str]  = None   
 
 
 class ESIRegistrationSchema(BaseModel):
@@ -302,14 +283,11 @@ class StatutoryInfoSchema(BaseModel):
     shopsAndEstablishment: Optional[ShopsEstablishmentSchema]  = None
 
 
-# ─────────────────────────────────────────────────────────────────────
-# REQUEST — POST /api/employees/  and  PUT /api/employees/{id}
-# ─────────────────────────────────────────────────────────────────────
 
 class EmployeeCreateRequest(BaseModel):
-    """Full payload the frontend sends when HR submits the Add New Employee modal."""
+    
 
-    # Top-level convenience fields
+    
     name:           Optional[str]     = None
     email:          Optional[str]     = None
     phone:          Optional[str]     = None
@@ -342,7 +320,7 @@ class EmployeeCreateRequest(BaseModel):
 
 
 class EmployeeUpdateRequest(BaseModel):
-    """Partial update — only fields present are changed."""
+    
 
     name:           Optional[str]     = None
     email:          Optional[str]     = None
@@ -362,12 +340,10 @@ class EmployeeUpdateRequest(BaseModel):
     statutoryInfo:  Optional[StatutoryInfoSchema]  = None
 
 
-# ─────────────────────────────────────────────────────────────────────
-# RESPONSE schemas
-# ─────────────────────────────────────────────────────────────────────
+
 
 class EmployeeListItem(BaseModel):
-    """Flat summary row used in the Employee Records table."""
+    
     id:             int
     employeeId:     str
     name:           str
@@ -385,7 +361,7 @@ class EmployeeListItem(BaseModel):
 
 
 class EmployeeFullResponse(EmployeeListItem):
-    """Full nested response — returned by GET /api/employees/ and GET /api/employees/{id}."""
+    
     personalInfo:   Optional[dict] = None
     employmentInfo: Optional[dict] = None
     jobHistory:     Optional[list] = None
@@ -396,7 +372,7 @@ class EmployeeFullResponse(EmployeeListItem):
 
 
 class EmployeeStatsResponse(BaseModel):
-    """4 stat cards at the top of the All Employees page."""
+    
     totalEmployees:  int
     activeEmployees: int
     departments:     int

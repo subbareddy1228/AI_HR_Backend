@@ -12,7 +12,7 @@ from schema.schemas import JobCreate, JobRead, JobUpdate, CandidateRead
 router = APIRouter()
 
 
-# -------------------- JOBS --------------------
+
 
 @router.post("/jobs", response_model=JobRead)
 def create_job(
@@ -108,7 +108,7 @@ def delete_job(
     return {"detail": "Job deleted"}
 
 
-# -------------------- CANDIDATES --------------------
+
 
 @router.get("/candidates")
 def list_candidates(
@@ -118,7 +118,7 @@ def list_candidates(
     db: Session = Depends(get_db),
     user: User = Depends(require_roles(["recruiter", "admin"]))
 ):
-    # Get job IDs
+ 
     if user.role.lower() == "admin":
         job_ids = db.execute(select(Job.id)).scalars().all()
     else:
@@ -129,7 +129,7 @@ def list_candidates(
     if not job_ids:
         return []
 
-    # Applications
+    
     app_stmt = select(Application).where(Application.job_id.in_(job_ids))
     if job_id:
         app_stmt = app_stmt.where(Application.job_id == job_id)
@@ -140,7 +140,7 @@ def list_candidates(
     if not candidate_ids:
         return []
 
-    # Candidates
+  
     cand_stmt = select(Candidate).where(Candidate.id.in_(candidate_ids))
     if stage:
         cand_stmt = cand_stmt.where(Candidate.stage == stage)
@@ -149,7 +149,7 @@ def list_candidates(
 
     candidates = db.execute(cand_stmt).scalars().all()
 
-    # Resume screened map
+    
     emails = [c.email.lower().strip() for c in candidates if c.email]
     screened_map = {}
 
@@ -166,13 +166,13 @@ def list_candidates(
                 continue
             current_value = screened_map.get(key)
             new_value = (r.resume_screened or "no").lower().strip()
-            # Keep "yes" if any matching record is screened.
+           
             if current_value == "yes" or new_value == "yes":
                 screened_map[key] = "yes"
             else:
                 screened_map[key] = "no"
 
-    # Response
+    
     return [
         {
             "id": c.id,
@@ -191,8 +191,6 @@ def list_candidates(
         for c in candidates
     ]
 
-
-# -------------------- PIPELINE --------------------
 
 @router.get("/pipeline/{job_id}")
 def pipeline_view(
@@ -214,7 +212,6 @@ def pipeline_view(
     return {stage: count for stage, count in rows}
 
 
-# -------------------- ANALYTICS --------------------
 
 @router.get("/analytics/applications-over-time")
 def applications_over_time(
@@ -245,7 +242,7 @@ def applications_over_time(
     return [{"date": d, "count": c} for d, c in rows]
 
 
-# -------------------- SETTINGS --------------------
+
 
 @router.get("/settings")
 def recruiter_settings(user: User = Depends(require_roles(["recruiter", "admin"]))):

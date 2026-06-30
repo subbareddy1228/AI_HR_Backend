@@ -1,8 +1,3 @@
-"""
-Asset Return Pydantic Schemas
-Covers: Returns tab — Return ID, Asset Details, Employee Details, Return Date,
-Reason, Condition, Penalty, Certificate, Status, Actions.
-"""
 
 from __future__ import annotations
 
@@ -29,7 +24,7 @@ class AssetReturnCreate(BaseModel):
 
 
 class AssetReturnUpdate(BaseModel):
-    """Used to issue certificate or update status."""
+    
     status:                Optional[ReturnStatus] = None
     certificate_issued:    Optional[bool]         = None
     certificate_issued_at: Optional[datetime]     = None

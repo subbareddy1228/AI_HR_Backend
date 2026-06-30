@@ -204,7 +204,6 @@ def get_leave_accrual_register(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Leave Accrual Register — shows monthly accrual entries per employee."""
     employees = db.execute(
         select(Employee).where(Employee.is_active == True)
     ).scalars().all()

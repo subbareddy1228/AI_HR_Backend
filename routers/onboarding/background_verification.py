@@ -39,7 +39,7 @@ def get_kpi(db: Session = Depends(get_db)):
 def list_requests(
     db:            Session        = Depends(get_db),
     search:        Optional[str] = Query(None),
-    status_filter: Optional[str] = Query(None),   # All | Pending | In Progress | Completed
+    status_filter: Optional[str] = Query(None),   
     skip:          int            = Query(0),
     limit:         int            = Query(50),
 ):

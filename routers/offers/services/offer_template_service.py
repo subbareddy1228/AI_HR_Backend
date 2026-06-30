@@ -20,7 +20,7 @@ def get_offer_templates(
 ) -> List[OfferTemplate]:
     query = db.query(OfferTemplate)
     
-    # Filter by recruiter (unless admin)
+    
     if user and user.role.lower() != "admin":
         query = query.filter(OfferTemplate.created_by == user.id)
     

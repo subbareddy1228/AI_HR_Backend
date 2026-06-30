@@ -7,7 +7,7 @@ from datetime import datetime
 class RoleBase(BaseModel):
     role_name: str
     description: Optional[str] = None
-    permissions: Optional[Dict[str, List[str]]] = None  # {"module": ["read","write","delete"]}
+    permissions: Optional[Dict[str, List[str]]] = None  
 
 
 class RoleCreate(RoleBase):

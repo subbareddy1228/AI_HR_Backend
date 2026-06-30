@@ -1,8 +1,4 @@
-"""
-Helper function to synchronize candidate stage between Candidate (SQLModel), 
-candidate_records, and Application tables.
-This ensures all three tables stay in sync when stage changes occur.
-"""
+
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func
@@ -30,14 +26,14 @@ def update_candidate_stage_all_tables(db: Session, email: str, new_stage: str) -
         return False
     
     try:
-        # Update Candidate table (SQLModel) - case-insensitive matching
+        
         try:
-            # Try SQLModel exec() first, fallback to query() for compatibility
+            
             try:
                 statement = select(Candidate).where(func.lower(func.trim(Candidate.email)) == email_normalized)
                 candidate = db.exec(statement).first()
             except AttributeError:
-                # Fallback to SQLAlchemy query() if exec() not available
+                
                 candidate = db.query(Candidate).filter(
                     func.lower(func.trim(Candidate.email)) == email_normalized
                 ).first()
@@ -49,7 +45,7 @@ def update_candidate_stage_all_tables(db: Session, email: str, new_stage: str) -
                 try:
                     db.refresh(candidate)
                 except:
-                    pass  # refresh() might not be available in all session types
+                    pass  
                 print(f" Updated Candidate.stage to '{new_stage}' for {email}")
                 updated = True
         except Exception as e:
@@ -57,7 +53,7 @@ def update_candidate_stage_all_tables(db: Session, email: str, new_stage: str) -
             import traceback
             traceback.print_exc()
         
-        # Update candidate_records table (Base/SQLAlchemy) - case-insensitive matching
+        
         try:
             candidate_record_result = db.execute(
                 text("""
@@ -86,9 +82,9 @@ def update_candidate_stage_all_tables(db: Session, email: str, new_stage: str) -
             import traceback
             traceback.print_exc()
         
-        # Update Application table (SQLModel) - case-insensitive matching
+        
         try:
-            # Update by candidate_email
+           
             result = db.execute(
                 text("""
                     UPDATE application 
@@ -103,7 +99,7 @@ def update_candidate_stage_all_tables(db: Session, email: str, new_stage: str) -
             db.commit()
             apps_updated_by_email = result.rowcount
             
-            # Also update by candidate_id if we found a candidate
+           
             if candidate:
                 result2 = db.execute(
                     text("""
@@ -140,7 +136,7 @@ def update_candidate_stage_all_tables(db: Session, email: str, new_stage: str) -
         return False
 
 
-# Keep the old function name for backward compatibility
+
 def update_candidate_stage_both_tables(db: Session, email: str, new_stage: str) -> bool:
     """
     Backward compatibility wrapper - calls update_candidate_stage_all_tables

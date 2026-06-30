@@ -376,7 +376,7 @@ class WorkflowEngineInstanceResponse(BaseModel):
 
 
 class StageActionPayload(BaseModel):
-    """Body for approve / reject / send-back / delegate / request-info actions."""
+    
     action:         str = Field(..., description="approved|rejected|sent_back|delegated|info_requested")
     action_by:      str
     action_by_role: Optional[str] = None

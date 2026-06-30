@@ -39,7 +39,7 @@ class CompanyProfileCreate(CompanyProfileBase):
 
 
 class CompanyProfileUpdate(CompanyProfileBase):
-    company_name: Optional[str] = None  # all fields optional on PATCH
+    company_name: Optional[str] = None  
 
 
 class CompanyProfileResponse(CompanyProfileBase):

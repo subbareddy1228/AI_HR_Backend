@@ -18,7 +18,7 @@ router = APIRouter(prefix="/assessments", tags=["Assessments"])
 
 @router.post("/", response_model=AssessmentOut)
 def create_assessment_endpoint(data: AssessmentCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    # Set created_by to current user if not provided
+    
     data_dict = data.dict()
     if not data_dict.get('created_by'):
         data_dict['created_by'] = user.id
@@ -41,7 +41,7 @@ def get_assessment_endpoint(assessment_id: int, db: Session = Depends(get_db), u
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
     
-    # Check access (unless admin)
+    
     if user.role.lower() != "admin" and assessment.created_by != user.id:
         raise HTTPException(status_code=403, detail="Access forbidden")
     
@@ -53,7 +53,7 @@ def update_assessment_endpoint(assessment_id: int, data: AssessmentUpdate, db: S
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
     
-    # Check access (unless admin)
+   
     if user.role.lower() != "admin" and assessment.created_by != user.id:
         raise HTTPException(status_code=403, detail="Access forbidden")
     
@@ -69,7 +69,6 @@ def delete_assessment_endpoint(assessment_id: int, db: Session = Depends(get_db)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
     
-    # Check access (unless admin)
     if user.role.lower() != "admin" and assessment.created_by != user.id:
         raise HTTPException(status_code=403, detail="Access forbidden")
     

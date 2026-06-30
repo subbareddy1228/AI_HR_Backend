@@ -5,7 +5,7 @@ from datetime import date, datetime
 
 class LeaveRequestCreate(BaseModel):
     employee_id: int
-    leave_type: str             # CL | SL | EL | ML | PL | BL  (matches Leave Types tab codes)
+    leave_type: str             
     start_date: date
     end_date: date
     is_half_day: Optional[bool] = False
@@ -21,8 +21,8 @@ class LeaveRequestCreate(BaseModel):
 
 
 class LeaveRequestUpdate(BaseModel):
-    """Used by approvers to approve/reject a pending application."""
-    status: Optional[str] = None        # Pending | Approved | Rejected
+    
+    status: Optional[str] = None        
     approved_by: Optional[int] = None
     rejection_reason: Optional[str] = None
 

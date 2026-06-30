@@ -16,11 +16,11 @@ def get_kpis(
     expiryDate: Optional[str] = Query(None),   
     db: Session = Depends(get_db)
 ):
-    # Parse dates
+    
     start = parse_date_str(start_date)
     end = parse_date_str(expiryDate)
 
-    # Prepare job query with filters
+    
     job_query = db.query(model.models.Job).filter(model.models.Job.status.in_(["active", "Draft"]))
 
     if role:
@@ -32,7 +32,7 @@ def get_kpis(
 
     active_jobs = job_query.count()
 
-    # Prepare application query with same job filters
+    
     app_query = db.query(model.models.Application).join(model.models.Job)\
         .filter(model.models.Job.status.in_(["active", "Draft"]))
 
@@ -45,21 +45,21 @@ def get_kpis(
 
     total_applications = app_query.count()
 
-    # Applications this week/month
+    
     week_start = datetime.utcnow() - timedelta(days=7)
     month_start = datetime(datetime.utcnow().year, datetime.utcnow().month, 1)
 
     applications_this_week = app_query.filter(model.models.Application.applied_at >= week_start).count()
     applications_this_month = app_query.filter(model.models.Application.applied_at >= month_start).count()
 
-    # Average time to hire (in days)
+   
     time_to_hire = db.query(
         func.avg(
             func.extract("epoch", model.models.Application.hired_at - model.models.Application.applied_at) / 86400.0
         )
     ).filter(model.models.Application.hired_at.isnot(None)).scalar()
 
-    # Applications by stage
+    
     stage_counts = db.query(model.models.Application.stage, func.count(model.models.Application.id))\
         .group_by(model.models.Application.stage).all()
     stage_data = {s: c for s, c in stage_counts}

@@ -80,20 +80,20 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
     Get assignments with actual completion status by checking test tables.
     Also includes results for candidates who completed tests even without explicit assignments.
     """
-    # Get assignments filtered by recruiter
+   
     assignments = get_assignments(db, user)
     
-    # Get recruiter's candidate IDs for filtering results
+   
     recruiter_candidate_record_ids = set()
     if user and user.role.lower() != "admin":
         recruiter_candidate_record_ids = set(_get_recruiter_candidate_record_ids(db, user))
     result = []
     
-    # Track which candidate-email combinations we've already processed
+    
     processed_candidates = set()
     
     for assignment in assignments:
-        # Get assessment details to know the type
+       
         assessment = db.query(Assessment).filter(Assessment.id == assignment.assessment_id).first()
         
         assignment_dict = {
@@ -102,7 +102,7 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
             "assessment_id": assignment.assessment_id,
             "due_date": assignment.due_date.isoformat() if assignment.due_date else None,
             "status": assignment.status,
-            "actual_status": assignment.status,  # Default to assignment status
+            "actual_status": assignment.status,  
             "completed_at": None,
             "score": None,
             "question_count": assessment.question_count if assessment and assessment.question_count else (25 if assessment and assessment.type == 'aptitude' else None)  # Include question_count from assessment, default to 25 for aptitude
@@ -111,7 +111,7 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
         if assessment and assignment.candidate_id:
             assessment_type = assessment.type.lower() if assessment.type else None
             
-            # Get candidate email for matching across different tables
+            
             candidate_email = None
             try:
                 email_result = db.execute(
@@ -126,7 +126,7 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
             except Exception as e:
                 print(f"❌ Error getting candidate email for candidate_id {assignment.candidate_id}: {e}")
             
-            # Check aptitude test completion
+           
             if assessment_type == 'aptitude' and candidate_email:
                 try:
                     aptitude_candidate = db.query(LegacyCandidate).filter(
@@ -134,30 +134,30 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
                     ).first()
                     
                     if aptitude_candidate:
-                        # Check if test is completed (Qualified or Regret status)
+                       
                         if aptitude_candidate.status and aptitude_candidate.status.lower() in ['qualified', 'regret', 'completed', 'passed', 'submitted']:
                             assignment_dict["actual_status"] = "Completed"
                             assignment_dict["score"] = aptitude_candidate.score
                             assignment_dict["test_status"] = aptitude_candidate.status  # Include the actual test result
                             
-                            # 🔥 Get actual total questions from candidate's answers
+                            
                             if aptitude_candidate.answers:
                                 if isinstance(aptitude_candidate.answers, dict):
-                                    # Count the number of questions answered
+                                 
                                     total_answered = len(aptitude_candidate.answers)
                                     assignment_dict["question_count"] = total_answered
                                 else:
-                                    # If answers is stored differently, use assessment question_count
+                            
                                     assignment_dict["question_count"] = assessment.question_count if assessment and assessment.question_count else 25
                         elif aptitude_candidate.status and aptitude_candidate.status.lower() == 'pending':
                             assignment_dict["actual_status"] = "In Progress"
                 except Exception as e:
                     print(f"Error checking aptitude test: {e}")
             
-            # Check communication test completion
+        
             elif assessment_type == 'communication' and candidate_email:
                 try:
-                    # Query communication_assessment_results table directly
+                   
                     comm_result = db.execute(
                         text("""
                             SELECT total_score, passed, submitted_at
@@ -171,7 +171,7 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
                     
                     if comm_result:
                         print(f"🔍 Communication result found for {candidate_email}: score={comm_result[0]}, passed={comm_result[1]}, submitted_at={comm_result[2]}")
-                        if comm_result[2]:  # submitted_at exists
+                        if comm_result[2]:  
                             assignment_dict["actual_status"] = "Completed"
                             assignment_dict["completed_at"] = comm_result[2].isoformat() if comm_result[2] else None
                             assignment_dict["score"] = float(comm_result[0]) if comm_result[0] is not None else 0
@@ -185,10 +185,10 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
                     import traceback
                     traceback.print_exc()
             
-            # Check coding test completion
+           
             elif assessment_type == 'coding' and candidate_email:
                 try:
-                    # Check coding_assessment_results table for coding completions
+                    
                     coding_result = db.execute(
                         text("""
                             SELECT COUNT(*) as submission_count, 
@@ -218,22 +218,22 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
         
         result.append(assignment_dict)
         
-        # Track processed candidates
+       
         if candidate_email:
             processed_candidates.add(candidate_email.lower())
     
-    # 🔥 ADD MISSING RESULTS: Check for communication and coding results that don't have assignments
-    # Get all candidates who have results but might not have assignments
+    
+
     try:
-        # Track which candidate-assessment combinations already have assignments
+        
         existing_combinations = set()
         for assignment_dict in result:
             if assignment_dict.get("candidate_id") and assignment_dict.get("assessment_id"):
                 existing_combinations.add((assignment_dict["candidate_id"], assignment_dict["assessment_id"]))
         
-        # Get all unique candidate emails from candidate_records (filtered by recruiter if needed)
+        
         if user and user.role.lower() != "admin" and recruiter_candidate_record_ids:
-            # Filter candidates by recruiter's candidate IDs using IN clause
+            
             candidate_ids_list = list(recruiter_candidate_record_ids)
             if candidate_ids_list:
                 placeholders = ','.join([':id' + str(i) for i in range(len(candidate_ids_list))])
@@ -249,7 +249,7 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
                 text("SELECT id, candidate_email FROM candidate_records WHERE candidate_email IS NOT NULL")
             ).fetchall()
         
-        # Find communication and coding assessments
+        
         comm_assessment = db.query(Assessment).filter(Assessment.type.ilike('communication')).first()
         coding_assessment = db.query(Assessment).filter(Assessment.type.ilike('coding')).first()
         
@@ -257,9 +257,9 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
             if not candidate_email:
                 continue
             
-            # Check for communication results
+          
             if comm_assessment:
-                # Check if this candidate-assessment combo already exists
+                
                 if (candidate_id, comm_assessment.id) not in existing_combinations:
                     comm_result = db.execute(
                         text("""
@@ -272,9 +272,9 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
                         {"email": candidate_email}
                     ).first()
                     
-                    if comm_result and comm_result[2]:  # Has submitted_at
+                    if comm_result and comm_result[2]:  
                         assignment_dict = {
-                            "id": None,  # No assignment ID
+                            "id": None,  
                             "candidate_id": candidate_id,
                             "assessment_id": comm_assessment.id,
                             "due_date": None,
@@ -289,9 +289,9 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
                         existing_combinations.add((candidate_id, comm_assessment.id))
                         print(f"✅ Added communication result for {candidate_email} (no assignment)")
             
-            # Check for coding results
+            
             if coding_assessment:
-                # Check if this candidate-assessment combo already exists
+                
                 if (candidate_id, coding_assessment.id) not in existing_combinations:
                     coding_result = db.execute(
                         text("""
@@ -306,7 +306,7 @@ def get_assignments_with_completion_status(db: Session, user: Optional[User] = N
                     
                     if coding_result and coding_result[0] and coding_result[0] > 0:
                         assignment_dict = {
-                            "id": None,  # No assignment ID
+                            "id": None,  
                             "candidate_id": candidate_id,
                             "assessment_id": coding_assessment.id,
                             "due_date": None,

@@ -168,8 +168,8 @@ def view_unassigned_tickets(db: Session = Depends(get_db)):
 def generate_weekly_report(db: Session = Depends(get_db)):
     
     today      = date.today()
-    week_start = today - timedelta(days=today.weekday())       # Monday
-    week_end   = week_start + timedelta(days=6)                # Sunday
+    week_start = today - timedelta(days=today.weekday())      
+    week_end   = week_start + timedelta(days=6)               
 
     all_records  = db.query(HRHelpdesk).all()
     week_records = [

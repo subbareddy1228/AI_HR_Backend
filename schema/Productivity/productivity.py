@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 
 
-# RESPONSE: Individual productivity record
+
 
 class ProductivityOut(BaseModel):
     id: int
@@ -20,7 +20,7 @@ class ProductivityOut(BaseModel):
 
 
 
-# RESPONSE: Summary metrics
+
 
 class SummaryMetrics(BaseModel):
     overall_score: float

@@ -9,12 +9,12 @@ from model.models import Assignment, Assessment
 from routers.Candidate_assessments.Assessment.utils.stage_sync import update_candidate_stage_both_tables
 import datetime, json, time, os
 
-#  Database Setup 
+
 engine = create_engine(DATABASE_URL, echo=True, future=True)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
 
-#  model.models 
+
 class ExamAttempt(Base):
     __tablename__ = "communication_assessment_results"
     id = Column(Integer, primary_key=True, index=True)
@@ -34,15 +34,15 @@ class ExamAttempt(Base):
     passed = Column(Boolean)
     submitted_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-#  Database Migration: Add missing columns 
+
 def ensure_table_columns():
     """Ensure all required columns exist in the communication_assessment_results table."""
     try:
-        # Create table if it doesn't exist
+       
         Base.metadata.create_all(bind=engine)
         
         with engine.begin() as conn:
-            # Check and add 'passed' column if it doesn't exist
+            
             result = conn.execute(text("""
                 SELECT COUNT(*) 
                 FROM information_schema.columns 
@@ -56,7 +56,7 @@ def ensure_table_columns():
                 """))
                 print(" Added 'passed' column to communication_assessment_results table")
             
-            # Check and add 'submitted_at' column if it doesn't exist
+            
             result = conn.execute(text("""
                 SELECT COUNT(*) 
                 FROM information_schema.columns 
@@ -74,8 +74,6 @@ def ensure_table_columns():
         import traceback
         traceback.print_exc()
 
-# Initialize database tables lazily (only when needed, not at import time)
-# This prevents startup failures if database is not available
 def init_db_tables():
     """Initialize database tables. Call this when database is ready."""
     try:
@@ -83,15 +81,14 @@ def init_db_tables():
     except Exception as e:
         print(f" Warning: Could not initialize database tables: {e}")
 
-#  Router 
 router = APIRouter()
 
-# Helper function to get base URL
+
 def get_base_url():
     """Get the base URL for the frontend application"""
     return os.getenv("FRONTEND_URL", "http://localhost:3000")
 
-#  Request model.models 
+ 
 class OTPRequest(BaseModel):
     name: str
     email: str
@@ -122,7 +119,6 @@ def send_otp_route(data: OTPRequest):
         raise HTTPException(status_code=500, detail=msg)
     return {"message": f"OTP sent successfully to {data.email}"}
 
-#  Verify OTP 
 @router.post("/verify-otp")
 def verify_otp_route(data: VerifyOTPRequest):
     record = otp_store.get(data.email)
@@ -136,13 +132,13 @@ def verify_otp_route(data: VerifyOTPRequest):
         return {"verified": True}
     return {"verified": False, "reason": "Invalid OTP"}
 
-#  Exam Routes 
+
 @router.get("/exam")
 def get_exam(name: str, email: str):
-    # Ensure database tables are initialized
+    
     init_db_tables()
     
-    #  REJECTION CHECK: Prevent rejected candidates from taking assessments
+    
     try:
         with SessionLocal() as session:
             candidate_record_result = session.execute(
@@ -161,13 +157,13 @@ def get_exam(name: str, email: str):
         raise
     except Exception as e:
         print(f"Warning: Could not check candidate stage: {e}")
-        # Continue if check fails (don't block legitimate candidates)
+        
     
     try:
         with SessionLocal() as session:
             existing = session.query(ExamAttempt).filter_by(email=email).first()
             if existing:
-                # Return existing exam data
+                
                 exam_data = {
                     "reading_paragraph": existing.reading_paragraph or "",
                     "reading_mcqs": json.loads(existing.reading_mcqs) if existing.reading_mcqs else [],
@@ -202,10 +198,10 @@ def get_exam(name: str, email: str):
 
 @router.post("/submit")
 def submit_answers(data: CommSubmission):
-    # Ensure database tables are initialized
+   
     init_db_tables()
     
-    #  REJECTION CHECK: Prevent rejected candidates from submitting assessments
+
     try:
         with SessionLocal() as session:
             candidate_record_result = session.execute(
@@ -224,7 +220,7 @@ def submit_answers(data: CommSubmission):
         raise
     except Exception as e:
         print(f"Warning: Could not check candidate stage: {e}")
-        # Continue if check fails (don't block legitimate candidates)
+        
     
     try:
         with SessionLocal() as session:
@@ -256,10 +252,10 @@ def submit_answers(data: CommSubmission):
             attempt.submitted_at = datetime.datetime.utcnow()
             session.commit()
 
-        # Update Assignment status to "Completed" and trigger next assessment
+        
         try:
             with MainSessionLocal() as db:
-                # Get candidate_records id by email
+                
                 candidate_record_result = db.execute(
                     text("SELECT id, candidate_name FROM candidate_records WHERE candidate_email = :email LIMIT 1"),
                     {"email": data.email}
@@ -269,7 +265,7 @@ def submit_answers(data: CommSubmission):
                     candidate_record_id = candidate_record_result[0]
                     candidate_name = candidate_record_result[1] if len(candidate_record_result) > 1 else data.name
                     
-                    # Find and update communication assignment
+                    
                     communication_assessments = db.query(Assessment).filter(
                         Assessment.type == "communication"
                     ).all()
@@ -286,9 +282,9 @@ def submit_answers(data: CommSubmission):
                     
                     db.commit()
                     
-                    #  SEQUENTIAL FLOW: Send appropriate email
+                    
                     if passed:
-                        # Send Coding test link
+                        
                         try:
                             coding_link = f"{get_base_url()}/assessment/coding?name={quote_plus(candidate_name)}&email={quote_plus(data.email)}"
                             email_body = f"""Dear {candidate_name},
@@ -316,13 +312,13 @@ HR Team - Recruitment"""
                         except Exception as email_error:
                             print(f"Warning: Could not send next assessment email: {email_error}")
                     else:
-                        #  STAGE MANAGEMENT: Change stage to "Rejected" if failed (both tables)
+                       
                         try:
                             update_candidate_stage_both_tables(db, data.email, "Rejected")
                         except Exception as stage_error:
                             print(f"Warning: Could not update candidate stage: {stage_error}")
                         
-                        # Send rejection email
+                       
                         try:
                             email_body = f"""Dear {candidate_name},
 
@@ -343,10 +339,10 @@ HR Team - Recruitment"""
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
-#  Admin Route 
+
 @router.get("/all-exams")
 def get_all_exams():
-    # Ensure database tables are initialized
+    
     init_db_tables()
     
     try:

@@ -14,7 +14,7 @@ def get_db():
     finally:
         db.close()
 
-# GET: show document slots
+
 @router.get("/{candidate_id}")
 def get_document_slots(candidate_id: int, db: Session = Depends(get_db)):
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
@@ -24,7 +24,7 @@ def get_document_slots(candidate_id: int, db: Session = Depends(get_db)):
     docs = db.query(Document).filter(Document.candidate_id == candidate_id).all()
     return [{"name": doc.name, "status": doc.status.value, "filename": doc.filename} for doc in docs]
 
-# POST: upload documents
+
 @router.post("/{candidate_id}")
 async def upload_documents(candidate_id: int, files: list[UploadFile] = File(...), db: Session = Depends(get_db)):
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()

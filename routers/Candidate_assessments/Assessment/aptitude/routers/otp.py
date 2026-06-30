@@ -7,7 +7,7 @@ from ..utils import generate_otp, send_email
 
 router = APIRouter(prefix="/otp", tags=["OTP"])
 
-# Temporary in-memory storage for OTPs
+
 TEMP_OTPS = {}
 
 @router.post("/send")
@@ -15,7 +15,7 @@ def send_otp(data: CandidateCreate, db: Session = Depends(get_db)):
     candidate = db.query(Candidate).filter_by(email=data.email).first()
     
     if not candidate:
-        #  Do NOT include 'role', it's not in LegacyCandidate
+       
         candidate = Candidate(
             name=data.name,
             email=data.email,
@@ -44,7 +44,7 @@ def verify_otp(data: OTPVerify, db: Session = Depends(get_db)):
     if TEMP_OTPS.get(data.email) != data.otp:
         raise HTTPException(status_code=400, detail="Invalid OTP")
 
-    # LegacyCandidate.verified is Integer, so use 1 instead of True
+   
     candidate.verified = 1
     db.commit()
     TEMP_OTPS.pop(data.email, None)

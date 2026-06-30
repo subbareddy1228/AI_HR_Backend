@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 class ExamStartRequest(BaseModel):
     student_id: int
-    email: str = None  # Optional: for looking up by email
+    email: str = None  
 
 class QuestionOption(BaseModel):
     A: str

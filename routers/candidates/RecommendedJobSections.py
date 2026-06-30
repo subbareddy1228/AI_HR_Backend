@@ -12,9 +12,7 @@ router = APIRouter(
 )
 
 
-# =====================================================
-# CREATE RECOMMENDED JOB
-# =====================================================
+
 @router.post("/", response_model=schemas.RecommendedJobSections)
 async def create_recommended_job(
     job: schemas.RecommendedJobSectionsCreate,
@@ -33,18 +31,14 @@ async def create_recommended_job(
     return db_job
 
 
-# =====================================================
-# READ RECOMMENDED JOBS
-# =====================================================
+
 @router.get("/", response_model=list[schemas.RecommendedJobSections])
 async def read_recommended_jobs(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(RecommendedJobSections))
     return result.scalars().all()
 
 
-# =====================================================
-# DELETE RECOMMENDED JOB
-# =====================================================
+
 @router.delete("/{job_id}", status_code=204)
 async def delete_recommended_job(
     job_id: int,

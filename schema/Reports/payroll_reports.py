@@ -5,7 +5,7 @@ from decimal import Decimal
  
  
 class PayrollReportStats(BaseModel):
-    """Top 4 stat cards on Payroll Reports page."""
+    
     total_reports: int
     filtered: int
     selected: int
@@ -13,7 +13,7 @@ class PayrollReportStats(BaseModel):
  
  
 class PayrollReportItem(BaseModel):
-    """One row in the payroll report list."""
+    
     report_name: str
     description: str
     category: str         

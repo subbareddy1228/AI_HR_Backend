@@ -166,8 +166,8 @@ class BuddyCommunicationCreate(BaseModel):
     date:               date
     duration_minutes:   Optional[int]  = None
     next_checkin_date:  Optional[date] = None
-    topics_discussed:   Optional[str]  = None    # comma-separated
-    follow_up_actions:  Optional[str]  = None    # comma-separated
+    topics_discussed:   Optional[str]  = None   
+    follow_up_actions:  Optional[str]  = None    
     additional_notes:   Optional[str]  = None
 
 
@@ -196,7 +196,7 @@ class ProgramAnalyticsOut(BaseModel):
     total_pairs:              int
     active_pairs:             int
     completed_pairs:          int
-    completion_rate:          float           # percentage
+    completion_rate:          float           
     avg_rating:               Optional[float]
     avg_match_score:          Optional[float]
     feedback_count:           int

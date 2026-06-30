@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 VERIFICATION_CREDITS: dict[str, int] = {
-    "mobile":  0,   # FREE
+    "mobile":  0,   
     "pan":     5,
     "bank":    5,
     "aadhaar": 10,
@@ -30,13 +30,7 @@ class CandidateCreate(BaseModel):
 
 
 class CandidateUpdate(BaseModel):
-    """Payload for PUT /api/onboarding-forms/candidates/{id}
-    
-    All fields are optional so the caller can send only the changed ones.
-    Matches the 'Edit Form' panel in the UI:
-      - Part A  : full_name, email, mobile
-      - Right   : verification_options
-    """
+   
     full_name: Optional[str]                = None
     email:     Optional[EmailStr]           = None
     mobile:    Optional[str]                = Field(default=None, pattern=r"^[0-9]{10}$")

@@ -1,11 +1,11 @@
-# schema/induction/induction.py
+
 
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime
 
 
-# ─── Induction Program ────────────────────────────────────────────────────────
+
 
 class ProgramCreate(BaseModel):
     name:             str
@@ -36,7 +36,7 @@ class ProgramResponse(BaseModel):
     start_date:       date
     end_date:         date
     max_participants: Optional[int]
-    enrolled_count:   int = 0          # filled by service
+    enrolled_count:   int = 0          
     avg_rating:       float
     created_at:       datetime
     updated_at:       datetime
@@ -45,7 +45,7 @@ class ProgramResponse(BaseModel):
         from_attributes = True
 
 
-# ─── Induction Participant (Employees List) ───────────────────────────────────
+
 
 class ParticipantAdd(BaseModel):
     employee_id: int
@@ -63,7 +63,7 @@ class AttendanceUpdate(BaseModel):
 
 class BulkAttendanceUpdate(BaseModel):
     """Used by 'Mark Attendance' bulk action."""
-    updates: List[dict]   # [{"employee_id": 1, "program_id": 2, "attendance": "Present"}, ...]
+    updates: List[dict]   
 
 
 class ParticipantResponse(BaseModel):
@@ -74,7 +74,7 @@ class ParticipantResponse(BaseModel):
     rating:      Optional[float]
     enrolled_at: datetime
 
-    # Flattened employee fields for the Employees List table
+   
     employee_name:   Optional[str] = None
     employee_code:   Optional[str] = None
     email:           Optional[str] = None
@@ -88,7 +88,7 @@ class ParticipantResponse(BaseModel):
         from_attributes = True
 
 
-# ─── Session ─────────────────────────────────────────────────────────────────
+
 
 class SessionCreate(BaseModel):
     program_id:   int
@@ -116,7 +116,7 @@ class SessionUpdate(BaseModel):
 class SessionResponse(BaseModel):
     id:           int
     program_id:   int
-    program_name: Optional[str] = None   # joined from program
+    program_name: Optional[str] = None   
     title:        str
     description:  Optional[str]
     session_date: date
@@ -131,7 +131,7 @@ class SessionResponse(BaseModel):
         from_attributes = True
 
 
-# ─── Induction Policy ────────────────────────────────────────────────────────
+
 
 class InductionPolicyCreate(BaseModel):
     title:          str
@@ -161,7 +161,7 @@ class InductionPolicyResponse(BaseModel):
     status:              str
     total_employees:     int
     completed_employees: int
-    completion_pct:      float = 0.0   # computed by service
+    completion_pct:      float = 0.0  
     total_modules:       int
     created_at:          datetime
 
@@ -169,7 +169,7 @@ class InductionPolicyResponse(BaseModel):
         from_attributes = True
 
 
-# ─── Policy Acknowledgment ───────────────────────────────────────────────────
+
 
 class AcknowledgmentUpdate(BaseModel):
     acknowledged:      bool
@@ -188,10 +188,10 @@ class AcknowledgmentResponse(BaseModel):
         from_attributes = True
 
 
-# ─── Dashboard Stats ─────────────────────────────────────────────────────────
+
 
 class InductionStats(BaseModel):
     total_programs:    int
     total_participants: int
-    policy_completion: float   # percentage e.g. 98.4
-    avg_rating:        float   # e.g. 2.4
+    policy_completion: float  
+    avg_rating:        float   

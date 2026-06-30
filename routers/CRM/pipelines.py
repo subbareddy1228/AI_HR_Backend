@@ -1,4 +1,4 @@
-# app/routers/pipelines.py
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -19,7 +19,7 @@ def create_pipeline(pipeline: PipelineCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=List[PipelineResponse])
 def read_pipelines(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    # Note: get_pipelines doesn't support pagination, so we get all and paginate manually
+
     all_pipelines = crud_ops.get_pipelines(db)
     return all_pipelines[skip:skip + limit]
 
