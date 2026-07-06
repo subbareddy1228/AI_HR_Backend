@@ -299,13 +299,13 @@ class Answer(Base):
 
 
 
-def init_db():
-    """
-    Initialize all tables
-    """
-    SQLModel.metadata.create_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-    print("Tables initialized.")
+# def init_db():
+#     """
+#     Initialize all tables
+#     """
+#     SQLModel.metadata.create_all(bind=engine)
+#     Base.metadata.create_all(bind=engine)
+#     print("Tables initialized.")
 
 class SavedJob(SQLModel, table=True):
     __tablename__ = "saved_jobs"

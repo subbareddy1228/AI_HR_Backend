@@ -30,7 +30,7 @@ def get_single(entity_id: int, db: Session = Depends(get_db), _=Depends(require_
 @router.patch("/entities/{entity_id}", response_model=ProductiveEntityResponse)
 def patch_entity(entity_id: int, payload: ProductiveEntityCreate, db: Session = Depends(get_db), _=Depends(require_roles("Admin"))):
     try:
-        updated = update_entity(db, entity_id, payload.dict())
+        updated = update_entity(db, entity_id, payload.model_dump())
         return updated
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

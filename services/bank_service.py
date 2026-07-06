@@ -4,7 +4,7 @@ from model.onboarding.bank_details import BankDetails
 from schema.onboarding.bank_details import BankDetailsCreate
 
 def create_bank_details(db: Session, data: BankDetailsCreate):
-    bank = BankDetails(**data.dict())
+    bank = BankDetails(**data.model_dump())
     db.add(bank)
     db.commit()
     db.refresh(bank)

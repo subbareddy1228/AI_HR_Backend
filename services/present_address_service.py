@@ -5,7 +5,7 @@ from utils.validators import validate_pincode
 
 def create_present_address(db: Session, data: PresentAddressCreate):
     validate_pincode(data.pincode)
-    address = PresentAddress(**data.dict())
+    address = PresentAddress(**data.model_dump())
     db.add(address)
     db.commit()
     db.refresh(address)
