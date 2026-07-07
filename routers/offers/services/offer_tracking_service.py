@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import List, Optional
 
 def create_offer(db: Session, data: OfferTrackingCreate) -> OfferTracking:
-    offer = OfferTracking(**data.dict())
+    offer = OfferTracking(**data.model_dump())
     db.add(offer)
     db.commit()
     db.refresh(offer)

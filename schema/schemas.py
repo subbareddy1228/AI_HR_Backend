@@ -93,9 +93,6 @@ class CandidateRead(CandidateCreate):
 
 
 
-from pydantic import BaseModel
-from typing import Optional
-
 class Profile(BaseModel):
     id: int
     name: str
@@ -220,9 +217,6 @@ class CandidateBase(BaseModel):
     stage_id: int
 
 
-class CandidateCreate(CandidateBase):
-    pass
-
 
 class CandidateUpdate(BaseModel):
     name: Optional[str] = None
@@ -231,10 +225,10 @@ class CandidateUpdate(BaseModel):
     stage_id: Optional[int] = None
 
 
-class CandidateOut(CandidateBase):
-    id: int
+# class CandidateOut(CandidateBase):
+#     id: int
 
-    model_config = {"from_attributes": True}
+#     model_config = {"from_attributes": True}
 
 
 class AnswerSchema(BaseModel):
@@ -345,12 +339,12 @@ class Signature(SignatureBase):
         orm_mode = True
 
 
-class CandidateCreate(BaseModel):
-    first_name: str
-    last_name: str
-    email: str
-    phone: Optional[str]
-    joining_date: Optional[date]
+# class CandidateCreate(BaseModel):
+#     first_name: str
+#     last_name: str
+#     email: str
+#     phone: Optional[str]
+#     joining_date: Optional[date]
 
 class CandidateOut(CandidateCreate):
     id: int
@@ -358,8 +352,8 @@ class CandidateOut(CandidateCreate):
         orm_mode = True
 
 
-class DocumentCreate(BaseModel):
-    name: str
+# class DocumentCreate(BaseModel):
+#     name: str
 
 class DocumentOut(DocumentCreate):
     id: int

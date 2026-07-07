@@ -50,7 +50,7 @@ class SendOfferRequest(BaseModel):
 
 @router.post("/", response_model=OfferTrackingOut)
 def create_offer_endpoint(data: OfferTrackingCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    data_dict = data.dict()
+    data_dict = data.model_dump()
     if not data_dict.get('created_by'):
         data_dict['created_by'] = user.id
     data = OfferTrackingCreate(**data_dict)
@@ -94,7 +94,7 @@ def update_offer_endpoint(
     if user.role.lower() != "admin" and offer.created_by != user.id:
         raise HTTPException(status_code=403, detail="Access forbidden")
     
-    update_dict = data.dict(exclude_unset=True)
+    update_dict = data.model_dump(exclude_unset=True)
     updated = update_offer(db, offer_id, update_dict)
     if not updated:
         raise HTTPException(status_code=404, detail="Offer not found")

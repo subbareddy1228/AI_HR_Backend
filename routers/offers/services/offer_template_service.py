@@ -6,7 +6,7 @@ from typing import List, Optional
 
 def create_offer_template(db: Session, data: OfferTemplateCreate) -> OfferTemplate:
     """Create a new offer template"""
-    template = OfferTemplate(**data.dict())
+    template = OfferTemplate(**data.model_dump())
     db.add(template)
     db.commit()
     db.refresh(template)

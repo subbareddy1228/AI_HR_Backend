@@ -12,7 +12,7 @@ def create_statutory_details(db: Session, data: StatutoryCreate):
     if not validate_aadhaar(data.aadhaar_number):
         raise HTTPException(status_code=400, detail="Invalid Aadhaar")
 
-    obj = StatutoryDetails(**data.dict())
+    obj = StatutoryDetails(**data.model_dump())
     db.add(obj)
     db.commit()
     db.refresh(obj)

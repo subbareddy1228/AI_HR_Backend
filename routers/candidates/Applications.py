@@ -20,7 +20,7 @@ async def create_application(
     application: schemas.ApplicationsCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    db_app = Applications(
+    db_app = Application(
         job_title=application.job_title,
         company=application.company,
         status=application.status,
@@ -133,7 +133,7 @@ async def delete_application(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(Applications).where(Applications.id == app_id)
+        select(Application).where(Application.id == app_id)
     )
     app = result.scalars().first()
 
