@@ -21,6 +21,26 @@ class Role(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class UserRoleAssignment(Base):
+    """
+    Maps a user to one of the custom roles defined above.
+
+    Deliberately NOT the same as User.role (superadmin/company/recruiter/
+    candidate/admin) in model/models.py — that field drives real
+    authentication/access-control checks throughout the app
+    (ProtectedRoute, require_roles, etc.) and must stay one of those 5
+    fixed values. This table is a separate, additive layer for the
+    fine-grained permission sets built on this page, so assigning a
+    custom role here can never break login/auth elsewhere.
+    """
+    __tablename__ = "user_role_assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=False, index=True)
+    role_id = Column(Integer, nullable=False, index=True)
+    assigned_at = Column(DateTime, default=datetime.utcnow)
+
+
 class RoleCreate(BaseModel):
     role_name: str
     description: Optional[str] = None
@@ -42,6 +62,20 @@ class RoleResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BulkAssignRequest(BaseModel):
+    role_id: int
+    user_ids: List[int]
+
+
+class UserRoleAssignmentResponse(BaseModel):
+    id: int
+    user_id: int
+    role_id: int
+    assigned_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -94,3 +128,53 @@ def delete_role(role_id: int, db: Session = Depends(get_db)):
     role.is_active = False
     db.commit()
     return {"message": f"Role '{role.role_name}' deactivated successfully"}
+
+
+# ---------------- USER <-> ROLE ASSIGNMENT ----------------
+
+@router.post("/assign/bulk", response_model=List[UserRoleAssignmentResponse])
+def bulk_assign_role(payload: BulkAssignRequest, db: Session = Depends(get_db)):
+    role = db.query(Role).filter(Role.id == payload.role_id).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+
+    created = []
+    for user_id in payload.user_ids:
+        existing = (
+            db.query(UserRoleAssignment)
+            .filter(
+                UserRoleAssignment.user_id == user_id,
+                UserRoleAssignment.role_id == payload.role_id,
+            )
+            .first()
+        )
+        if existing:
+            created.append(existing)
+            continue
+        assignment = UserRoleAssignment(user_id=user_id, role_id=payload.role_id)
+        db.add(assignment)
+        db.commit()
+        db.refresh(assignment)
+        created.append(assignment)
+
+    return created
+
+
+@router.get("/assign/by-role/{role_id}", response_model=List[UserRoleAssignmentResponse])
+def list_assignments_for_role(role_id: int, db: Session = Depends(get_db)):
+    return db.query(UserRoleAssignment).filter(UserRoleAssignment.role_id == role_id).all()
+
+
+@router.get("/assign/by-user/{user_id}", response_model=List[UserRoleAssignmentResponse])
+def list_assignments_for_user(user_id: int, db: Session = Depends(get_db)):
+    return db.query(UserRoleAssignment).filter(UserRoleAssignment.user_id == user_id).all()
+
+
+@router.delete("/assign/{assignment_id}")
+def unassign_role(assignment_id: int, db: Session = Depends(get_db)):
+    assignment = db.query(UserRoleAssignment).filter(UserRoleAssignment.id == assignment_id).first()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    db.delete(assignment)
+    db.commit()
+    return {"message": "Role unassigned successfully"}

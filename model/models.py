@@ -83,6 +83,11 @@ class Candidate(SQLModel, table=True):
     recruiter_comments: Optional[str]
     applications: List["Application"] = Relationship(back_populates="candidate")
 
+class Stage(SQLModel, table=True):
+        id: Optional[int] = Field(default=None, primary_key=True)
+        name: str
+        order: int
+
 class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     job_id: int = Field(foreign_key="job.id")

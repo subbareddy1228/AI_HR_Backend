@@ -109,7 +109,8 @@ from routers.HR_Automation.Onboarding.routers import candidates as onboard_candi
 from routers.AI_Interview_Bot.routes import interviews
 from routers.CRM import contacts, company, deals, leads, pipelines, activities, analytics,projects, clients, tasks
 from routers.onboarding.admin_candidates import router as admin_candidates_router
-from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address, background_verification, probation_management, induction, buddy_mentor, offer_letter
+from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address, background_verification, probation_management, induction, buddy_mentor, offer_letter, basic_details, contact_details
+from routers.billing import subscription as billing_subscription
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile,notification_preference,location,data_privacy
 from routers.Payroll import Payroll_Processing
@@ -284,6 +285,9 @@ app.include_router(probation_management.router)
 app.include_router(induction.router)
 app.include_router(buddy_mentor.router)
 app.include_router(offer_letter.router)
+app.include_router(basic_details.router)
+app.include_router(contact_details.router)
+app.include_router(billing_subscription.router)
 
 # Company Settings - Currency Management
 app.include_router(currency.router) 
@@ -406,4 +410,3 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.get("/api/test")
 def test_api():
     return {"message": "Backend is working correctly!"}
- 
