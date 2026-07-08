@@ -83,6 +83,12 @@ class Candidate(SQLModel, table=True):
     recruiter_comments: Optional[str]
     applications: List["Application"] = Relationship(back_populates="candidate")
 
+class Stage(SQLModel, table=True):
+        id: Optional[int] = Field(default=None, primary_key=True)
+        name: str
+        order: int
+        stage_type: Optional[str] = Field(default="Screening")  # Screening | Interview | Decision | Final
+
 class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     job_id: int = Field(foreign_key="job.id")
@@ -299,13 +305,13 @@ class Answer(Base):
 
 
 
-def init_db():
-    """
-    Initialize all tables
-    """
-    SQLModel.metadata.create_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
-    print("Tables initialized.")
+# def init_db():
+#     """
+#     Initialize all tables
+#     """
+#     SQLModel.metadata.create_all(bind=engine)
+#     Base.metadata.create_all(bind=engine)
+#     print("Tables initialized.")
 
 class SavedJob(SQLModel, table=True):
     __tablename__ = "saved_jobs"
@@ -325,4 +331,3 @@ class Notifications(Base):
     id = Column(Integer, primary_key=True, index=True)
     message = Column(String, nullable=False)
     is_read = Column(Boolean, default=False)
-

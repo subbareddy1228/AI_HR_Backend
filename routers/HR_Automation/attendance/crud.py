@@ -3,7 +3,7 @@ import model.models
 from schema import schemas
 
 def create_attendance(db: Session, attendance: schemas.AttendanceCreate):
-    db_att = model.models.Attendance(**attendance.dict())
+    db_att = model.models.Attendance(**attendance.model_dump())
     db.add(db_att)
     db.commit()
     db.refresh(db_att)
@@ -13,7 +13,7 @@ def get_attendance(db: Session):
     return db.query(model.models.Attendance).all()
 
 def create_leave_request(db: Session, leave: schemas.LeaveRequestCreate):
-    db_leave = model.models.LeaveRequest(**leave.dict())
+    db_leave = model.models.LeaveRequest(**leave.model_dump())
     db.add(db_leave)
     db.commit()
     db.refresh(db_leave)

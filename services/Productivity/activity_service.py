@@ -59,10 +59,10 @@ async def list_activities_by_employee(
     return activities
 
 
-def log_activity(db: Session, ProductivityActivity: ActivityCreate) -> ProductivityActivity:
+def log_activity(db: Session, activity_data: ActivityCreate) -> ProductivityActivity:
     
     logger.info(f"Logging ProductivityActivity type={ProductivityActivity.activity_type} for employee_id={ProductivityActivity.employee_id}")
-    db_activity = ProductivityActivity(**ProductivityActivity.dict())
+    db_activity = ProductivityActivity(**activity_data.model_dump())
     db.add(db_activity)
     db.commit()
     db.refresh(db_activity)

@@ -26,7 +26,7 @@ def create_stage(payload: schemas.StageCreate, db: Session = Depends(get_db)):
     if exists:
         raise HTTPException(status_code=409, detail="Stage with this name already exists")
 
-    stage = model.models.Stage(name=payload.name, order=payload.order)
+    stage = model.models.Stage(name=payload.name, order=payload.order, stage_type=payload.stage_type)
     db.add(stage)
     db.commit()
     db.refresh(stage)
@@ -42,6 +42,8 @@ def update_stage(stage_id: int, payload: schemas.StageUpdate, db: Session = Depe
         stage.name = payload.name
     if payload.order is not None:
         stage.order = payload.order
+    if payload.stage_type is not None:
+        stage.stage_type = payload.stage_type
     db.commit()
     db.refresh(stage)
     return stage
@@ -55,5 +57,3 @@ def delete_stage(stage_id: int, db: Session = Depends(get_db)):
     db.delete(stage)
     db.commit()
     return None
-
-

@@ -1,7 +1,8 @@
 # core/database.py
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlmodel import SQLModel, Session
 from core.config import settings
 
 
@@ -16,7 +17,7 @@ engine = create_engine(
 
 
 class Base(DeclarativeBase):
-    pass
+     metadata = SQLModel.metadata
 
 
 SessionLocal = sessionmaker(
