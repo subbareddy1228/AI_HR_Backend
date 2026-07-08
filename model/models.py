@@ -87,6 +87,7 @@ class Stage(SQLModel, table=True):
         id: Optional[int] = Field(default=None, primary_key=True)
         name: str
         order: int
+        stage_type: Optional[str] = Field(default="Screening")  # Screening | Interview | Decision | Final
 
 class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -330,4 +331,3 @@ class Notifications(Base):
     id = Column(Integer, primary_key=True, index=True)
     message = Column(String, nullable=False)
     is_read = Column(Boolean, default=False)
-

@@ -24,6 +24,25 @@ class Tenant(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # NOTE: the frontend's MultiTenantSetup.jsx (Super Admin) has a much
+    # richer tenant record than the original model supported — branding,
+    # provisioning config, and usage/status fields. Adding them here
+    # (all optional, all with sane defaults) so that page can be wired to
+    # real data without losing any of its existing UI.
+    status = Column(String(20), default="active")                  # active | pending | suspended | inactive
+    company_size = Column(String(20), nullable=True)                # Small | Medium | Large | Enterprise
+    primary_color = Column(String(20), default="#1890ff")
+    logo_url = Column(Text, nullable=True)
+    trial_ends_at = Column(DateTime, nullable=True)
+    data_usage = Column(String(20), default="0%")
+    last_active = Column(DateTime, nullable=True)
+    tenant_context = Column(String(255), nullable=True)
+    schema_type = Column(String(20), default="shared")              # shared | separate
+    data_retention_period = Column(Integer, default=7)               # years
+    performance_tier = Column(String(20), default="standard")
+    billing_enabled = Column(Boolean, default=False)
+    sso_enabled = Column(Boolean, default=False)
+
 
 class TenantCreate(BaseModel):
     tenant_name: str
@@ -34,6 +53,19 @@ class TenantCreate(BaseModel):
     address: Optional[str] = None
     plan: Optional[str] = "BASIC"
     max_employees: Optional[int] = 50
+    status: Optional[str] = "active"
+    company_size: Optional[str] = None
+    primary_color: Optional[str] = "#1890ff"
+    logo_url: Optional[str] = None
+    trial_ends_at: Optional[datetime] = None
+    data_usage: Optional[str] = "0%"
+    last_active: Optional[datetime] = None
+    tenant_context: Optional[str] = None
+    schema_type: Optional[str] = "shared"
+    data_retention_period: Optional[int] = 7
+    performance_tier: Optional[str] = "standard"
+    billing_enabled: Optional[bool] = False
+    sso_enabled: Optional[bool] = False
 
 
 class TenantUpdate(BaseModel):
@@ -45,6 +77,19 @@ class TenantUpdate(BaseModel):
     plan: Optional[str] = None
     max_employees: Optional[int] = None
     is_active: Optional[bool] = None
+    status: Optional[str] = None
+    company_size: Optional[str] = None
+    primary_color: Optional[str] = None
+    logo_url: Optional[str] = None
+    trial_ends_at: Optional[datetime] = None
+    data_usage: Optional[str] = None
+    last_active: Optional[datetime] = None
+    tenant_context: Optional[str] = None
+    schema_type: Optional[str] = None
+    data_retention_period: Optional[int] = None
+    performance_tier: Optional[str] = None
+    billing_enabled: Optional[bool] = None
+    sso_enabled: Optional[bool] = None
 
 
 class TenantResponse(BaseModel):
@@ -60,6 +105,19 @@ class TenantResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    status: str
+    company_size: Optional[str]
+    primary_color: Optional[str]
+    logo_url: Optional[str]
+    trial_ends_at: Optional[datetime]
+    data_usage: Optional[str]
+    last_active: Optional[datetime]
+    tenant_context: Optional[str]
+    schema_type: Optional[str]
+    data_retention_period: Optional[int]
+    performance_tier: Optional[str]
+    billing_enabled: Optional[bool]
+    sso_enabled: Optional[bool]
 
     model_config = ConfigDict(from_attributes=True)
 

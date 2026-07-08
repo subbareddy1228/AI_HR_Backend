@@ -99,7 +99,7 @@ from routers.Candidate_assessments.Assessment.coding.coding import router as cod
 from routers.Candidate_assessments.Assessment.Assessments.Assessment_Result.candidates import router as candidates_result_router
 from routers.Candidate_assessments.Assessment.aptitude.routers import exam, results as aptitude_results
 from routers.Basic_analytics.hiring_funnel.routers.hiring_funnel import router as hiring_funnel_router
-from routers.Basic_analytics.hiring_funnel.routers.hiring_funnel import router as time_hire_router
+from routers.Basic_analytics.Time_to_hire.time_hire import router as time_hire_router
 from routers.HR_Automation.Task_Management.router.tasks_router import router as tasks_router
 from routers.Resume_parsing.routers.resume_router import router as resume_router
 from routers.admin_users.send_assessment_email import router as email_router
@@ -147,7 +147,8 @@ from routers.Productivity.download_router import router as download_router
 from routers.Productivity.settings_router import router as prod_settings_router
 from routers.Productivity.notifications_router import router as prod_notifications_router
 from routers.candidates.auth import router as candidate_auth_router
-from super_admin import roles_permissions, multi_tenant, company_settings_admin
+from super_admin import roles_permissions, multi_tenant, company_settings_admin, role_assignments
+...
 
 
 # CORS
@@ -397,6 +398,8 @@ app.include_router(candidate_auth_router, prefix="/api/candidate", tags=["Candid
 app.include_router(roles_permissions.router,      prefix="/api/super-admin", tags=["Super Admin"])
 app.include_router(multi_tenant.router,           prefix="/api/super-admin", tags=["Super Admin"])
 app.include_router(company_settings_admin.router, prefix="/api/super-admin", tags=["Super Admin"])
+app.include_router(roles_permissions.router,      prefix="/api/super-admin", tags=["Super Admin"])
+app.include_router(role_assignments.router,       prefix="/api/super-admin", tags=["Super Admin"])
  
 
 # STATIC FILES

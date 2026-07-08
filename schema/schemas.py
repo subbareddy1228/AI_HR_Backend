@@ -193,6 +193,7 @@ class NotificationsCreate(BaseModel):
 class StageBase(BaseModel):
     name: str
     order: int
+    stage_type: Optional[str] = "Screening"  # Screening | Interview | Decision | Final — for the UI badge only
 
 
 class StageCreate(StageBase):
@@ -202,6 +203,7 @@ class StageCreate(StageBase):
 class StageUpdate(BaseModel):
     name: Optional[str] = None
     order: Optional[int] = None
+    stage_type: Optional[str] = None
 
 
 class StageOut(StageBase):
@@ -403,4 +405,3 @@ class TaskOut(BaseModel):
     model_config = {
         "from_attributes": True
     }
-
