@@ -40,7 +40,7 @@ from schema.HR_Operations.promotion import (
     BuddyBulkActionSchema,
 )
 
-router = APIRouter(prefix="/career", tags=["Promotions & Career"])
+router = APIRouter(prefix="/promotions", tags=["Promotions & Career"])
 
 
 

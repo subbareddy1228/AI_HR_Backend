@@ -13,7 +13,7 @@ from core.database import get_db
 import schema.HR_Operations.exit_management as schemas
 import services.HR_Operations.exit_management_service as svc
 
-router = APIRouter(prefix="/hr-ops/exit", tags=["Exit Management"])
+router = APIRouter(prefix="/exit-management", tags=["Exit Management"])
 
 
 @router.get("/kpi", response_model=schemas.ExitKPISummary, summary="Exit Management KPI Summary")

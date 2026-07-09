@@ -38,8 +38,8 @@ from schema.HR_Operations.notice_period import (
 from services.HR_Operations import noticeperiod as svc
 
 router = APIRouter(
-    prefix="/hr-ops/notice-period",
-    tags=["HR Ops – Notice Period Tracking"],
+    prefix="/notice-period",
+    tags=["HR Ops - Notice Period Tracking"],
 )
 
 

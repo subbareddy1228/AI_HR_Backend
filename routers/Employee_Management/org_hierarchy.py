@@ -37,7 +37,7 @@ from schema.Employee_Management.org_hierarchy import (
 )
 from datetime import datetime
  
-router = APIRouter(prefix="/api/org-hierarchy", tags=["Org Hierarchy"])
+router = APIRouter(prefix="/org-hierarchy", tags=["Org Hierarchy"])
  
 
  
