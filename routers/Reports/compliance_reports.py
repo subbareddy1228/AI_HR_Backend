@@ -24,7 +24,7 @@ from schema.Reports.compliance_reports import (
     GratuityComplianceItem,
 )
  
-router = APIRouter(prefix="/api/reports/compliance", tags=["Compliance Reports"])
+router = APIRouter(prefix="/compliance", tags=["Compliance Reports"])
  
 
  

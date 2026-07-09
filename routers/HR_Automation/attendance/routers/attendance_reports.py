@@ -28,7 +28,7 @@ from schema.HR_Automation.attendance_report import (
 )
 
 router = APIRouter(
-    prefix="/api/hr/attendance/reports",
+    prefix="/reports",
     tags=["Attendance & Leave Reports"],
 )
 

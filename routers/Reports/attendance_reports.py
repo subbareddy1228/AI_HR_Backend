@@ -30,7 +30,7 @@ from schema.Reports.attendance_reports import (
     AttendanceRegisterItem,
 )
 
-router = APIRouter(prefix="/api/reports/attendance", tags=["Attendance Reports"])
+router = APIRouter(prefix="/attendance", tags=["Attendance Reports"])
 
 SHIFT_START     = 9     
 SHIFT_END       = 18       

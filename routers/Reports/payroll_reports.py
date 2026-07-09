@@ -27,7 +27,7 @@ from schema.Reports.payroll_reports import (
     PayrollVarianceItem,
 )
  
-router = APIRouter(prefix="/api/reports/payroll", tags=["Payroll Reports"])
+router = APIRouter(prefix="/payroll", tags=["Payroll Reports"])
  
  
 @router.get("/stats", response_model=PayrollReportStats)

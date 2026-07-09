@@ -38,7 +38,7 @@ from schema.Reports.employee_reports import (
     JoiningMetrics,
 )
 
-router = APIRouter(prefix="/api/reports/employee", tags=["Employee Reports"])
+router = APIRouter(prefix="/employee", tags=["Employee Reports"])
 
 
 

@@ -16,7 +16,7 @@ from schema.HR_Automation.monthly_attendance import (
 from services.HR_Automation.monthly_attendance_service import monthly_attendance_service as svc
 
 router = APIRouter(
-    prefix="/attendance/monthly",
+    prefix="/monthly",
     tags=["Monthly Attendance"],
 )
 

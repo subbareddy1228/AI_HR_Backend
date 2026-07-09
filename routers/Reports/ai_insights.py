@@ -27,7 +27,7 @@ from schema.Reports.ai_insights import (
     WorkforceTrendSchema,
 )
 
-router = APIRouter(prefix="/api/reports/AI_Insights", tags=["AI Insights Reports"])
+router = APIRouter(prefix="/ai-insights", tags=["AI Insights Reports"])
 
 MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun",
                "Jul","Aug","Sep","Oct","Nov","Dec"]

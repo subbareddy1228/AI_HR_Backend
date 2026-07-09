@@ -25,7 +25,7 @@ from schema.HR_Automation.manual_attendance import (
 )
 
 router = APIRouter(
-    prefix="/api/hr/attendance/manual",
+    prefix="/manual",
     tags=["Manual Attendance"],
 )
 

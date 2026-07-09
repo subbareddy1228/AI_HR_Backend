@@ -18,7 +18,7 @@ from schema.HR_Automation.daily_attendance import (
 from services.HR_Automation.daily_attendance_service import daily_attendance_service as svc
 
 router = APIRouter(
-    prefix="/attendance/daily",
+    prefix="/daily",
     tags=["Daily Attendance"],
 )
 

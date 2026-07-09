@@ -25,7 +25,7 @@ from schema.HR_Automation.leave_correction import (
 )
 
 router = APIRouter(
-    prefix="/api/hr/leave/correction",
+    prefix="/correction",
     tags=["Leave Correction"],
 )
 

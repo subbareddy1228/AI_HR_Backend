@@ -20,7 +20,7 @@ from schema.Reports.leave_reports import (
     EmployeeLeaveRecordItem,
 )
  
-router = APIRouter(prefix="/api/reports/leave", tags=["Leave Reports"])
+router = APIRouter(prefix="/leave", tags=["Leave Reports"])
  
 CASUAL_TOTAL  = 12
 SICK_TOTAL    = 10
