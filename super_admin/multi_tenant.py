@@ -24,11 +24,6 @@ class Tenant(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # NOTE: the frontend's MultiTenantSetup.jsx (Super Admin) has a much
-    # richer tenant record than the original model supported — branding,
-    # provisioning config, and usage/status fields. Adding them here
-    # (all optional, all with sane defaults) so that page can be wired to
-    # real data without losing any of its existing UI.
     status = Column(String(20), default="active")                  # active | pending | suspended | inactive
     company_size = Column(String(20), nullable=True)                # Small | Medium | Large | Enterprise
     primary_color = Column(String(20), default="#1890ff")

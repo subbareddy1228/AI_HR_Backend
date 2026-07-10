@@ -42,6 +42,8 @@ class User(SQLModel, table=True):
     company_name: Optional[str]
     company_website: Optional[str]
     company_id: Optional[str] = None
+
+    tenant_id: Optional[int] = Field(default=None, foreign_key="tenants.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Job(SQLModel, table=True):
@@ -79,6 +81,7 @@ class Candidate(SQLModel, table=True):
     skills: Optional[str]
     stage: str = "Applied"
     resume_url: Optional[str]
+    profile_image_url: Optional[str] = None
     notes: Optional[str]
     recruiter_comments: Optional[str]
     applications: List["Application"] = Relationship(back_populates="candidate")

@@ -32,6 +32,7 @@ class AdminUserUpdate(BaseModel):
     role: Optional[ROLE_CHOICES]
     is_active: Optional[bool]
     password: Optional[str] = None
+    tenant_id: Optional[int] = None
 
 
 def _serialize_user(user: User) -> dict:
@@ -42,6 +43,7 @@ def _serialize_user(user: User) -> dict:
         "email": user.email,
         "role": user.role,
         "is_active": user.is_active,
+        "tenant_id": user.tenant_id,
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
 
@@ -124,7 +126,7 @@ def update_user(
     if payload.password:
         target_user.hashed_password = get_password_hash(payload.password)
 
-    for field in ["name", "username", "email", "role", "is_active"]:
+    for field in ["name", "username", "email", "role", "is_active", "tenant_id"]:
         value = getattr(payload, field)
         if value is not None:
             setattr(target_user, field, value)
