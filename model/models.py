@@ -42,8 +42,12 @@ class User(SQLModel, table=True):
     company_name: Optional[str]
     company_website: Optional[str]
     company_id: Optional[str] = None
-
-    tenant_id: Optional[int] = Field(default=None, foreign_key="tenants.id")
+    # Required by the Company Settings routers (current_user.tenant_id) —
+    # those endpoints would throw AttributeError without this. References
+    # super_admin.multi_tenant.Tenant.id conceptually (cross-Base FK, so no
+    # hard `foreign_key=` constraint to avoid SQLModel/SQLAlchemy metadata
+    # ordering issues between the two declarative bases in this codebase).
+    tenant_id: Optional[int] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Job(SQLModel, table=True):
@@ -81,9 +85,9 @@ class Candidate(SQLModel, table=True):
     skills: Optional[str]
     stage: str = "Applied"
     resume_url: Optional[str]
-    profile_image_url: Optional[str] = None
     notes: Optional[str]
     recruiter_comments: Optional[str]
+    source: Optional[str] = Field(default="Unknown")  # LinkedIn | Referral | Naukri | Career Page | Unknown — how this candidate entered the pipeline
     applications: List["Application"] = Relationship(back_populates="candidate")
 
 class Stage(SQLModel, table=True):
@@ -99,12 +103,37 @@ class Application(SQLModel, table=True):
     candidate_name: str
     candidate_email: str
     stage: str = "Applied"  
+    source: Optional[str] = Field(default=None)  # LinkedIn | Referral | Naukri | Career Page | ... — set by whatever creates the application; NULL for existing/legacy rows
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     applied_at: datetime = Field(default_factory=datetime.utcnow)
     hired_at: Optional[datetime] = None
     job: Job = Relationship(back_populates="applications")
     candidate: Candidate = Relationship(back_populates="applications")
+
+class IntegrationConnection(SQLModel, table=True):
+    # Records which third-party integrations an admin has toggled on —
+    # deliberately NOT a real OAuth connection. There is no Slack/Gmail/
+    # Google Calendar app registration (client_id/secret/redirect URI)
+    # anywhere in this backend, so "Connect" here does not actually talk to
+    # those services. This just persists the on/off state honestly instead
+    # of faking it as purely client-side (which reset on every reload).
+    id: Optional[int] = Field(default=None, primary_key=True)
+    integration_id: str = Field(unique=True)  # 'slack' | 'gmail' | 'google-calendar'
+    status: str = Field(default="disconnected")  # 'connected' | 'disconnected'
+    connected_at: Optional[datetime] = None
+
+
+class CandidateComment(SQLModel, table=True):
+    # Real threaded discussion for the Pipeline Collaboration board — separate
+    # from Candidate.recruiter_comments (a single free-text field) since the
+    # UI needs multiple, attributed, timestamped entries per candidate.
+    id: Optional[int] = Field(default=None, primary_key=True)
+    candidate_id: int = Field(foreign_key="candidate.id")
+    author: str
+    text: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 
 class AIInterviewTemplate(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

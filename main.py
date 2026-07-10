@@ -111,6 +111,7 @@ from routers.CRM import contacts, company, deals, leads, pipelines, activities, 
 from routers.onboarding.admin_candidates import router as admin_candidates_router
 from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address, background_verification, probation_management, induction, buddy_mentor, offer_letter, basic_details, contact_details
 from routers.billing import subscription as billing_subscription
+from routers.integrations import connections as integrations_connections
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
 from routers.Company_Settings import currency, financial_year, localization, policy,company_profile,notification_preference,location,data_privacy
 from routers.Payroll import Payroll_Processing
@@ -289,6 +290,7 @@ app.include_router(offer_letter.router)
 app.include_router(basic_details.router)
 app.include_router(contact_details.router)
 app.include_router(billing_subscription.router)
+app.include_router(integrations_connections.router)
 
 # Company Settings - Currency Management
 app.include_router(currency.router) 
@@ -309,58 +311,58 @@ app.include_router(asset_insurance.router)
 
 
 # Payroll
-app.include_router(salary_structure.router,     prefix="/api/payroll")
-app.include_router(payroll_run.router,          prefix="/api/payroll")
-app.include_router(salary_slip.router,          prefix="/api/payroll")
-app.include_router(reimbursements.router,       prefix="/api/payroll")
-app.include_router(loans_advances.router,       prefix="/api/payroll")
-app.include_router(statutory_compliance.router, prefix="/api/payroll")
-app.include_router(bank_transfer.router,        prefix="/api/payroll")
-app.include_router(final_settlement.router,     prefix="/api/payroll")
-app.include_router(payroll_rpt.router,          prefix="/api/payroll")
-app.include_router(Payroll_Processing.router,   prefix="/api/payroll")
-app.include_router(payroll_integration.router,  prefix="/api/payroll")
+app.include_router(salary_structure.router,     prefix="/api/payroll", tags=["Payroll"])
+app.include_router(payroll_run.router,          prefix="/api/payroll", tags=["Payroll"])
+app.include_router(salary_slip.router,          prefix="/api/payroll", tags=["Payroll"])
+app.include_router(reimbursements.router,       prefix="/api/payroll", tags=["Payroll"])
+app.include_router(loans_advances.router,       prefix="/api/payroll", tags=["Payroll"])
+app.include_router(statutory_compliance.router, prefix="/api/payroll", tags=["Payroll"])
+app.include_router(bank_transfer.router,        prefix="/api/payroll", tags=["Payroll"])
+app.include_router(final_settlement.router,     prefix="/api/payroll", tags=["Payroll"])
+app.include_router(payroll_rpt.router,          prefix="/api/payroll", tags=["Payroll"])
+app.include_router(Payroll_Processing.router,   prefix="/api/payroll", tags=["Payroll"])
+app.include_router(payroll_integration.router,  prefix="/api/payroll", tags=["Payroll"])
 # Employee Management
-app.include_router(employee_master.router,       prefix="/api/employees")
-app.include_router(all_employees.router,         prefix="/api/employees")
-app.include_router(document_vault.router,        prefix="/api/employees")
-app.include_router(org_hierarchy.router,         prefix="/api/employees")
-app.include_router(employee_lifecycle.router,    prefix="/api/employees")
-app.include_router(employee_self_service.router, prefix="/api/employees")
+app.include_router(employee_master.router,       prefix="/api/employees", tags=["Employee Management"])
+app.include_router(all_employees.router,         prefix="/api/employees", tags=["Employee Management"])
+app.include_router(document_vault.router,        prefix="/api/employees", tags=["Employee Management"])
+app.include_router(org_hierarchy.router,         prefix="/api/employees", tags=["Employee Management"])
+app.include_router(employee_lifecycle.router,    prefix="/api/employees", tags=["Employee Management"])
+app.include_router(employee_self_service.router, prefix="/api/employees", tags=["Employee Management"])
 
 # HR Operations
-app.include_router(exit_management.router,       prefix="/api/hr-ops")
-app.include_router(letter_generation.router,     prefix="/api/hr-ops")
-app.include_router(notice_period.router,         prefix="/api/hr-ops")
-app.include_router(hr_helpdesk.router,           prefix="/api/hr-ops")
-app.include_router(employee_confirmation.router, prefix="/api/hr-ops")
-app.include_router(transfers.router,             prefix="/api/hr-ops")
-app.include_router(promotions.router,            prefix="/api/hr-ops")
+app.include_router(exit_management.router,       prefix="/api/hr-ops", tags=["HR Operations"])
+app.include_router(letter_generation.router,     prefix="/api/hr-ops", tags=["HR Operations"])
+app.include_router(notice_period.router,         prefix="/api/hr-ops", tags=["HR Operations"])
+app.include_router(hr_helpdesk.router,           prefix="/api/hr-ops", tags=["HR Operations"])
+app.include_router(employee_confirmation.router, prefix="/api/hr-ops", tags=["HR Operations"])
+app.include_router(transfers.router,             prefix="/api/hr-ops", tags=["HR Operations"])
+app.include_router(promotions.router,            prefix="/api/hr-ops", tags=["HR Operations"])
 
 # Attendance extensions
-app.include_router(shift_management.router,       prefix="/api/attendance")
-app.include_router(holiday_calendar.router,       prefix="/api/attendance")
-app.include_router(work_hour_rules.router,        prefix="/api/attendance")
+app.include_router(shift_management.router,       prefix="/api/attendance", tags=["Attendance"])
+app.include_router(holiday_calendar.router,       prefix="/api/attendance", tags=["Attendance"])
+app.include_router(work_hour_rules.router,        prefix="/api/attendance", tags=["Attendance"])
 # app.include_router(att_rpt.router,                prefix="/api/attendance", tags=["Attendance"])
-app.include_router(attendance_capture.router,     prefix="/api/attendance")
-app.include_router(daily_punches.router,          prefix="/api/attendance")
-app.include_router(daily_attendance.router,       prefix="/api/attendance")
-app.include_router(manual_attendance.router,      prefix="/api/attendance")
-app.include_router(leave_correction.router,       prefix="/api/attendance")
-app.include_router(monthly_attendance.router,     prefix="/api/attendance")
-app.include_router(regularization.router,         prefix="/api/attendance")
-app.include_router(attendance_reports.router,     prefix="/api/attendance")
+app.include_router(attendance_capture.router,     prefix="/api/attendance", tags=["Attendance"])
+app.include_router(daily_punches.router,          prefix="/api/attendance", tags=["Attendance"])
+app.include_router(daily_attendance.router,       prefix="/api/attendance", tags=["Attendance"])
+app.include_router(manual_attendance.router,      prefix="/api/attendance", tags=["Attendance"])
+app.include_router(leave_correction.router,       prefix="/api/attendance", tags=["Attendance"])
+app.include_router(monthly_attendance.router,     prefix="/api/attendance", tags=["Attendance"])
+app.include_router(regularization.router,         prefix="/api/attendance", tags=["Attendance"])
+app.include_router(attendance_reports.router,     prefix="/api/attendance", tags=["Attendance"])
 # leave.router already mounted at /api/leave (line above attendance block); not duplicated here
 
 # Reports
-app.include_router(employee_reports.router,      prefix="/api/reports")
-app.include_router(rep_att.router,               prefix="/api/reports")
-app.include_router(leave_reports.router,         prefix="/api/reports")
-app.include_router(rep_pay.router,               prefix="/api/reports")
-app.include_router(compliance_reports.router,    prefix="/api/reports")
-app.include_router(custom_report_builder.router, prefix="/api/reports")
-app.include_router(executive_dashboard.router,   prefix="/api/reports")
-app.include_router(ai_insights.router,           prefix="/api/reports")
+app.include_router(employee_reports.router,      prefix="/api/reports", tags=["Reports"])
+app.include_router(rep_att.router,               prefix="/api/reports", tags=["Reports"])
+app.include_router(leave_reports.router,         prefix="/api/reports", tags=["Reports"])
+app.include_router(rep_pay.router,               prefix="/api/reports", tags=["Reports"])
+app.include_router(compliance_reports.router,    prefix="/api/reports", tags=["Reports"])
+app.include_router(custom_report_builder.router, prefix="/api/reports", tags=["Reports"])
+app.include_router(executive_dashboard.router,   prefix="/api/reports", tags=["Reports"])
+app.include_router(ai_insights.router,           prefix="/api/reports", tags=["Reports"])
 
 # Productivity
 
@@ -398,6 +400,7 @@ app.include_router(candidate_auth_router, prefix="/api/candidate", tags=["Candid
 app.include_router(roles_permissions.router,      prefix="/api/super-admin", tags=["Super Admin"])
 app.include_router(multi_tenant.router,           prefix="/api/super-admin", tags=["Super Admin"])
 app.include_router(company_settings_admin.router, prefix="/api/super-admin", tags=["Super Admin"])
+app.include_router(roles_permissions.router,      prefix="/api/super-admin", tags=["Super Admin"])
 app.include_router(role_assignments.router,       prefix="/api/super-admin", tags=["Super Admin"])
  
 

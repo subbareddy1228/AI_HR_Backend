@@ -21,6 +21,7 @@ class CandidateSignup(BaseModel):
     email: EmailStr
     password: str
     role: Optional[str] = "candidate"
+    source: Optional[str] = "Unknown"  # LinkedIn | Referral | Naukri | Career Page | Unknown
 
 class CandidateLogin(BaseModel):
     email: EmailStr
@@ -48,6 +49,7 @@ def candidate_signup(payload: CandidateSignup, db: Session = Depends(get_db)):
         email=payload.email,
         hashed_password=pwd_context.hash(payload.password),
         role=payload.role or "candidate",
+        source=payload.source or "Unknown",
     )
     db.add(candidate)
     db.commit()

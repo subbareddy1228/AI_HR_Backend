@@ -105,3 +105,47 @@ def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
     db.delete(candidate)
     db.commit()
     return None
+
+
+# ---------------- COLLABORATION COMMENTS ----------------
+
+class CommentCreate(BaseModel):
+    author: str
+    text: str
+
+
+class CommentOut(BaseModel):
+    id: int
+    candidate_id: int
+    author: str
+    text: str
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/{candidate_id}/comments", response_model=List[CommentOut])
+def list_comments(candidate_id: int, db: Session = Depends(get_db)):
+    comments = db.exec(
+        select(model.models.CandidateComment)
+        .where(model.models.CandidateComment.candidate_id == candidate_id)
+        .order_by(model.models.CandidateComment.created_at)
+    ).all()
+    return [
+        CommentOut(id=c.id, candidate_id=c.candidate_id, author=c.author, text=c.text, created_at=c.created_at.isoformat())
+        for c in comments
+    ]
+
+
+@router.post("/{candidate_id}/comments", response_model=CommentOut, status_code=201)
+def add_comment(candidate_id: int, payload: CommentCreate, db: Session = Depends(get_db)):
+    candidate = db.get(Candidate, candidate_id)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    comment = model.models.CandidateComment(candidate_id=candidate_id, author=payload.author, text=payload.text)
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return CommentOut(id=comment.id, candidate_id=comment.candidate_id, author=comment.author, text=comment.text, created_at=comment.created_at.isoformat())
