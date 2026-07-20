@@ -4,10 +4,27 @@ import csv
 from datetime import datetime
 from dateutil import parser
 from sqlalchemy.orm import Session
+from sqlalchemy import Column, Integer, String, Float, DateTime
 from core.database import SessionLocal, Base, engine
-from model.models import Candidate
 
 router = APIRouter()
+
+
+class HiringFunnelCandidate(Base):
+    __tablename__ = "hiring_funnel_candidates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_name = Column(String, nullable=True)
+    source = Column(String, nullable=True)
+    applied_date = Column(DateTime, nullable=True)
+    role = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+    experience_level = Column(String, nullable=True)
+    call_screening = Column(Float, nullable=True)
+    ai_interview = Column(Float, nullable=True)
+    assessment = Column(Float, nullable=True)
+    assessment_result = Column(String, nullable=True)
+    hired = Column(String, nullable=True)
 
 
 @router.on_event("startup")
@@ -17,8 +34,6 @@ def startup():
         print("✓ Hiring funnel tables created successfully!")
     except Exception as e:
         print(f"⚠ Warning: Could not create hiring funnel tables: {e}")
-        print("  Database may not be available. The application will continue.")
-        print("  Please ensure PostgreSQL is running and DATABASE_URL is correct.")
 
 
 def get_db():
@@ -49,7 +64,6 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
 
     for i, row in enumerate(reader, start=2):
         try:
-            
             applied_date_str = row.get("Applied_Date", "")
             try:
                 applied_date = datetime.strptime(applied_date_str, "%Y-%m-%d")
@@ -59,7 +73,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
                 except ValueError:
                     applied_date = parser.parse(applied_date_str)
 
-            candidate = Candidate(
+            candidate = HiringFunnelCandidate(
                 candidate_name=row.get("CandidateName", ""),
                 source=row.get("Source", ""),
                 applied_date=applied_date,
@@ -90,12 +104,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
 
 @router.get("/")
 def get_hiring_funnel(db: Session = Depends(get_db)):
-    """
-    Returns hiring funnel stats: counts per stage across all candidates.
-    """
-    from sqlalchemy import func
-
-    candidates = db.query(Candidate).all()
+    candidates = db.query(HiringFunnelCandidate).all()
 
     total = len(candidates)
     call_screened = sum(1 for c in candidates if c.call_screening and c.call_screening > 0)
@@ -121,12 +130,7 @@ def get_hiring_funnel(db: Session = Depends(get_db)):
 
 @router.get("/time-to-hire")
 def get_time_to_hire(db: Session = Depends(get_db)):
-    """
-    Returns average time-to-hire metrics based on candidate applied_date.
-    """
-    from datetime import datetime
-
-    candidates = db.query(Candidate).all()
+    candidates = db.query(HiringFunnelCandidate).all()
 
     if not candidates:
         return {"average_days": 0, "total_hired": 0, "data": []}
