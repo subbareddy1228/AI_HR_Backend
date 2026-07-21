@@ -8,8 +8,10 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 
+from sqlalchemy import func
 from core.database import get_db
 from model.models import User
+from super_admin.multi_tenant import Tenant
 
 import secrets
 from fastapi_mail import FastMail, MessageSchema, MessageType
@@ -111,6 +113,26 @@ def require_roles(allowed_roles: List[str]):
     return checker
 
 
+def get_or_create_tenant(db: Session, company_name: str, contact_email: str) -> Tenant:
+
+    tenant = db.execute(
+        select(Tenant).where(func.lower(Tenant.tenant_name) == company_name.strip().lower())
+    ).scalar_one_or_none()
+
+    if tenant:
+        return tenant
+
+    tenant = Tenant(
+        tenant_name=company_name.strip(),
+        contact_email=contact_email,
+        plan="BASIC",
+        status="active",
+    )
+    db.add(tenant)
+    db.flush()  
+    return tenant
+
+
 @router.post("/signup", status_code=201)
 def signup(payload: SignupRequest, db: Session = Depends(get_db)):
     existing_user = db.execute(
@@ -120,6 +142,8 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=409, detail="Email already registered")
 
+    tenant = get_or_create_tenant(db, payload.company_name, payload.email)
+
     user = User(
         name=payload.name,
         email=payload.email,
@@ -127,6 +151,7 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)):
         role=payload.role,
         company_name=payload.company_name,
         company_website=payload.company_website,
+        tenant_id=tenant.id,
         is_active=False  
     )
 

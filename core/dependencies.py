@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from jose import jwt, JWTError
 from core.database import get_db
 from model.models import User
-from typing import List
+from typing import List, Optional
 
  
 SECRET_KEY = "your_super_secret_key"
@@ -29,12 +29,23 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
  
 def require_roles(allowed_roles: List[str]):
-    """
-    Dependency to ensure current user has one of the allowed roles.
-    Usage: Depends(require_roles(["recruiter", "company"]))
-    """
+
     def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role.lower() not in [r.lower() for r in allowed_roles]:
             raise HTTPException(status_code=403, detail="Operation not permitted")
         return current_user
     return role_checker
+
+
+def get_current_tenant_id(current_user: User = Depends(get_current_user)) -> Optional[int]:
+   
+    if current_user.role.lower() == "super_admin":
+        return None
+
+    if not current_user.tenant_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Your account is not linked to a company yet. Contact support.",
+        )
+
+    return current_user.tenant_id

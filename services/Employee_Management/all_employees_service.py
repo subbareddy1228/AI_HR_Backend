@@ -363,11 +363,14 @@ def _build_response(emp: Employee, db: Session) -> dict:
 
 def list_all_employees(
     db: Session,
+    tenant_id: Optional[int],
     is_active: Optional[bool] = None,
     department: Optional[str] = None,
     search: Optional[str] = None,
 ) -> list:
     stmt = select(Employee)
+    if tenant_id is not None:  
+        stmt = stmt.where(Employee.tenant_id == tenant_id)
     if is_active is not None:
         stmt = stmt.where(Employee.is_active == is_active)
     if department and department not in ("All Departments", "All", ""):
@@ -387,14 +390,17 @@ def list_all_employees(
     return [_build_response(emp, db) for emp in employees]
 
 
-def get_employee(db: Session, employee_id: int) -> dict:
+def get_employee(db: Session, employee_id: int, tenant_id: Optional[int]) -> dict:
     emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
     if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+   
+    if tenant_id is not None and emp.tenant_id != tenant_id:
         raise HTTPException(status_code=404, detail="Employee not found")
     return _build_response(emp, db)
 
 
-def create_employee(db: Session, payload: dict) -> dict:
+def create_employee(db: Session, payload: dict, tenant_id: int) -> dict:
     personal_data = payload.get("personalInfo", {})
     emp_info_data = payload.get("employmentInfo", {})
     salary_data   = payload.get("salaryInfo", {})
@@ -465,6 +471,7 @@ def create_employee(db: Session, payload: dict) -> dict:
         cost_center=emp_info_data.get("costCenter"),
         business_unit=emp_info_data.get("employeeCategory"),
         is_active=True,
+        tenant_id=tenant_id,
     )
     db.add(emp)
     db.flush()  
@@ -719,9 +726,11 @@ def create_employee(db: Session, payload: dict) -> dict:
     return _build_response(emp, db)
 
 
-def update_employee(db: Session, employee_id: int, payload: dict) -> dict:
+def update_employee(db: Session, employee_id: int, payload: dict, tenant_id: Optional[int]) -> dict:
     emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
     if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    if tenant_id is not None and emp.tenant_id != tenant_id:
         raise HTTPException(status_code=404, detail="Employee not found")
 
     personal_data  = payload.get("personalInfo", {})
@@ -1088,9 +1097,11 @@ def update_employee(db: Session, employee_id: int, payload: dict) -> dict:
     return _build_response(emp, db)
 
 
-def delete_employee(db: Session, employee_id: int, hard: bool = False) -> dict:
+def delete_employee(db: Session, employee_id: int, tenant_id: Optional[int], hard: bool = False) -> dict:
     emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
     if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    if tenant_id is not None and emp.tenant_id != tenant_id:
         raise HTTPException(status_code=404, detail="Employee not found")
 
     if hard:

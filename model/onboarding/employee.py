@@ -16,6 +16,8 @@ class Employee(Base):
     __tablename__ = "employees"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    
+    tenant_id: Mapped[int | None] = mapped_column(nullable=True, index=True)
 
     time_logs = relationship("TimeLog", back_populates="employee")
 
