@@ -268,6 +268,6 @@ def update_salary_slip(
     return svc.update_salary_slip(db, slip_id, payload)
 
 
-@router.delete("/{slip_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{slip_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_salary_slip(slip_id: int, db: Session = Depends(get_db)):
     svc.delete_salary_slip(db, slip_id)

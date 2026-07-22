@@ -36,7 +36,7 @@ router = APIRouter(prefix="/reimbursements", tags=["Reimbursements"])
 
 
 @router.get(
-    "/d1ashboard",
+    "/dashboard",
     response_model=ReimbursementDashboard,
     summary="KPI cards — Total Claims | Approved | Pending | Tax Amount",
 )
@@ -94,7 +94,7 @@ def update_type_endpoint(
 
 @router.delete(
     "/types/{type_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Deactivate a reimbursement type (soft-delete)",
 )
 def deactivate_type_endpoint(type_id: int, db: Session = Depends(get_db)):

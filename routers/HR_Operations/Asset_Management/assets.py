@@ -84,7 +84,7 @@ def edit_asset(asset_id: int, payload: AssetUpdate, db: Session = Depends(get_db
 
 @router.delete(
     "/{asset_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete an asset (only if not currently allocated)",
 )
 def remove_asset(asset_id: int, db: Session = Depends(get_db)):

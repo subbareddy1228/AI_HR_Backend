@@ -100,7 +100,7 @@ def complete_task(task_id: int, db: Session = Depends(get_db)):
 
 @router.delete(
     "/onboarding-tasks/{task_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete an onboarding task",
 )
 def delete_task(task_id: int, db: Session = Depends(get_db)):
@@ -239,7 +239,7 @@ def reject_transfer_route(
 
 @router.delete(
     "/transfers/{transfer_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a transfer request",
 )
 def delete_transfer(transfer_id: int, db: Session = Depends(get_db)):
@@ -299,7 +299,7 @@ def relieving_letter(exit_id: int, db: Session = Depends(get_db)):
 
 @router.delete(
     "/exits/{exit_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete an exit process",
 )
 def delete_exit(exit_id: int, db: Session = Depends(get_db)):
@@ -348,7 +348,7 @@ def update_contract(contract_id: int, payload: ContractRenewalUpdate, db: Sessio
 
 @router.delete(
     "/contracts/{contract_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a contract renewal",
 )
 def delete_contract(contract_id: int, db: Session = Depends(get_db)):
@@ -432,7 +432,7 @@ def update_event(event_id: int, payload: LifecycleEventUpdate, db: Session = Dep
 
 @router.delete(
     "/event/{event_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Soft-delete a lifecycle event",
 )
 def delete_event(event_id: int, db: Session = Depends(get_db)):

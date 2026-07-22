@@ -243,7 +243,7 @@ def update_component(
 
 @router.delete(
     "/components/{component_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Soft-delete a salary component (Delete button in table)",
 )
 def delete_component(

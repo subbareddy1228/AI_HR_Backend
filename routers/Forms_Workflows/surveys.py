@@ -150,7 +150,7 @@ def update_bank_question_endpoint(
 
 @router.delete(
     "/question-bank/{qid}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Soft-delete a Question Bank entry",
 )
 def delete_bank_question_endpoint(
@@ -289,7 +289,7 @@ def update_survey_endpoint(
 
 @router.delete(
     "/{survey_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a survey (must not be active)",
 )
 def delete_survey_endpoint(
@@ -384,7 +384,7 @@ def update_question_endpoint(
 
 @router.delete(
     "/{survey_id}/questions/{question_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Remove a question from a survey",
 )
 def delete_question_endpoint(

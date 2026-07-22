@@ -81,7 +81,7 @@ def edit_exchange_rate(
     return update_exchange_rate(db, current_user.tenant_id, rate_id, data, current_user.id)
 
 
-@router.delete("/rates/{rate_id}", status_code=status.HTTP_200_OK)
+@router.delete("/rates/{rate_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_exchange_rate(
     rate_id:      int,
     current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
