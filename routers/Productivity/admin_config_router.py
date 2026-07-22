@@ -35,7 +35,7 @@ def patch_entity(entity_id: int, payload: ProductiveEntityCreate, db: Session = 
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.delete("/entities/{entity_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/entities/{entity_id}", status_code=status.HTTP_200_OK)
 def remove_entity(entity_id: int, db: Session = Depends(get_db), _=Depends(require_roles("Admin"))):
     try:
         delete_entity(db, entity_id)

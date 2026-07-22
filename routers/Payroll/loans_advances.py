@@ -110,7 +110,7 @@ def edit_loan(loan_id: int, payload: LoanAdvanceUpdate, db: Session = Depends(ge
 
 @router.delete(
     "/{loan_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete a loan/advance record (delete icon — disallowed while ACTIVE)",
 )
 def remove_loan(loan_id: int, db: Session = Depends(get_db)):

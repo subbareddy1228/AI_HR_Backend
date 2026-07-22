@@ -1,12 +1,4 @@
--- ============================================================================
--- SQL QUERIES TO INSERT PRASAD CHANDRAGIRI'S CANDIDATE DATA
--- ============================================================================
--- Resume: uploads/jd_files/prasad Chandragiri Resume.pdf
--- Extracted Date: October 30, 2025
--- ============================================================================
 
--- STEP 1: INSERT CANDIDATE INTO DATABASE
--- ============================================================================
 INSERT INTO candidate (name, email, role, skills, stage, resume_url, notes, recruiter_comments)
 VALUES (
     'Durga Sai Vara Prasad Chandragiri',
@@ -19,27 +11,18 @@ VALUES (
     'Fresh graduate with full-stack experience. Strong in MERN and MEAN stacks. Good project portfolio.'
 );
 
--- ============================================================================
--- STEP 2: VERIFY CANDIDATE INSERTION
--- ============================================================================
 SELECT id, name, email, role, stage 
 FROM candidate 
+
 WHERE email = 'durgasaivaraprasadchan@gmail.com';
 
--- ============================================================================
--- STEP 3: VIEW AVAILABLE JOBS
--- ============================================================================
 -- Check available jobs to assign the candidate to
 SELECT id, title, department, employment_type, location, role, status
 FROM job 
 WHERE status IN ('Active', 'Open', 'Published')
 ORDER BY created_at DESC;
 
--- ============================================================================
--- STEP 4: CREATE APPLICATION (ASSIGN CANDIDATE TO JOB)
--- ============================================================================
--- OPTION A: Direct insertion with known IDs
--- Replace <JOB_ID> with actual job ID from Step 3
+
 INSERT INTO application (
     job_id, 
     candidate_id, 
@@ -61,10 +44,7 @@ VALUES (
     NOW()
 );
 
--- ============================================================================
--- OPTION B: Assign to multiple jobs at once
--- ============================================================================
--- If you want to apply this candidate to multiple jobs simultaneously
+
 INSERT INTO application (
     job_id, 
     candidate_id, 
@@ -89,9 +69,6 @@ CROSS JOIN job j
 WHERE c.email = 'durgasaivaraprasadchan@gmail.com'
   AND j.id IN (1, 2, 3);  -- Replace with actual job IDs
 
--- ============================================================================
--- STEP 5: VERIFY APPLICATION CREATION
--- ============================================================================
 SELECT 
     a.id AS application_id,
     a.candidate_name,
@@ -106,10 +83,6 @@ JOIN job j ON a.job_id = j.id
 WHERE a.candidate_email = 'durgasaivaraprasadchan@gmail.com'
 ORDER BY a.applied_at DESC;
 
--- ============================================================================
--- ALTERNATIVE: COMPLETE EXAMPLE WITH SPECIFIC JOB
--- ============================================================================
--- Example: If applying to a "Full Stack Developer" position (job_id = 5)
 
 -- First, insert candidate (if not already exists)
 INSERT INTO candidate (name, email, role, skills, stage, resume_url, notes, recruiter_comments)
@@ -153,9 +126,6 @@ WHERE c.email = 'durgasaivaraprasadchan@gmail.com'
     WHERE candidate_id = c.id AND job_id = 5
   );
 
--- ============================================================================
--- USEFUL QUERIES FOR MANAGEMENT
--- ============================================================================
 
 -- View all applications for this candidate
 SELECT 
@@ -193,9 +163,7 @@ DELETE FROM application
 WHERE candidate_email = 'durgasaivaraprasadchan@gmail.com'
   AND job_id = 1;  -- Replace with actual job_id
 
--- ============================================================================
--- CANDIDATE SUMMARY
--- ============================================================================
+
 /*
 Name: Durga Sai Vara Prasad Chandragiri
 Email: durgasaivaraprasadchan@gmail.com

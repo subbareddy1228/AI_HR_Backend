@@ -67,7 +67,7 @@ def edit_location(
     return update_location(db, current_user.tenant_id, location_id, data, current_user.id)
 
 
-@router.delete("/{location_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{location_id}", status_code=status.HTTP_200_OK)
 def remove_location(
     location_id:  int,
     current_user: User    = Depends(require_roles(["admin", "hr_admin"])),

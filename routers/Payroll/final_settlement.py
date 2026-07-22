@@ -161,7 +161,7 @@ def update_settlement_header(
 
 @router.delete(
     "/{settlement_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete settlement",
     description="Cannot delete a Paid settlement.",
 )

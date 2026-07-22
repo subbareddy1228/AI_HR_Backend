@@ -169,7 +169,7 @@ def approve_payment_file(
 
 @router.delete(
     "/payment-files/{file_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete a payment file (non-Processed only)",
 )
 def delete_payment_file(file_id: int, db: Session = Depends(get_db)):
@@ -353,7 +353,7 @@ def retry_bank_transfer(transfer_id: int, db: Session = Depends(get_db)):
 
 @router.delete(
     "/transfers/{transfer_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete a bank transfer (non-successful only)",
 )
 def delete_bank_transfer(transfer_id: int, db: Session = Depends(get_db)):

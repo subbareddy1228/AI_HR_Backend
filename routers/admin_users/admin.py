@@ -126,7 +126,7 @@ def update_user(
     if payload.password:
         target_user.hashed_password = get_password_hash(payload.password)
 
-    for field in ["name", "username", "email", "role", "is_active", "tenant_id"]:
+    for field in ["name", "username", "email", "role", "is_active"]:
         value = getattr(payload, field)
         if value is not None:
             setattr(target_user, field, value)
@@ -138,7 +138,7 @@ def update_user(
     return _serialize_user(target_user)
 
 
-@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/users/{user_id}", status_code=status.HTTP_200_OK)
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),

@@ -377,7 +377,7 @@ def generate_compliance_report(
 
 @router.delete(
     "/compliance/{report_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete a compliance report entry",
 )
 def delete_compliance_report(report_id: int, db: Session = Depends(get_db)):
@@ -423,7 +423,7 @@ def update_analytics_dashboard(
 
 @router.delete(
     "/analytics/{dashboard_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete an analytics dashboard card",
 )
 def delete_analytics_dashboard(dashboard_id: int, db: Session = Depends(get_db)):
@@ -487,7 +487,7 @@ def download_generated_report(report_id: int, db: Session = Depends(get_db)):
 
 @router.delete(
     "/generated/{report_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete a generated report record",
 )
 def delete_generated_report(report_id: int, db: Session = Depends(get_db)):
@@ -543,7 +543,7 @@ def toggle_schedule_active(schedule_id: int, db: Session = Depends(get_db)):
 
 @router.delete(
     "/scheduled/{schedule_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete a scheduled report (🗑 button)",
 )
 def delete_report_schedule(schedule_id: int, db: Session = Depends(get_db)):
@@ -655,7 +655,7 @@ def update_custom_report(
 
 @router.delete(
     "/builder/{report_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete a custom report",
 )
 def delete_custom_report(report_id: int, db: Session = Depends(get_db)):

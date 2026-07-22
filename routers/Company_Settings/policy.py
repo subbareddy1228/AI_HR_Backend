@@ -113,7 +113,7 @@ def edit_policy(
     return update_policy(db, current_user.tenant_id, policy_id, data, document, current_user.id)
 
 
-@router.delete("/{policy_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{policy_id}", status_code=status.HTTP_200_OK)
 def remove_policy(
     policy_id:    int,
     current_user: User    = Depends(require_roles(["admin", "hr_admin"])),

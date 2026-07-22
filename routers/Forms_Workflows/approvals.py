@@ -169,7 +169,7 @@ def update_approval(
 
 @router.delete(
     "/{approval_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Soft-delete an approval request",
     description="Marks the record as deleted; does not physically remove it.",
 )
@@ -298,7 +298,7 @@ def add_comment(
 
 @router.delete(
     "/comments/{comment_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete a comment",
 )
 def delete_comment(

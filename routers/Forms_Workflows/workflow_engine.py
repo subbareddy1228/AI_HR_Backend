@@ -139,7 +139,7 @@ def update_workflow(
 
 @router.delete(
     "/{workflow_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete a workflow and all its sub-configurations",
 )
 @_handle
@@ -235,7 +235,7 @@ def update_stage(
 
 @router.delete(
     "/{workflow_id}/stages/{stage_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete stage",
 )
 @_handle
@@ -274,7 +274,7 @@ def update_approver(
 
 @router.delete(
     "/approvers/{approver_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Remove an approver from a stage",
 )
 @_handle
@@ -329,7 +329,7 @@ def update_auto_rule(
 
 @router.delete(
     "/auto-approval-rules/{rule_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete auto-approval rule",
 )
 @_handle
@@ -417,7 +417,7 @@ def update_escalation_rule(
 
 @router.delete(
     "/escalation/rules/{rule_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete escalation rule (trash icon)",
 )
 @_handle

@@ -137,7 +137,7 @@ class AttendanceCaptureService:
         db.commit()
         db.refresh(log)
         return log
-
+ 
     def sync_all_devices(self, db: Session) -> List[DeviceSyncLog]:
         devices = db.query(BiometricDevice).filter(BiometricDevice.is_active == True).all()
         logs = []

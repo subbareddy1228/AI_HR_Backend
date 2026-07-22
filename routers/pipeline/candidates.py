@@ -107,8 +107,6 @@ def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
     return None
 
 
-# ---------------- COLLABORATION COMMENTS ----------------
-
 class CommentCreate(BaseModel):
     author: str
     text: str

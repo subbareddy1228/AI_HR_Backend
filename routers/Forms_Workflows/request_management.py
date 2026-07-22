@@ -455,7 +455,7 @@ def update_request(
 
 @router.delete(
     "/{request_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Soft-delete a request",
 )
 def delete_request(request_id: int, db: Session = Depends(get_db)):
@@ -662,7 +662,7 @@ def add_attachment(
 
 @router.delete(
     "/{request_id}/attachments/{attachment_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     summary="Delete an attachment",
 )
 def delete_attachment(
