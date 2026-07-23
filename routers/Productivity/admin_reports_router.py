@@ -11,7 +11,7 @@ from schema.Productivity.admin_schemas import ReportRequest
 router = APIRouter(prefix="/admin/reports")
 
 @router.post("/productivity/export")
-def export_productivity(req: ReportRequest, db: Session = Depends(get_db), _=Depends(require_roles("Admin"))):
+def export_productivity(req: ReportRequest, db: Session = Depends(get_db), _=Depends(require_roles(["Admin"]))):
     
     scope = {}
     if req.employee_id: scope["employee_id"] = req.employee_id
