@@ -60,7 +60,7 @@ def get_employee_screenshots(
     page: int = Query(1, ge=1),
     limit: int = Query(15, le=50),
     db: Session = Depends(get_db),
-    _: object = Depends(require_roles(["Admin"])),
+    _: object = Depends(require_roles(["superadmin"])),
 ):
     logger.info(f"Get screenshots for employee_id={employee_id}, page={page}, limit={limit}")
     offset = (page - 1) * limit
