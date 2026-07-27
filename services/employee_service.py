@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from model.onboarding.employee import Employee
@@ -13,11 +13,10 @@ def _generate_code() -> str:
     return f"EMP-{uuid.uuid4().hex[:8].upper()}"
 
 
-async def create_employee(db: AsyncSession, payload: EmployeeCreate) -> Employee:
+def create_employee(db: Session, payload: EmployeeCreate) -> Employee:
 
-    
     if payload.reporting_manager_id is not None:
-        result = await db.execute(
+        result = db.execute(
             select(Employee).where(Employee.id == payload.reporting_manager_id)
         )
         if result.scalar_one_or_none() is None:
@@ -60,12 +59,12 @@ async def create_employee(db: AsyncSession, payload: EmployeeCreate) -> Employee
 
     db.add(employee)
 
-    for attempt in range(2):  
+    for attempt in range(2):
         try:
-            await db.commit()
+            db.commit()
             break
         except IntegrityError as exc:
-            await db.rollback()
+            db.rollback()
             msg = str(exc).lower()
 
             if "mobile_number" in msg:
@@ -98,13 +97,13 @@ async def create_employee(db: AsyncSession, payload: EmployeeCreate) -> Employee
                 detail="Employee data violates a database constraint.",
             )
 
-    await db.refresh(employee)
+    db.refresh(employee)
     return employee
 
 
-async def get_active_managers(db: AsyncSession) -> list[dict]:
-    
-    result = await db.execute(
+def get_active_managers(db: Session) -> list[dict]:
+
+    result = db.execute(
         select(Employee.id, Employee.first_name, Employee.last_name, Employee.employee_code)
         .where(Employee.is_active == True)
         .order_by(Employee.first_name)
