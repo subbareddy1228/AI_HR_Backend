@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from model.Company_Settings.location import CompanyLocation
+from model.onboarding.employee import Employee
 from schema.Company_Settings.location import (
     CompanyLocationCreate,
     CompanyLocationUpdate,
@@ -15,8 +16,19 @@ from schema.Company_Settings.location import (
 logger = logging.getLogger(__name__)
 
 
+def _attach_employee_count(db: Session, locations: List[CompanyLocation]) -> List[CompanyLocation]:
+    """Stamp a transient `employee_count` attribute onto each location for reporting."""
+    for loc in locations:
+        loc.employee_count = (
+            db.query(Employee)
+            .filter(Employee.location_id == loc.id, Employee.is_active.is_(True))
+            .count()
+        )
+    return locations
+
+
 def get_all_locations(db: Session, tenant_id: int) -> List[CompanyLocation]:
-    return (
+    locations = (
         db.query(CompanyLocation)
         .filter(
             CompanyLocation.tenant_id == tenant_id,
@@ -25,10 +37,13 @@ def get_all_locations(db: Session, tenant_id: int) -> List[CompanyLocation]:
         .order_by(CompanyLocation.is_default.desc(), CompanyLocation.name)
         .all()
     )
+    return _attach_employee_count(db, locations)
 
 
 def get_location(db: Session, tenant_id: int, location_id: int) -> CompanyLocation:
-    return _get_or_404(db, tenant_id, location_id)
+    location = _get_or_404(db, tenant_id, location_id)
+    _attach_employee_count(db, [location])
+    return location
 
 
 def create_location(
@@ -81,6 +96,16 @@ def delete_location(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot delete the default location. Set another location as default first.",
+        )
+    assigned = (
+        db.query(Employee)
+        .filter(Employee.location_id == location_id, Employee.is_active.is_(True))
+        .count()
+    )
+    if assigned:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete this branch — {assigned} active employee(s) are still assigned to it. Reassign them first.",
         )
     location.is_active  = False
     location.updated_by = actor_id

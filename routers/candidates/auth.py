@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-from jose import jwt
+from jose import jwt, JWTError
 
 from core.database import get_db
 from model.models import Candidate
@@ -72,3 +73,37 @@ def candidate_login(payload: CandidateLogin, db: Session = Depends(get_db)):
         "name": candidate.name,
         "email": candidate.email,
     }
+
+
+# ---------------------------------------------------------------------------
+# Shared dependency for any candidate-facing route that needs to know who's
+# calling (e.g. Apply). Decodes the "candidate"-typed JWT issued by /login
+# above and loads the matching Candidate row.
+# ---------------------------------------------------------------------------
+_candidate_bearer = HTTPBearer(auto_error=False)
+
+
+def get_current_candidate(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_candidate_bearer),
+    db: Session = Depends(get_db),
+) -> Candidate:
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    if payload.get("type") != "candidate":
+        raise HTTPException(status_code=401, detail="Not a candidate token")
+
+    candidate_id = payload.get("sub")
+    if candidate_id is None:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    candidate = db.get(Candidate, int(candidate_id))
+    if not candidate:
+        raise HTTPException(status_code=401, detail="Candidate not found")
+
+    return candidate

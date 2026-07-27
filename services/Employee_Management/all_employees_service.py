@@ -115,6 +115,9 @@ def _build_response(emp: Employee, db: Session) -> dict:
     designation = (emp_info.designation if emp_info else emp.designation or "")
     department = (emp_info.department if emp_info else emp.department or "")
     location = (emp_info.location if emp_info else emp.location or "")
+    location_id = (emp_info.location_id if (emp_info and emp_info.location_id is not None) else emp.location_id)
+    branch = (emp_info.branch if (emp_info and emp_info.location_id) else emp.branch)
+    branch_name = branch.name if branch else ""
     emp_type = (emp_info.employment_type if emp_info else (master.employment_type if master else "Permanent"))
     emp_status = (emp_info.employment_status if emp_info else (master.employment_status if master else "Active"))
     join_date = str(emp_info.date_of_joining) if (emp_info and emp_info.date_of_joining) else (str(emp.joining_date) if emp.joining_date else "")
@@ -129,6 +132,8 @@ def _build_response(emp: Employee, db: Session) -> dict:
         "department": department,
         "designation": designation,
         "location": location,
+        "locationId": location_id,
+        "branchName": branch_name,
         "employmentType": emp_type,
         "status": emp_status,
         "joinDate": join_date,
@@ -232,6 +237,8 @@ def _build_response(emp: Employee, db: Session) -> dict:
             "grade": (emp_info.grade if emp_info else emp.grade or ""),
             "level": (emp_info.level if emp_info else ""),
             "location": location,
+            "locationId": location_id,
+            "branchName": branch_name,
             "workplaceType": (emp_info.workplace_type if emp_info else "Office"),
             "workEmail": work_email,
             "extensionNumber": (emp_info.extension_number if emp_info else ""),
@@ -367,6 +374,7 @@ def list_all_employees(
     is_active: Optional[bool] = None,
     department: Optional[str] = None,
     search: Optional[str] = None,
+    location_id: Optional[int] = None,
 ) -> list:
     stmt = select(Employee)
     if tenant_id is not None:  
@@ -375,6 +383,8 @@ def list_all_employees(
         stmt = stmt.where(Employee.is_active == is_active)
     if department and department not in ("All Departments", "All", ""):
         stmt = stmt.where(Employee.department == department)
+    if location_id is not None:
+        stmt = stmt.where(Employee.location_id == location_id)
     if search:
         s = f"%{search.strip().lower()}%"
         from sqlalchemy import or_, func as sf
@@ -467,6 +477,7 @@ def create_employee(db: Session, payload: dict, tenant_id: int) -> dict:
         department=emp_info_data.get("department") or payload.get("department"),
         designation=emp_info_data.get("designation") or payload.get("designation"),
         location=emp_info_data.get("location") or payload.get("location"),
+        location_id=emp_info_data.get("locationId"),
         grade=emp_info_data.get("grade"),
         cost_center=emp_info_data.get("costCenter"),
         business_unit=emp_info_data.get("employeeCategory"),
@@ -565,6 +576,7 @@ def create_employee(db: Session, payload: dict, tenant_id: int) -> dict:
         grade=emp_info_data.get("grade"),
         level=emp_info_data.get("level"),
         location=emp_info_data.get("location") or payload.get("location"),
+        location_id=emp_info_data.get("locationId"),
         workplace_type=emp_info_data.get("workplaceType", "Office"),
         work_email=emp_info_data.get("workEmail") or payload.get("email"),
         extension_number=emp_info_data.get("extensionNumber"),
@@ -763,6 +775,8 @@ def update_employee(db: Session, employee_id: int, payload: dict, tenant_id: Opt
         emp.designation = emp_info_data.get("designation") or payload.get("designation")
     if emp_info_data.get("location") or payload.get("location"):
         emp.location = emp_info_data.get("location") or payload.get("location")
+    if emp_info_data.get("locationId") is not None:
+        emp.location_id = emp_info_data.get("locationId")
     if emp_info_data.get("grade"):
         emp.grade = emp_info_data.get("grade")
     if emp_info_data.get("costCenter"):
@@ -903,6 +917,7 @@ def update_employee(db: Session, employee_id: int, payload: dict, tenant_id: Opt
             ("grade", emp_info_data.get("grade")),
             ("level", emp_info_data.get("level")),
             ("location", emp_info_data.get("location")),
+            ("location_id", emp_info_data.get("locationId")),
             ("workplace_type", emp_info_data.get("workplaceType")),
             ("work_email", emp_info_data.get("workEmail")),
             ("extension_number", emp_info_data.get("extensionNumber")),

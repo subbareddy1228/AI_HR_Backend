@@ -1,5 +1,7 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select
 
 from core.database import get_db
@@ -42,9 +44,10 @@ def add_employee(
     summary="List employees",
 )
 def list_employees(
-    db:     Session = Depends(get_db),
-    limit:  int = Query(50, ge=1, le=100),
-    offset: int = Query(0,  ge=0),
+    db:          Session = Depends(get_db),
+    limit:       int = Query(50, ge=1, le=100),
+    offset:      int = Query(0,  ge=0),
+    location_id: Optional[int] = Query(None, description="Filter employees by branch/office (CompanyLocation) id"),
 ):
     # NOTE: this whole file (and services/employee_service.py) was written
     # for AsyncSession — `await db.execute(...)` — but the real get_db
@@ -56,10 +59,13 @@ def list_employees(
     # GET /employees/managers too, on their own await calls). Converted to
     # plain sync calls throughout — matches the pattern used everywhere
     # else in this codebase (core/database.py's get_db is sync).
-    result = db.execute(
+    query = (
         select(Employee)
+        .options(joinedload(Employee.branch))
         .order_by(Employee.id.desc())
-        .limit(limit)
-        .offset(offset)
     )
+    if location_id is not None:
+        query = query.where(Employee.location_id == location_id)
+
+    result = db.execute(query.limit(limit).offset(offset))
     return result.scalars().all()

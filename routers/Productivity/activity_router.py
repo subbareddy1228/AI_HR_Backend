@@ -170,8 +170,12 @@ def admin_grouped_monitoring(
         items.append({
             "employee_id": emp.id,
             "name": f"{emp.first_name} {emp.last_name or ''}".strip(),
-            "email": emp.email,
-            "profile_picture": emp.profile_picture,
+            # Employee has no single "email" field — official_email is the
+            # primary work address, falling back to personal_email.
+            "email": emp.official_email or emp.personal_email,
+            # Employee has no profile_picture column yet; return None
+            # rather than crash until one is added.
+            "profile_picture": None,
             "apps": apps,
             "activities": activities,
         })

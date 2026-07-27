@@ -19,7 +19,23 @@ class Employee(Base):
     
     tenant_id: Mapped[int | None] = mapped_column(nullable=True, index=True)
 
+    location_id: Mapped[int | None] = mapped_column(
+        ForeignKey("company_locations.id"), nullable=True, index=True
+    )
+    branch = relationship("CompanyLocation", foreign_keys=[location_id])
+
     time_logs = relationship("TimeLog", back_populates="employee")
+
+    app_sessions = relationship(
+        "AppSession",
+        back_populates="employee",
+        foreign_keys="AppSession.employee_id",
+    )
+    activities = relationship(
+        "ProductivityActivity",
+        back_populates="employee",
+        foreign_keys="ProductivityActivity.employee_id",
+    )
 
     onboarding_id: Mapped[int | None] = mapped_column(
         ForeignKey("onboarding_forms.id")
@@ -68,6 +84,10 @@ class Employee(Base):
     
     send_mobile_login: Mapped[bool] = mapped_column(default=True)
     send_web_login:    Mapped[bool] = mapped_column(default=True)
+
+    @property
+    def branch_name(self) -> str | None:
+        return self.branch.name if self.branch else None
 
     is_active:  Mapped[bool]     = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)

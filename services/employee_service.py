@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from model.onboarding.employee import Employee
+from model.Company_Settings.location import CompanyLocation
 from schema.onboarding.employee import EmployeeCreate
 
 
@@ -23,6 +24,22 @@ def create_employee(db: Session, payload: EmployeeCreate) -> Employee:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Reporting manager with id {payload.reporting_manager_id} not found.",
+            )
+
+    if payload.location_id is not None:
+        # NOTE: this endpoint doesn't currently resolve the caller's tenant
+        # (no get_current_user dependency wired in yet — see routers/onboarding/employee.py).
+        # Once it is, tighten this to also filter by CompanyLocation.tenant_id so an
+        # employee can't be assigned a branch belonging to a different company.
+        branch = (
+            db.query(CompanyLocation)
+            .filter(CompanyLocation.id == payload.location_id, CompanyLocation.is_active.is_(True))
+            .first()
+        )
+        if branch is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Branch/location with id {payload.location_id} not found.",
             )
 
     code = payload.employee_code or _generate_code()
@@ -44,6 +61,7 @@ def create_employee(db: Session, payload: EmployeeCreate) -> Employee:
         department=payload.department,
         business_unit=payload.business_unit,
         location=payload.location,
+        location_id=payload.location_id,
         grade=payload.grade,
         cost_center=payload.cost_center,
         reporting_manager_id=payload.reporting_manager_id,

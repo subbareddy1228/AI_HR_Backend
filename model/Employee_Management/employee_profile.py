@@ -129,7 +129,8 @@ class EmployeeEmploymentInfo(Base):
     designation        = Column(String(150), nullable=True)
     grade              = Column(String(50),  nullable=True)
     level              = Column(String(50),  nullable=True)  
-    location           = Column(String(200), nullable=True)
+    location           = Column(String(200), nullable=True)  # legacy free-text, kept for backward compatibility
+    location_id        = Column(Integer, ForeignKey("company_locations.id"), nullable=True, index=True)  # branch
     workplace_type     = Column(String(50),  nullable=True)   
     work_email         = Column(String(255), nullable=True)
     extension_number   = Column(String(20),  nullable=True)
@@ -137,6 +138,8 @@ class EmployeeEmploymentInfo(Base):
     employee_category  = Column(String(100), nullable=True)   
     notice_period      = Column(Integer,     nullable=True, default=30) 
     direct_manager     = Column(String(200), nullable=True)
+
+    branch = relationship("CompanyLocation", foreign_keys=[location_id])
     functional_manager = Column(String(200), nullable=True)
     hr_business_partner = Column(String(200), nullable=True)
 

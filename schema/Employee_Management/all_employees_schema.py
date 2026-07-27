@@ -121,6 +121,8 @@ class EmploymentInfoSchema(BaseModel):
     grade:              Optional[str]  = None
     level:              Optional[str]  = None    
     location:           Optional[str]  = None
+    locationId:         Optional[int]  = None    # branch/office id (CompanyLocation)
+    branchName:         Optional[str]  = None    # resolved branch name, read-only on responses
     workplaceType:      Optional[str]  = "Office"  
     workEmail:          Optional[str]  = None
     extensionNumber:    Optional[str]  = None
@@ -352,6 +354,8 @@ class EmployeeListItem(BaseModel):
     department:     Optional[str]
     designation:    Optional[str]
     location:       Optional[str]
+    locationId:     Optional[int] = None
+    branchName:     Optional[str] = None
     employmentType: Optional[str]
     status:         Optional[str]
     joinDate:       Optional[str]

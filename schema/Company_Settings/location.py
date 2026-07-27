@@ -43,10 +43,11 @@ class CompanyLocationUpdate(CompanyLocationBase):
 
 
 class CompanyLocationResponse(CompanyLocationBase):
-    id:         int
-    tenant_id:  int
-    created_at: datetime
-    updated_at: datetime
+    id:             int
+    tenant_id:      int
+    created_at:     datetime
+    updated_at:     datetime
+    employee_count: int = 0
 
     model_config = {"from_attributes": True}
 

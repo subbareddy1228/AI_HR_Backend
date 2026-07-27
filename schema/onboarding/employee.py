@@ -33,6 +33,7 @@ class EmployeeCreate(BaseModel):
     department:           Optional[str] = None
     business_unit:        Optional[str] = None
     location:             Optional[str] = None
+    location_id:          Optional[int] = Field(None, description="Branch/office (CompanyLocation) this employee belongs to")
     grade:                Optional[str] = None
     cost_center:          Optional[str] = None
     reporting_manager_id: Optional[int] = Field(None, description="Employee ID of reporting manager")
@@ -80,6 +81,8 @@ class EmployeeResponse(BaseModel):
     department:     Optional[str]
     business_unit:  Optional[str]
     location:       Optional[str]
+    location_id:    Optional[int] = None
+    branch_name:    Optional[str] = Field(None, description="Resolved name of the assigned CompanyLocation, if any")
     grade:          Optional[str]
     cost_center:    Optional[str]
     reporting_manager_id: Optional[int]

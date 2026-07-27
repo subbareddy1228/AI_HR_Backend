@@ -30,6 +30,7 @@ def list_employees_endpoint(
     is_active: Optional[bool] = Query(default=None),
     department: Optional[str] = Query(default=None),
     search: Optional[str] = Query(default=None),
+    location_id: Optional[int] = Query(default=None, description="Filter by branch/office (CompanyLocation) id"),
     db: Session = Depends(get_db),
     tenant_id: Optional[int] = Depends(get_current_tenant_id),
 ):
@@ -39,6 +40,7 @@ def list_employees_endpoint(
         is_active=is_active,
         department=department,
         search=search,
+        location_id=location_id,
     )
 
 
