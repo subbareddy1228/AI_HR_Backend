@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
@@ -13,7 +12,7 @@ router = APIRouter(prefix="/superadmin", tags=["Admin"])
 compat_router = APIRouter(prefix="/admin/user", tags=["Admin"])
 
 
-ROLE_CHOICES = Literal["recruiter", "company", "admin", "candidate", "superadmin"]
+ROLE_CHOICES = Literal["recruiter", "company", "admin", "hr_admin", "candidate", "superadmin"]
 
 
 class AdminUserCreate(BaseModel):
@@ -23,6 +22,7 @@ class AdminUserCreate(BaseModel):
     role: ROLE_CHOICES
     is_active: bool = False
     password: Optional[str] = None
+    tenant_id: Optional[int] = None
 
 
 class AdminUserUpdate(BaseModel):
@@ -89,6 +89,13 @@ def create_user(
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
+    tenant_scoped_roles = {"admin", "hr_admin", "recruiter", "company"}
+    if payload.role in tenant_scoped_roles and not payload.tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"'{payload.role}' must be linked to a company (tenant_id) — pick one from Tenant Management.",
+        )
+
     hashed_password = get_password_hash(payload.password or "ChangeMe@123")
 
     new_user = User(
@@ -98,6 +105,7 @@ def create_user(
         role=payload.role,
         is_active=payload.is_active,
         hashed_password=hashed_password,
+        tenant_id=payload.tenant_id,
     )
 
     db.add(new_user)
