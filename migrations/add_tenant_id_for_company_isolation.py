@@ -3,6 +3,7 @@ from sqlalchemy import text, inspect
 from core.database import engine, SessionLocal
 from model.models import User
 from model.onboarding.employee import Employee
+from model.Company_Settings.location import CompanyLocation  # noqa: F401 — needed for Employee.branch relationship to resolve
 
 
 def _column_exists(table_name: str, column_name: str) -> bool:
@@ -13,13 +14,13 @@ def _column_exists(table_name: str, column_name: str) -> bool:
 
 def run_schema_migration():
     with engine.connect() as conn:
-        if not _column_exists("users", "tenant_id"):
-            print("Adding users.tenant_id ...")
-            conn.execute(text("ALTER TABLE users ADD COLUMN tenant_id INTEGER"))
-            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_users_tenant_id ON users(tenant_id)"))
+        if not _column_exists("user", "tenant_id"):
+            print('Adding "user".tenant_id ...')
+            conn.execute(text('ALTER TABLE "user" ADD COLUMN tenant_id INTEGER'))
+            conn.execute(text('CREATE INDEX IF NOT EXISTS ix_user_tenant_id ON "user"(tenant_id)'))
             conn.commit()
         else:
-            print("users.tenant_id already exists — skipping.")
+            print('"user".tenant_id already exists — skipping.')
 
         if not _column_exists("employees", "tenant_id"):
             print("Adding employees.tenant_id ...")
