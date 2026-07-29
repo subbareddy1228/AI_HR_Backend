@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Header
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session, select
 from jose import jwt, JWTError
@@ -39,7 +39,7 @@ def require_roles(allowed_roles: List[str]):
 
 def get_current_tenant_id(current_user: User = Depends(get_current_user)) -> Optional[int]:
    
-    if current_user.role.lower() == "super_admin":
+    if current_user.role.lower() == "superadmin":
         return None
 
     if not current_user.tenant_id:
@@ -51,21 +51,36 @@ def get_current_tenant_id(current_user: User = Depends(get_current_user)) -> Opt
     return current_user.tenant_id
 
 
-def get_current_location_id(current_user: User = Depends(get_current_user)) -> Optional[int]:
+def get_current_location_id(
+    current_user: User = Depends(get_current_user),
+    x_location_id: Optional[int] = Header(default=None, alias="X-Location-Id"),
+) -> Optional[int]:
     """
-    Returns the branch (CompanyLocation.id) the current admin should be scoped
-    to, or None if they should see the whole company.
+    Returns the branch (CompanyLocation.id) the current user should be scoped
+    to, or None if they should see all branches.
 
-    - role != "admin" (superadmin, hr_admin, company, recruiter) -> None,
-      no branch filter applied by this helper.
-    - role == "admin" and location_id is set -> that location_id: this admin
-      only sees data for their one branch.
-    - role == "admin" and location_id is None -> None: a whole-company admin
-      (not tied to any single branch), keeps full-tenant access.
+    - role == "admin": ALWAYS forced to their own location_id (or None if
+      they're a whole-company admin not tied to a branch). The X-Location-Id
+      header is ignored for this role — a branch-scoped admin can never
+      widen their own access just by sending a different header.
+    - role in ("company", "superadmin"): may OPTIONALLY narrow to one branch
+      via the X-Location-Id header sent by the frontend branch selector.
+      No header (the default) -> None -> all branches, matching "company
+      sees all branches" from the role plan.
+    - hr_admin / recruiter: None, unaffected by this helper (they aren't
+      branch-filtered at all today).
 
     Usage in a route: filter results by `.where(Model.location_id == loc_id)`
-    only when `loc_id is not None`.
+    only when `loc_id is not None`. Callers that also scope by tenant_id
+    should keep doing so — this header is not a substitute for tenant
+    isolation, only an optional branch narrowing on top of it.
     """
-    if current_user.role.lower() != "admin":
-        return None
-    return current_user.location_id
+    role = current_user.role.lower()
+
+    if role == "admin":
+        return current_user.location_id
+
+    if role in ("company", "superadmin"):
+        return x_location_id
+
+    return None
