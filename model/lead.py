@@ -32,6 +32,7 @@ class Visibility(enum.Enum):
 
 class Lead(Base):
     __tablename__ = "leads"
+    tenant_id = Column(Integer, nullable=True, index=True)  # which company this record belongs to
 
     id = Column(Integer, primary_key=True, index=True)
 

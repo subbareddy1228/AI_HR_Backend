@@ -14,7 +14,7 @@ import model
 
 
 
-def create_contact(db: Session, contact):
+def create_contact(db: Session, contact, tenant_id: int | None = None):
     if contact.email:
         existing = (
             db.query(model.Contact)
@@ -24,32 +24,40 @@ def create_contact(db: Session, contact):
         if existing:
             raise HTTPException(status_code=400, detail="Email already exists")
 
-    db_contact = model.Contact(**contact.dict())
+    db_contact = model.Contact(**contact.dict(), tenant_id=tenant_id)
     db.add(db_contact)
     db.commit()
     db.refresh(db_contact)
     return db_contact
 
 
-def get_contacts(db: Session, skip: int = 0, limit: int = 50):
+def get_contacts(db: Session, skip: int = 0, limit: int = 50, tenant_id: int | None = None):
+    query = db.query(model.Contact)
+    if tenant_id is not None:
+        query = query.filter(model.Contact.tenant_id == tenant_id)
     return (
-        db.query(model.Contact)
+        query
         .offset(skip)
         .limit(limit)
         .all()
     )
 
 
-def get_contact(db: Session, contact_id: int):
-    return (
+def get_contact(db: Session, contact_id: int, tenant_id: int | None = None):
+    contact = (
         db.query(model.Contact)
         .filter(model.Contact.id == contact_id)
         .first()
     )
+    if contact is None:
+        return None
+    if tenant_id is not None and contact.tenant_id != tenant_id:
+        return None
+    return contact
 
 
-def update_contact(db: Session, contact_id: int, updated):
-    db_contact = get_contact(db, contact_id)
+def update_contact(db: Session, contact_id: int, updated, tenant_id: int | None = None):
+    db_contact = get_contact(db, contact_id, tenant_id=tenant_id)
     if not db_contact:
         return None
 
@@ -75,8 +83,8 @@ def update_contact(db: Session, contact_id: int, updated):
     return db_contact
 
 
-def delete_contact(db: Session, contact_id: int) -> bool:
-    db_contact = get_contact(db, contact_id)
+def delete_contact(db: Session, contact_id: int, tenant_id: int | None = None) -> bool:
+    db_contact = get_contact(db, contact_id, tenant_id=tenant_id)
     if not db_contact:
         return False
 

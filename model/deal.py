@@ -6,6 +6,7 @@ from typing import Optional, List
 
 class Deal(Base):
     __tablename__ = "deals"
+    tenant_id = Column(Integer, nullable=True, index=True)  # which company this record belongs to
 
     id = Column(Integer, primary_key=True, index=True)
     deal_name = Column(String, nullable=False)
@@ -28,5 +29,3 @@ class Deal(Base):
 
     def __repr__(self):
         return f"<Deal(id={self.id}, deal_name='{self.deal_name}', status='{self.status}')>"
-
-

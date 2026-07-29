@@ -86,7 +86,7 @@ def admin_grouped_monitoring(
     employee_id: int | None = None,
     target_date: date | None = Query(None),
     db: Session = Depends(get_db),
-    _: object = Depends(require_roles(["superadmin", "admin"])),
+    _: object = Depends(require_roles(["superadmin", "admin", "company"])),
 ):
     offset = (page - 1) * limit
 

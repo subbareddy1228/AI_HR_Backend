@@ -30,8 +30,9 @@ router = APIRouter(
 
 def _assert_branch_access(admin_location_id, location_id: int):
     """A branch-scoped admin (admin_location_id set) may only touch their own
-    branch. hr_admin and whole-company admins (admin_location_id is None)
-    are unrestricted here — this only fires for branch-restricted admins."""
+    branch. Whole-company admins (admin_location_id is None) are unrestricted
+    here — this only fires for branch-restricted admins. (hr_admin no longer
+    reaches this router at all — see the require_roles(["admin", "company"]) below.)"""
     if admin_location_id is not None and admin_location_id != location_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -66,7 +67,7 @@ def read_location(
 @router.post("/", response_model=CompanyLocationResponse, status_code=status.HTTP_201_CREATED)
 def add_location(
     data:              CompanyLocationCreate,
-    current_user:      User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user:      User    = Depends(require_roles(["admin", "company"])),
     db:                Session = Depends(get_db),
     admin_location_id: int | None = Depends(get_current_location_id),
 ):
@@ -84,7 +85,7 @@ def add_location(
 def edit_location(
     location_id:       int,
     data:              CompanyLocationUpdate,
-    current_user:      User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user:      User    = Depends(require_roles(["admin", "company"])),
     db:                Session = Depends(get_db),
     admin_location_id: int | None = Depends(get_current_location_id),
 ):
@@ -95,7 +96,7 @@ def edit_location(
 @router.delete("/{location_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_location(
     location_id:       int,
-    current_user:      User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user:      User    = Depends(require_roles(["admin", "company"])),
     db:                Session = Depends(get_db),
     admin_location_id: int | None = Depends(get_current_location_id),
 ):
@@ -113,7 +114,7 @@ def remove_location(
 @router.patch("/{location_id}/set-default", response_model=CompanyLocationResponse)
 def mark_default(
     location_id:       int,
-    current_user:      User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user:      User    = Depends(require_roles(["admin", "company"])),
     db:                Session = Depends(get_db),
     admin_location_id: int | None = Depends(get_current_location_id),
 ):

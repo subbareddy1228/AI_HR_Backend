@@ -5,6 +5,7 @@ from core.database import Base
 
 class Project(Base):
     __tablename__ = "projects"
+    tenant_id = Column(Integer, nullable=True, index=True)  # which company this record belongs to
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
     name = Column(String(150), nullable=False)

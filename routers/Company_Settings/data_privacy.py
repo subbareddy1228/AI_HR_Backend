@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
@@ -36,7 +34,7 @@ def read_data_privacy(
 @router.post("/", response_model=DataPrivacyResponse)
 def save_data_privacy(
     data:         DataPrivacyCreate,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     
@@ -46,7 +44,7 @@ def save_data_privacy(
 @router.patch("/", response_model=DataPrivacyResponse)
 def patch_data_privacy(
     data:         DataPrivacyUpdate,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
    

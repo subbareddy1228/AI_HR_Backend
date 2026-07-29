@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 from typing import Optional
 
@@ -74,7 +73,7 @@ def add_policy(
     effective_date: str           = Form(...),
     description:    Optional[str] = Form(None),
     document:       Optional[UploadFile] = File(None),
-    current_user:   User          = Depends(require_roles(["admin", "hr_admin"])),
+    current_user:   User          = Depends(require_roles(["admin", "company"])),
     db:             Session       = Depends(get_db),
 ):
     from datetime import date
@@ -98,7 +97,7 @@ def edit_policy(
     description:    Optional[str] = Form(None),
     status:         Optional[str] = Form(None),
     document:       Optional[UploadFile] = File(None),
-    current_user:   User          = Depends(require_roles(["admin", "hr_admin"])),
+    current_user:   User          = Depends(require_roles(["admin", "company"])),
     db:             Session       = Depends(get_db),
 ):
     from datetime import date
@@ -116,7 +115,7 @@ def edit_policy(
 @router.delete("/{policy_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_policy(
     policy_id:    int,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     delete_policy(db, current_user.tenant_id, policy_id, current_user.id)

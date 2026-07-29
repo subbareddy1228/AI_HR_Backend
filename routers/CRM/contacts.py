@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
@@ -9,6 +8,8 @@ from schema import contact
 from core.database import get_db
 import crud_ops
 from model import Contact as ContactModel
+from core.dependencies import get_current_user
+from model.models import User
 
 router = APIRouter()
 
@@ -48,7 +49,7 @@ def convert_contact_output(db_contact: ContactModel):
 
   
 @router.post("/", response_model=contact.ContactResponse)
-def create_contact(contact_data: contact.ContactCreate, db: Session = Depends(get_db)):
+def create_contact(contact_data: contact.ContactCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
    
     contact_dict = contact_data.dict()
     if isinstance(contact_dict.get("tags"), list):
@@ -58,29 +59,29 @@ def create_contact(contact_data: contact.ContactCreate, db: Session = Depends(ge
     from schema.contact import ContactCreate
     contact_data_converted = ContactCreate(**contact_dict)
     
-    db_contact = crud_ops.create_contact(db=db, contact=contact_data_converted)
+    db_contact = crud_ops.create_contact(db=db, contact=contact_data_converted, tenant_id=current_user.tenant_id)
     return convert_contact_output(db_contact)
 
 
 
 @router.get("/", response_model=List[contact.ContactResponse])
-def read_contacts(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
-    db_contacts = crud_ops.get_contacts(db=db, skip=skip, limit=limit)
+def read_contacts(skip: int = 0, limit: int = 50, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_contacts = crud_ops.get_contacts(db=db, skip=skip, limit=limit, tenant_id=current_user.tenant_id)
     return [convert_contact_output(c) for c in db_contacts]
 
  
 @router.get("/{contact_id}", response_model=contact.ContactResponse)
-def read_contact(contact_id: int, db: Session = Depends(get_db)):
-    db_contact = crud_ops.get_contact(db=db, contact_id=contact_id)
+def read_contact(contact_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    db_contact = crud_ops.get_contact(db=db, contact_id=contact_id, tenant_id=current_user.tenant_id)
     if not db_contact:
         raise HTTPException(status_code=404, detail="Contact not found")
     return convert_contact_output(db_contact)
 
  
 @router.put("/{contact_id}", response_model=contact.ContactResponse)
-def update_contact(contact_id: int, updated: contact.ContactUpdate, db: Session = Depends(get_db)):
+def update_contact(contact_id: int, updated: contact.ContactUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
    
-    db_contact = crud_ops.get_contact(db=db, contact_id=contact_id)
+    db_contact = crud_ops.get_contact(db=db, contact_id=contact_id, tenant_id=current_user.tenant_id)
     if not db_contact:
         raise HTTPException(status_code=404, detail="Contact not found")
     
@@ -99,8 +100,8 @@ def update_contact(contact_id: int, updated: contact.ContactUpdate, db: Session 
 
  
 @router.delete("/{contact_id}")
-def delete_contact(contact_id: int, db: Session = Depends(get_db)):
-    ok = crud_ops.delete_contact(db=db, contact_id=contact_id)
+def delete_contact(contact_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    ok = crud_ops.delete_contact(db=db, contact_id=contact_id, tenant_id=current_user.tenant_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Contact not found")
     return {"detail": "Contact deleted successfully"}

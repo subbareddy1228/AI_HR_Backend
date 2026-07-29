@@ -2,7 +2,7 @@
 import os
 import base64
 from fastapi import FastAPI, Request, Depends
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, require_roles
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -243,18 +243,23 @@ app.include_router(exam.router,                prefix="/api/assessment/aptitude"
 app.include_router(aptitude_results.router,    prefix="/api/assessment/aptitude")
 app.include_router(hiring_funnel_router,       prefix="/api/hiring_funnel")
 app.include_router(time_hire_router,           prefix="/api/time_to_hire")
-_hr_auth = [Depends(get_current_user)]
+_hr_auth = [Depends(require_roles(["superadmin", "admin", "company", "hr_admin"]))]
 app.include_router(basic_attendance.router,      prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
 app.include_router(leave.router,               prefix="/api/leave", dependencies=_hr_auth)
 app.include_router(documents_router,           prefix="/api/documents", dependencies=_hr_auth)
 app.include_router(signatures_router,          prefix="/api/signatures", dependencies=_hr_auth)
-# NOTE: onboard_candidates.router is NOT secured here on purpose. It's mounted at
-# prefix="/api" with an internal "/candidates" prefix, landing on /api/candidates/* —
-# the SAME path prefix the real candidate-portal router (routers/candidates, `candidates_router`
-# above) uses. Adding staff-only get_current_user here risks breaking candidate login/portal
-# calls if any paths overlap. This needs a manual look at both routers before securing it,
-# not a blind router-level dependency.
-app.include_router(onboard_candidates.router,  prefix="/api")  # router self-prefix="/candidates" -> /api/candidates/*
+# onboard_candidates.router is mounted at prefix="/api" with an internal
+# "/candidates" prefix, landing on /api/candidates/*, /api/candidates/list —
+# the SAME path prefix the real candidate-portal router (routers/candidates,
+# `candidates_router` above) uses. Checked both routers' exact routes: no
+# actual overlap (portal router only defines /applications, /profile,
+# /jobsearch, /savedjobs, /recentapplications, /recommendedjobs,
+# /notifications — never a bare "/" or "/list"), so this is safe to secure.
+# This one manages Candidate records for the internal ATS/onboarding flow
+# (HR staff pre-creating a candidate record when onboarding a new hire),
+# not the job-seeker-facing side, hence HR-tier auth rather than open to
+# recruiters.
+app.include_router(onboard_candidates.router,  prefix="/api", dependencies=_hr_auth)  # router self-prefix="/candidates" -> /api/candidates/*
 app.include_router(uploads.router,             prefix="/api/uploads", dependencies=_hr_auth)
 app.include_router(tasks_router,               prefix="/api/tasks", dependencies=_hr_auth)
 app.include_router(resume_router,              prefix="/api/resume")
@@ -268,7 +273,7 @@ app.include_router(offer_tracking_router,      prefix="/api/offers")
 # inside each route) — anyone, logged in or not, could read/write CRM data.
 # Enforcing login here at the router-mount level closes that without having
 # to edit every individual route function in routers/CRM/*.
-_crm_auth = [Depends(get_current_user)]
+_crm_auth = [Depends(require_roles(["superadmin", "admin", "company"]))]
 app.include_router(contacts.router,    prefix="/contacts",tags=["contacts"], dependencies=_crm_auth)
 app.include_router(company.router,     prefix="/companies",tags=["companies"], dependencies=_crm_auth)
 app.include_router(deals.router,       prefix="/deals",tags=["deals"], dependencies=_crm_auth)
@@ -336,12 +341,18 @@ app.include_router(payroll_rpt.router,          prefix="/api/payroll", tags=["Pa
 app.include_router(Payroll_Processing.router,   prefix="/api/payroll", tags=["Payroll"])
 app.include_router(payroll_integration.router,  prefix="/api/payroll", tags=["Payroll"])
 # Employee Management
-app.include_router(employee_master.router,       prefix="/api/employees", tags=["Employee Management"])
+# SECURITY FIX: employee_master, document_vault, employee_lifecycle, and
+# employee_self_service had NO auth check whatsoever — not even a login
+# requirement (unlike all_employees.router and org_hierarchy.router, which
+# already enforce their own role checks internally, so they're left as-is
+# here to avoid a redundant duplicate check).
+_emp_mgmt_auth = [Depends(require_roles(["superadmin", "admin", "company", "hr_admin"]))]
+app.include_router(employee_master.router,       prefix="/api/employees", tags=["Employee Management"], dependencies=_emp_mgmt_auth)
 app.include_router(all_employees.router,         prefix="/api/employees", tags=["Employee Management"])
-app.include_router(document_vault.router,        prefix="/api/employees", tags=["Employee Management"])
+app.include_router(document_vault.router,        prefix="/api/employees", tags=["Employee Management"], dependencies=_emp_mgmt_auth)
 app.include_router(org_hierarchy.router,         prefix="/api/employees", tags=["Employee Management"])
-app.include_router(employee_lifecycle.router,    prefix="/api/employees", tags=["Employee Management"])
-app.include_router(employee_self_service.router, prefix="/api/employees", tags=["Employee Management"])
+app.include_router(employee_lifecycle.router,    prefix="/api/employees", tags=["Employee Management"], dependencies=_emp_mgmt_auth)
+app.include_router(employee_self_service.router, prefix="/api/employees", tags=["Employee Management"], dependencies=_emp_mgmt_auth)
 
 # HR Operations
 app.include_router(exit_management.router,       prefix="/api/hr-ops", tags=["HR Operations"])

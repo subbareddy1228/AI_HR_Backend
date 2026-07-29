@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 from typing import List
 
@@ -47,7 +45,7 @@ def read_currency_settings(
 @router.post("/settings", response_model=CurrencySettingResponse)
 def save_currency_settings(
     data:         CurrencySettingCreate,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     return upsert_currency_settings(db, current_user.tenant_id, data, current_user.id)
@@ -65,7 +63,7 @@ def list_exchange_rates(
 @router.post("/rates", response_model=ExchangeRateResponse, status_code=status.HTTP_201_CREATED)
 def create_exchange_rate(
     data:         ExchangeRateCreate,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     return add_exchange_rate(db, current_user.tenant_id, data, current_user.id)
@@ -75,7 +73,7 @@ def create_exchange_rate(
 def edit_exchange_rate(
     rate_id:      int,
     data:         ExchangeRateUpdate,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     return update_exchange_rate(db, current_user.tenant_id, rate_id, data, current_user.id)
@@ -84,7 +82,7 @@ def edit_exchange_rate(
 @router.delete("/rates/{rate_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_exchange_rate(
     rate_id:      int,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     delete_exchange_rate(db, current_user.tenant_id, rate_id, current_user.id)

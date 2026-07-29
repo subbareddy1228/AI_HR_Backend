@@ -4,6 +4,7 @@ from core.database import Base
 
 class Task(Base):
     __tablename__ = "tasks"
+    tenant_id = Column(Integer, nullable=True, index=True)  # which company this record belongs to
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)

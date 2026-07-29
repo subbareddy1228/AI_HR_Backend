@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from typing import Optional
 
 from core.database import get_db
-from core.dependencies import get_current_tenant_id, get_current_location_id
+from core.dependencies import get_current_tenant_id, get_current_location_id, require_roles
 from model.onboarding.employee import Employee
 from schema.Employee_Management.all_employees_schema import (
     EmployeeCreateRequest,
@@ -22,7 +22,16 @@ from services.Employee_Management.all_employees_service import (
     delete_employee,
 )
 
-router = APIRouter(prefix="", tags=["Employee Management"])
+# SECURITY FIX: this router previously had no role check at all (only
+# tenant scoping via get_current_tenant_id) — meaning "recruiter" and any
+# other authenticated role could read/write employee records, even though
+# the sidebar only shows this section to admin/company/hr_admin/superadmin.
+# The frontend hiding a menu item was never actually enforced here.
+router = APIRouter(
+    prefix="",
+    tags=["Employee Management"],
+    dependencies=[Depends(require_roles(["superadmin", "admin", "company", "hr_admin"]))],
+)
 
 
 @router.get("/", response_model=list[EmployeeFullResponse])

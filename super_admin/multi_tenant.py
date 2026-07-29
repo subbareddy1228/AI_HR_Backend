@@ -118,7 +118,15 @@ class TenantResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-router = APIRouter(prefix="/tenants", tags=["Super Admin"])
+router = APIRouter(
+    prefix="/tenants",
+    tags=["Super Admin"],
+    # SECURITY FIX: this whole router had no auth check at all — anyone
+    # could create, list, view, update, or delete ANY company (tenant),
+    # without even logging in. Tenant management is exclusively a
+    # superadmin action.
+    dependencies=[Depends(require_roles(["superadmin"]))],
+)
 
 
 @router.post("/", response_model=TenantResponse, status_code=201)
@@ -142,7 +150,6 @@ def list_tenants(db: Session = Depends(get_db)):
 def list_tenant_locations(
     tenant_id: int,
     db: Session = Depends(get_db),
-    _current_user=Depends(require_roles(["superadmin"])),
 ):
     """
     Superadmin-only: list the branches (CompanyLocation rows) belonging to

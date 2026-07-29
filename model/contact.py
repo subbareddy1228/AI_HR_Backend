@@ -4,6 +4,7 @@ from core.database import Base
 
 class Contact(Base):
     __tablename__ = "contacts"
+    tenant_id = Column(Integer, nullable=True, index=True)  # which company this record belongs to
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)

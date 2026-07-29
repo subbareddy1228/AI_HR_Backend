@@ -19,6 +19,7 @@ def _normalize_status(status: str | None) -> LeadStatus | None:
 
 def get_leads(
     db: Session,
+    tenant_id: int | None,
     skip: int = 0,
     limit: int = 100,
     status: str | None = None,
@@ -26,6 +27,8 @@ def get_leads(
     owner: str | None = None,
 ):
     query = db.query(Lead)
+    if tenant_id is not None:
+        query = query.filter(Lead.tenant_id == tenant_id)
 
     normalized_status = _normalize_status(status)
     if normalized_status is not None:
@@ -42,20 +45,27 @@ def get_leads(
     return query.offset(skip).limit(limit).all()
 
 
-def get_lead(db: Session, lead_id: int):
-    return db.get(Lead, lead_id)
+def get_lead(db: Session, lead_id: int, tenant_id: int | None):
+    lead = db.get(Lead, lead_id)
+    if lead is None:
+        return None
+    if tenant_id is not None and lead.tenant_id != tenant_id:
+        # Exists, but belongs to a different company — treat as not found
+        # rather than leaking a 403 (avoids confirming the ID is valid).
+        return None
+    return lead
 
 
-def create_lead(db: Session, lead_in):
-    lead = Lead(**lead_in.model_dump())
+def create_lead(db: Session, lead_in, tenant_id: int | None):
+    lead = Lead(**lead_in.model_dump(), tenant_id=tenant_id)
     db.add(lead)
     db.commit()
     db.refresh(lead)
     return lead
 
 
-def update_lead(db: Session, lead_id: int, lead_in):
-    lead = db.get(Lead, lead_id)
+def update_lead(db: Session, lead_id: int, lead_in, tenant_id: int | None):
+    lead = get_lead(db, lead_id, tenant_id)
     if not lead:
         return None
 
@@ -69,8 +79,8 @@ def update_lead(db: Session, lead_id: int, lead_in):
     return lead
 
 
-def delete_lead(db: Session, lead_id: int):
-    lead = db.get(Lead, lead_id)
+def delete_lead(db: Session, lead_id: int, tenant_id: int | None):
+    lead = get_lead(db, lead_id, tenant_id)
     if not lead:
         return False
 

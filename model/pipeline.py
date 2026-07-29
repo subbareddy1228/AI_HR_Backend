@@ -10,6 +10,7 @@ class StatusEnum(str, enum.Enum):
 
 class Pipeline(Base):
     __tablename__ = "pipelines"
+    tenant_id = Column(Integer, nullable=True, index=True)  # which company this record belongs to
 
     id = Column(Integer, primary_key=True, index=True)
     pipeline_Name = Column(String, nullable=False)

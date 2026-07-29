@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 from typing import Optional
 
@@ -60,7 +58,7 @@ def add_company_profile(
     registration_authority: Optional[str]  = Form(None),
     incorporation_number:   Optional[str]  = Form(None),
     logo:                   Optional[UploadFile] = File(None),
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     data = CompanyProfileCreate(
@@ -104,7 +102,7 @@ def edit_company_profile(
     registration_authority: Optional[str]  = Form(None),
     incorporation_number:   Optional[str]  = Form(None),
     logo:                   Optional[UploadFile] = File(None),
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     data = CompanyProfileUpdate(
@@ -131,7 +129,7 @@ def edit_company_profile(
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 def remove_company_profile(
-    current_user: User    = Depends(require_roles(["admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     delete_company_profile(db, current_user.tenant_id, current_user.id)

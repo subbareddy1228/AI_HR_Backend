@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
@@ -35,7 +33,7 @@ def fetch_current_fy(
 @router.post("/", response_model=FinancialYearResponse)
 def save_financial_year(
     data:         FinancialYearCreate,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     return create_or_update_financial_year(db, current_user.tenant_id, data, current_user.id)
@@ -43,7 +41,7 @@ def save_financial_year(
 
 @router.post("/reset-default", response_model=FinancialYearResponse)
 def reset_financial_year(
-    current_user: User    = Depends(require_roles(["admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
 

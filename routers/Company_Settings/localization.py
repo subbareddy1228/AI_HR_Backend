@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
@@ -34,7 +32,7 @@ def read_localization(
 @router.post("/", response_model=LocalizationResponse)
 def save_localization(
     data:         LocalizationCreate,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
     

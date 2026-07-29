@@ -6,6 +6,7 @@ from typing import Optional, List
 
 class Activity(Base):
     __tablename__ = "activities"
+    tenant_id = Column(Integer, nullable=True, index=True)  # which company this record belongs to
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)

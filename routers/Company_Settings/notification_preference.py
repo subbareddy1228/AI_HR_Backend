@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
@@ -35,7 +33,7 @@ def read_notification_preferences(
 @router.post("/", response_model=NotificationPreferenceResponse)
 def save_notification_preferences(
     data:         NotificationPreferenceCreate,
-    current_user: User    = Depends(require_roles(["admin", "hr_admin"])),
+    current_user: User    = Depends(require_roles(["admin", "company"])),
     db:           Session = Depends(get_db),
 ):
 

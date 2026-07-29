@@ -96,7 +96,7 @@ def get_org_stats(
 def create_department(
     payload: DepartmentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["superadmin", "admin", "hr_admin"])),
+    current_user: User = Depends(require_roles(["superadmin", "admin", "company", "hr_admin"])),
 ):
     existing = db.execute(
         select(Department).where(Department.name == payload.name)
@@ -146,7 +146,7 @@ def update_department(
     department_id: int,
     payload: DepartmentUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["superadmin", "admin", "hr_admin"])),
+    current_user: User = Depends(require_roles(["superadmin", "admin", "company", "hr_admin"])),
 ):
     obj = db.get(Department, department_id)
     if not obj:
@@ -164,7 +164,7 @@ def update_department(
 def delete_department(
     department_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["superadmin", "admin", "hr_admin"])),
+    current_user: User = Depends(require_roles(["superadmin", "admin", "company", "hr_admin"])),
 ):
     obj = db.get(Department, department_id)
     if not obj:
@@ -268,7 +268,7 @@ def get_reporting_summary(
 def create_reporting_relationship(
     payload: ReportingRelationshipCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["superadmin", "admin", "hr_admin"])),
+    current_user: User = Depends(require_roles(["superadmin", "admin", "company", "hr_admin"])),
 ):
     obj = ReportingRelationship(**payload.model_dump())
     db.add(obj)
@@ -297,7 +297,7 @@ def update_reporting_relationship(
     relationship_id: int,
     payload: ReportingRelationshipUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["superadmin", "admin", "hr_admin"])),
+    current_user: User = Depends(require_roles(["superadmin", "admin", "company", "hr_admin"])),
 ):
     obj = db.get(ReportingRelationship, relationship_id)
     if not obj:
@@ -313,7 +313,7 @@ def update_reporting_relationship(
 def delete_reporting_relationship(
     relationship_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["superadmin", "admin", "hr_admin"])),
+    current_user: User = Depends(require_roles(["superadmin", "admin", "company", "hr_admin"])),
 ):
     obj = db.get(ReportingRelationship, relationship_id)
     if not obj:
@@ -449,7 +449,7 @@ def action_change_request(
     request_id: int,
     payload: HierarchyChangeRequestUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(["superadmin", "admin", "hr_admin"])),
+    current_user: User = Depends(require_roles(["superadmin", "admin", "company", "hr_admin"])),
 ):
     """Approve or reject a hierarchy change request."""
     obj = db.get(HierarchyChangeRequest, request_id)
