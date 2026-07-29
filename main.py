@@ -1,7 +1,8 @@
 # main.py
 import os
 import base64
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
+from core.dependencies import get_current_user
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -242,13 +243,20 @@ app.include_router(exam.router,                prefix="/api/assessment/aptitude"
 app.include_router(aptitude_results.router,    prefix="/api/assessment/aptitude")
 app.include_router(hiring_funnel_router,       prefix="/api/hiring_funnel")
 app.include_router(time_hire_router,           prefix="/api/time_to_hire")
-app.include_router(basic_attendance.router,      prefix="/api/attendance", tags=["Attendance"])
-app.include_router(leave.router,               prefix="/api/leave")
-app.include_router(documents_router,           prefix="/api/documents")
-app.include_router(signatures_router,          prefix="/api/signatures")
+_hr_auth = [Depends(get_current_user)]
+app.include_router(basic_attendance.router,      prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(leave.router,               prefix="/api/leave", dependencies=_hr_auth)
+app.include_router(documents_router,           prefix="/api/documents", dependencies=_hr_auth)
+app.include_router(signatures_router,          prefix="/api/signatures", dependencies=_hr_auth)
+# NOTE: onboard_candidates.router is NOT secured here on purpose. It's mounted at
+# prefix="/api" with an internal "/candidates" prefix, landing on /api/candidates/* —
+# the SAME path prefix the real candidate-portal router (routers/candidates, `candidates_router`
+# above) uses. Adding staff-only get_current_user here risks breaking candidate login/portal
+# calls if any paths overlap. This needs a manual look at both routers before securing it,
+# not a blind router-level dependency.
 app.include_router(onboard_candidates.router,  prefix="/api")  # router self-prefix="/candidates" -> /api/candidates/*
-app.include_router(uploads.router,             prefix="/api/uploads")
-app.include_router(tasks_router,               prefix="/api/tasks")
+app.include_router(uploads.router,             prefix="/api/uploads", dependencies=_hr_auth)
+app.include_router(tasks_router,               prefix="/api/tasks", dependencies=_hr_auth)
 app.include_router(resume_router,              prefix="/api/resume")
 app.include_router(interviews.router,          prefix="/api/interviews")
 app.include_router(email_router)
@@ -256,18 +264,23 @@ app.include_router(offer_template_router,      prefix="/api/offers")
 app.include_router(offer_tracking_router,      prefix="/api/offers")
 
 # Additional CRM Modules
-app.include_router(contacts.router,    prefix="/contacts",tags=["contacts"])
-app.include_router(company.router,     prefix="/companies",tags=["companies"])
-app.include_router(deals.router,       prefix="/deals",tags=["deals"])
-app.include_router(leads.router,       prefix="/api/leads", tags=["leads"])
+# SECURITY FIX: these previously had no auth check at all (only Depends(get_db)
+# inside each route) — anyone, logged in or not, could read/write CRM data.
+# Enforcing login here at the router-mount level closes that without having
+# to edit every individual route function in routers/CRM/*.
+_crm_auth = [Depends(get_current_user)]
+app.include_router(contacts.router,    prefix="/contacts",tags=["contacts"], dependencies=_crm_auth)
+app.include_router(company.router,     prefix="/companies",tags=["companies"], dependencies=_crm_auth)
+app.include_router(deals.router,       prefix="/deals",tags=["deals"], dependencies=_crm_auth)
+app.include_router(leads.router,       prefix="/api/leads", tags=["leads"], dependencies=_crm_auth)
 # Legacy compatibility for existing frontend calls.
-app.include_router(leads.router,       prefix="/leads", tags=["leads-legacy"], include_in_schema=False)
-app.include_router(pipelines.router,   prefix="/pipelines",tags=["pipelines"])
-app.include_router(activities.router,  prefix="/activities",tags=["activities"])
-app.include_router(analytics.router,   prefix="/analytics",tags=["analytics"])
-app.include_router(clients.router)
-app.include_router(projects.router)
-app.include_router(tasks.router)
+app.include_router(leads.router,       prefix="/leads", tags=["leads-legacy"], include_in_schema=False, dependencies=_crm_auth)
+app.include_router(pipelines.router,   prefix="/pipelines",tags=["pipelines"], dependencies=_crm_auth)
+app.include_router(activities.router,  prefix="/activities",tags=["activities"], dependencies=_crm_auth)
+app.include_router(analytics.router,   prefix="/analytics",tags=["analytics"], dependencies=_crm_auth)
+app.include_router(clients.router, dependencies=_crm_auth)
+app.include_router(projects.router, dependencies=_crm_auth)
+app.include_router(tasks.router, dependencies=_crm_auth)
 
 # Onboarding Routes
     
@@ -340,18 +353,18 @@ app.include_router(transfers.router,             prefix="/api/hr-ops", tags=["HR
 app.include_router(promotions.router,            prefix="/api/hr-ops", tags=["HR Operations"])
 
 # Attendance extensions
-app.include_router(shift_management.router,       prefix="/api/attendance", tags=["Attendance"])
-app.include_router(holiday_calendar.router,       prefix="/api/attendance", tags=["Attendance"])
-app.include_router(work_hour_rules.router,        prefix="/api/attendance", tags=["Attendance"])
+app.include_router(shift_management.router,       prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(holiday_calendar.router,       prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(work_hour_rules.router,        prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
 # app.include_router(att_rpt.router,                prefix="/api/attendance", tags=["Attendance"])
-app.include_router(attendance_capture.router,     prefix="/api/attendance", tags=["Attendance"])
-app.include_router(daily_punches.router,          prefix="/api/attendance", tags=["Attendance"])
-app.include_router(daily_attendance.router,       prefix="/api/attendance", tags=["Attendance"])
-app.include_router(manual_attendance.router,      prefix="/api/attendance", tags=["Attendance"])
-app.include_router(leave_correction.router,       prefix="/api/attendance", tags=["Attendance"])
-app.include_router(monthly_attendance.router,     prefix="/api/attendance", tags=["Attendance"])
-app.include_router(regularization.router,         prefix="/api/attendance", tags=["Attendance"])
-app.include_router(attendance_reports.router,     prefix="/api/attendance", tags=["Attendance"])
+app.include_router(attendance_capture.router,     prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(daily_punches.router,          prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(daily_attendance.router,       prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(manual_attendance.router,      prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(leave_correction.router,       prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(monthly_attendance.router,     prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(regularization.router,         prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
+app.include_router(attendance_reports.router,     prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
 # leave.router already mounted at /api/leave (line above attendance block); not duplicated here
 
 # Reports

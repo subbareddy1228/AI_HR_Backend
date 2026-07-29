@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from typing import Optional
 
 from core.database import get_db
-from core.dependencies import get_current_tenant_id
+from core.dependencies import get_current_tenant_id, get_current_location_id
 from model.onboarding.employee import Employee
 from schema.Employee_Management.all_employees_schema import (
     EmployeeCreateRequest,
@@ -33,14 +33,20 @@ def list_employees_endpoint(
     location_id: Optional[int] = Query(default=None, description="Filter by branch/office (CompanyLocation) id"),
     db: Session = Depends(get_db),
     tenant_id: Optional[int] = Depends(get_current_tenant_id),
+    admin_location_id: Optional[int] = Depends(get_current_location_id),
 ):
+    # A branch-scoped admin (location_id set on their user record) is always
+    # locked to their own branch, regardless of what location_id was passed
+    # in the query string — this is what actually enforces "admin sees only
+    # their branch's data", not just an optional filter they could drop.
+    effective_location_id = admin_location_id if admin_location_id is not None else location_id
     return list_all_employees(
         db,
         tenant_id=tenant_id,
         is_active=is_active,
         department=department,
         search=search,
-        location_id=location_id,
+        location_id=effective_location_id,
     )
 
 

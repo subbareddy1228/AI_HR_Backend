@@ -9,7 +9,7 @@ from typing import List
 router = APIRouter(prefix="/admin/config")
 
 @router.post("/entities", response_model=ProductiveEntityResponse, status_code=status.HTTP_201_CREATED)
-def create_entity(payload: ProductiveEntityCreate, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin"]))):
+def create_entity(payload: ProductiveEntityCreate, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin", "admin"]))):
     try:
         ent = add_entity(db, payload)
         return ent
@@ -17,18 +17,18 @@ def create_entity(payload: ProductiveEntityCreate, db: Session = Depends(get_db)
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/entities", response_model=List[ProductiveEntityResponse])
-def get_entities(db: Session = Depends(get_db), _=Depends(require_roles(["superadmin"]))):
+def get_entities(db: Session = Depends(get_db), _=Depends(require_roles(["superadmin", "admin"]))):
     return list_entities(db)
 
 @router.get("/entities/{entity_id}", response_model=ProductiveEntityResponse)
-def get_single(entity_id: int, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin"]))):
+def get_single(entity_id: int, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin", "admin"]))):
     ent = get_entity(db, entity_id)
     if not ent:
         raise HTTPException(status_code=404, detail="Not found")
     return ent
 
 @router.patch("/entities/{entity_id}", response_model=ProductiveEntityResponse)
-def patch_entity(entity_id: int, payload: ProductiveEntityCreate, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin"]))):
+def patch_entity(entity_id: int, payload: ProductiveEntityCreate, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin", "admin"]))):
     try:
         updated = update_entity(db, entity_id, payload.model_dump())
         return updated
@@ -36,7 +36,7 @@ def patch_entity(entity_id: int, payload: ProductiveEntityCreate, db: Session = 
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.delete("/entities/{entity_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_entity(entity_id: int, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin"]))):
+def remove_entity(entity_id: int, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin", "admin"]))):
     try:
         delete_entity(db, entity_id)
     except ValueError as e:

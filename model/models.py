@@ -48,6 +48,14 @@ class User(SQLModel, table=True):
     # hard `foreign_key=` constraint to avoid SQLModel/SQLAlchemy metadata
     # ordering issues between the two declarative bases in this codebase).
     tenant_id: Optional[int] = None
+    # Branch-level scoping for "admin" role: when set, an admin's access is
+    # narrowed to just this branch (see get_current_location_id in
+    # core/dependencies.py) instead of the whole tenant. References
+    # CompanyLocation.id conceptually — same cross-Base soft-FK reasoning as
+    # tenant_id above (no hard `foreign_key=`, different declarative Base).
+    # None means "not branch-restricted" (whole-tenant access, or role is
+    # not admin/hr_admin at all — e.g. superadmin, recruiter, company).
+    location_id: Optional[int] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Job(SQLModel, table=True):

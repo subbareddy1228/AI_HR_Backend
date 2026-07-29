@@ -10,13 +10,13 @@ from core.dependencies import require_roles
 router = APIRouter(prefix="/admin/productivity")
 
 @router.get("/overview", response_model=OrgSummary)
-def overview(db: Session = Depends(get_db), _=Depends(require_roles(["superadmin"]))):
+def overview(db: Session = Depends(get_db), _=Depends(require_roles(["superadmin", "admin"]))):
     return get_org_summary(db)
 
 @router.get("/team/{team_id}")
-def team_summary(team_id: int, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin"]))):
+def team_summary(team_id: int, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin", "admin"]))):
     return get_team_summary(db, team_id)
 
 @router.get("/department/{department_id}")
-def department_summary(department_id: int, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin"]))):
+def department_summary(department_id: int, db: Session = Depends(get_db), _=Depends(require_roles(["superadmin", "admin"]))):
     return get_department_summary(db, department_id)

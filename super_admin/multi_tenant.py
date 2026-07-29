@@ -6,6 +6,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from core.database import Base, get_db
+from core.dependencies import require_roles
 
 
 class Tenant(Base):
@@ -135,6 +136,33 @@ def create_tenant(payload: TenantCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=List[TenantResponse])
 def list_tenants(db: Session = Depends(get_db)):
     return db.query(Tenant).order_by(Tenant.created_at.desc()).all()
+
+
+@router.get("/{tenant_id}/locations")
+def list_tenant_locations(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    _current_user=Depends(require_roles(["superadmin"])),
+):
+    """
+    Superadmin-only: list the branches (CompanyLocation rows) belonging to
+    a specific tenant. Needed because the regular
+    /company-settings/locations endpoint always scopes to the *caller's own*
+    tenant_id — a superadmin has no tenant_id, so it can never be used to
+    browse another company's branches. This is what powers the branch
+    picker in Super Admin -> User Management when assigning a branch admin.
+    """
+    from model.Company_Settings.location import CompanyLocation
+    locations = (
+        db.query(CompanyLocation)
+        .filter(CompanyLocation.tenant_id == tenant_id, CompanyLocation.is_active.is_(True))
+        .order_by(CompanyLocation.is_default.desc(), CompanyLocation.name)
+        .all()
+    )
+    return [
+        {"id": loc.id, "name": loc.name, "is_default": loc.is_default}
+        for loc in locations
+    ]
 
 
 @router.get("/{tenant_id}", response_model=TenantResponse)

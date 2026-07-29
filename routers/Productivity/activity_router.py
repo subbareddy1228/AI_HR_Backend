@@ -86,7 +86,7 @@ def admin_grouped_monitoring(
     employee_id: int | None = None,
     target_date: date | None = Query(None),
     db: Session = Depends(get_db),
-    _: object = Depends(require_roles(["superadmin"])),
+    _: object = Depends(require_roles(["superadmin", "admin"])),
 ):
     offset = (page - 1) * limit
 
@@ -170,12 +170,8 @@ def admin_grouped_monitoring(
         items.append({
             "employee_id": emp.id,
             "name": f"{emp.first_name} {emp.last_name or ''}".strip(),
-            # Employee has no single "email" field — official_email is the
-            # primary work address, falling back to personal_email.
-            "email": emp.official_email or emp.personal_email,
-            # Employee has no profile_picture column yet; return None
-            # rather than crash until one is added.
-            "profile_picture": None,
+            "email": emp.email,
+            "profile_picture": emp.profile_picture,
             "apps": apps,
             "activities": activities,
         })
