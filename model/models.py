@@ -56,6 +56,25 @@ class User(SQLModel, table=True):
     # None means "not branch-restricted" (whole-tenant access, or role is
     # not admin/hr_admin at all — e.g. superadmin, recruiter, company).
     location_id: Optional[int] = None
+    # Soft reference to Employee.id (model/onboarding/employee.py — a
+    # different declarative Base, same cross-Base reasoning as tenant_id/
+    # location_id above: no hard `foreign_key=`). Set when this login was
+    # created via "Convert to Employee"; None for logins that aren't an
+    # employee self-service account (company/admin/hr_admin/recruiter/
+    # superadmin/candidate).
+    employee_id: Optional[int] = None
+    # True right after "Convert to Employee" creates a temporary password.
+    # The employee must set their own password before using the rest of
+    # the HRMS — enforced by the frontend redirecting on this flag and by
+    # POST /api/auth/change-password clearing it.
+    requires_password_change: bool = Field(default=False)
+    # True once the employee has completed bank details + emergency contact
+    # + at least one document upload after their first login. Mirrors
+    # requires_password_change: the frontend gates the full self-service
+    # dashboard behind this the same way it gates behind the forced
+    # password change, matching "Account becomes active" in the hiring
+    # flow. HR/admin/etc. logins are simply never checked against this.
+    profile_completed: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Job(SQLModel, table=True):

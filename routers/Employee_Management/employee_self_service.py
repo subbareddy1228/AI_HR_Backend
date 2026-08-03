@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 from typing import Optional
@@ -6,10 +6,14 @@ from datetime import date, datetime
 import json
 
 from core.database import get_db
+from utils.file_upload import save_file
 
 from model.onboarding.employee                   import Employee
 from model.Employee_Management.employee_master   import EmployeeMaster
 from model.Employee_Management.employee_document import EmployeeDocument
+from model.Employee_Management.employee_self_service_extras import (
+    EmployeeBankDetail, EmployeeEmergencyContact,
+)
 from model.Employee_Management.employee_lifecycle import (
     EmployeeLifecycleEvent, TransferRequest, ExitProcess, OnboardingTask
 )
@@ -17,7 +21,7 @@ from model.Payroll.salary_slip                   import SalarySlip
 from model.Payroll.loan_advance                  import LoanAdvance
 from model.Payroll.reimbursement                 import ReimbursementClaim, ReimbursementType
 from model.HR_Operations.hr_helpdesk             import HRHelpdesk
-from model.models                                import AttendanceRecord, LeaveRequest, LeaveStatus
+from model.models                                import AttendanceRecord, LeaveRequest, LeaveStatus, User
 
 router = APIRouter(prefix="/self-service", tags=["Employee Self Service"])
 
@@ -767,6 +771,252 @@ def get_self_lifecycle(employee_id: int, db: Session = Depends(get_db)):
 
 
 
+@router.get("/{employee_id}/bank-details")
+def get_bank_details(employee_id: int, db: Session = Depends(get_db)):
+    emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    bank = db.execute(
+        select(EmployeeBankDetail).where(EmployeeBankDetail.employee_id == employee_id)
+    ).scalar_one_or_none()
+    if not bank:
+        return None
+    return {
+        "accountHolderName": bank.account_holder_name,
+        "accountNumber": bank.account_number,
+        "ifscCode": bank.ifsc_code,
+        "bankName": bank.bank_name,
+        "branchName": bank.branch_name,
+        "updatedAt": str(bank.updated_at) if bank.updated_at else None,
+    }
+
+
+@router.put("/{employee_id}/bank-details")
+def upsert_bank_details(
+    employee_id: int,
+    account_holder_name: str = Form(...),
+    account_number: str = Form(...),
+    ifsc_code: str = Form(...),
+    bank_name: str = Form(...),
+    branch_name: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+):
+    emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    bank = db.execute(
+        select(EmployeeBankDetail).where(EmployeeBankDetail.employee_id == employee_id)
+    ).scalar_one_or_none()
+    if bank is None:
+        bank = EmployeeBankDetail(employee_id=employee_id)
+        db.add(bank)
+
+    bank.account_holder_name = account_holder_name
+    bank.account_number = account_number
+    bank.ifsc_code = ifsc_code
+    bank.bank_name = bank_name
+    bank.branch_name = branch_name
+
+    db.commit()
+    _refresh_profile_completion(db, employee_id)
+    return {"message": "Bank details saved"}
+
+
+@router.get("/{employee_id}/emergency-contact")
+def get_emergency_contact(employee_id: int, db: Session = Depends(get_db)):
+    emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    contact = db.execute(
+        select(EmployeeEmergencyContact).where(EmployeeEmergencyContact.employee_id == employee_id)
+    ).scalar_one_or_none()
+    if not contact:
+        return None
+    return {
+        "contactName": contact.contact_name,
+        "relationship": contact.relationship,
+        "phoneNumber": contact.phone_number,
+        "alternatePhoneNumber": contact.alternate_phone_number,
+        "address": contact.address,
+    }
+
+
+@router.put("/{employee_id}/emergency-contact")
+def upsert_emergency_contact(
+    employee_id: int,
+    contact_name: str = Form(...),
+    relationship: str = Form(...),
+    phone_number: str = Form(...),
+    alternate_phone_number: Optional[str] = Form(None),
+    address: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+):
+    emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    contact = db.execute(
+        select(EmployeeEmergencyContact).where(EmployeeEmergencyContact.employee_id == employee_id)
+    ).scalar_one_or_none()
+    if contact is None:
+        contact = EmployeeEmergencyContact(employee_id=employee_id)
+        db.add(contact)
+
+    contact.contact_name = contact_name
+    contact.relationship = relationship
+    contact.phone_number = phone_number
+    contact.alternate_phone_number = alternate_phone_number
+    contact.address = address
+
+    db.commit()
+    _refresh_profile_completion(db, employee_id)
+    return {"message": "Emergency contact saved"}
+
+
+@router.post("/{employee_id}/documents/upload")
+def upload_self_document(
+    employee_id: int,
+    document_type: str = Form(...),
+    document_name: str = Form(...),
+    category: str = Form("Other"),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    file_path = save_file(file, f"employee_{employee_id}_{document_type}")
+
+    doc = EmployeeDocument(
+        employee_id=employee_id,
+        document_name=document_name,
+        document_type=document_type,
+        category=category,
+        file_path=file_path,
+        file_format=(file.filename.rsplit(".", 1)[-1] if "." in file.filename else None),
+        upload_date=date.today(),
+        status="PENDING",
+    )
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+    _refresh_profile_completion(db, employee_id)
+    return {"message": "Document uploaded", "documentId": doc.id, "status": doc.status}
+
+
+@router.post("/{employee_id}/attendance/check-in")
+def check_in(employee_id: int, db: Session = Depends(get_db)):
+    emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    today = date.today()
+    existing = db.execute(
+        select(AttendanceRecord).where(
+            AttendanceRecord.employee_id == employee_id,
+            AttendanceRecord.date == today,
+        )
+    ).scalar_one_or_none()
+    if existing and existing.check_in:
+        raise HTTPException(status_code=409, detail="Already checked in today")
+
+    now_str = datetime.now().strftime("%H:%M:%S")
+    if existing:
+        existing.check_in = now_str
+        existing.status = "Present"
+    else:
+        existing = AttendanceRecord(
+            employee_id=employee_id, date=today, status="Present", check_in=now_str,
+        )
+        db.add(existing)
+    db.commit()
+    db.refresh(existing)
+    return {"message": "Checked in", "date": str(today), "checkIn": existing.check_in}
+
+
+@router.post("/{employee_id}/attendance/check-out")
+def check_out(employee_id: int, db: Session = Depends(get_db)):
+    emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    today = date.today()
+    existing = db.execute(
+        select(AttendanceRecord).where(
+            AttendanceRecord.employee_id == employee_id,
+            AttendanceRecord.date == today,
+        )
+    ).scalar_one_or_none()
+    if not existing or not existing.check_in:
+        raise HTTPException(status_code=400, detail="You haven't checked in today yet")
+    if existing.check_out:
+        raise HTTPException(status_code=409, detail="Already checked out today")
+
+    existing.check_out = datetime.now().strftime("%H:%M:%S")
+    db.commit()
+    db.refresh(existing)
+    return {"message": "Checked out", "date": str(today), "checkOut": existing.check_out}
+
+
+def _refresh_profile_completion(db: Session, employee_id: int) -> bool:
+    """
+    Recomputes and persists whether this employee has finished the
+    'complete your profile' step (personal details already exist from
+    conversion; bank details + emergency contact + at least one document
+    are what's added here) and flips User.profile_completed accordingly —
+    this is what the frontend gates the full self-service dashboard on,
+    matching "Account becomes active" in the hiring flow.
+    """
+    has_bank = db.execute(
+        select(EmployeeBankDetail.id).where(EmployeeBankDetail.employee_id == employee_id)
+    ).scalar_one_or_none() is not None
+    has_emergency = db.execute(
+        select(EmployeeEmergencyContact.id).where(EmployeeEmergencyContact.employee_id == employee_id)
+    ).scalar_one_or_none() is not None
+    has_document = db.execute(
+        select(EmployeeDocument.id).where(EmployeeDocument.employee_id == employee_id)
+    ).scalar_one_or_none() is not None
+
+    completed = has_bank and has_emergency and has_document
+
+    user = db.execute(select(User).where(User.employee_id == employee_id)).scalar_one_or_none()
+    if user is not None and user.profile_completed != completed:
+        user.profile_completed = completed
+        db.add(user)
+        db.commit()
+
+    return completed
+
+
+@router.get("/{employee_id}/profile-completion-status")
+def get_profile_completion_status(employee_id: int, db: Session = Depends(get_db)):
+    emp = db.execute(select(Employee).where(Employee.id == employee_id)).scalar_one_or_none()
+    if not emp:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    has_bank = db.execute(
+        select(EmployeeBankDetail.id).where(EmployeeBankDetail.employee_id == employee_id)
+    ).scalar_one_or_none() is not None
+    has_emergency = db.execute(
+        select(EmployeeEmergencyContact.id).where(EmployeeEmergencyContact.employee_id == employee_id)
+    ).scalar_one_or_none() is not None
+    has_document = db.execute(
+        select(EmployeeDocument.id).where(EmployeeDocument.employee_id == employee_id)
+    ).scalar_one_or_none() is not None
+
+    completed = _refresh_profile_completion(db, employee_id)
+
+    return {
+        "personalDetails": True,  # captured at Convert-to-Employee time
+        "bankDetails": has_bank,
+        "emergencyContact": has_emergency,
+        "documents": has_document,
+        "profileCompleted": completed,
+    }
 @router.get("/{employee_id}/onboarding-tasks")
 def get_self_onboarding_tasks(employee_id: int, db: Session = Depends(get_db)):
     

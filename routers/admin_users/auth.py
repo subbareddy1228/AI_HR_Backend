@@ -45,6 +45,8 @@ class TokenResponse(BaseModel):
     role: str
     email: EmailStr
     refresh_token: Optional[str] = None
+    requires_password_change: bool = False
+    profile_completed: bool = True
 
 class SignupRequest(BaseModel):
     name: str
@@ -65,6 +67,14 @@ class CurrentUserResponse(BaseModel):
     email: EmailStr
     role: str
     is_active: bool
+    requires_password_change: bool = False
+    profile_completed: bool = True
+    employee_id: Optional[int] = None
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -205,6 +215,8 @@ def login_json(payload: LoginJSON, db: Session = Depends(get_db)):
         "role": user.role,
         "email": user.email,
         "refresh_token": None,
+        "requires_password_change": user.requires_password_change,
+        "profile_completed": user.profile_completed,
     }
 
 @router.post("/login", response_model=TokenResponse)
@@ -229,6 +241,8 @@ def login_form(
         "role": user.role,
         "email": user.email,
         "refresh_token": None,
+        "requires_password_change": user.requires_password_change,
+        "profile_completed": user.profile_completed,
     }
 
 
@@ -240,7 +254,36 @@ def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "role": current_user.role,
         "is_active": current_user.is_active,
+        "requires_password_change": current_user.requires_password_change,
+        "profile_completed": current_user.profile_completed,
+        "employee_id": current_user.employee_id,
     }
+
+
+@router.post("/change-password")
+def change_password(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Authenticated self-service password change. Used both for the forced
+    change after a "Convert to Employee" temporary password, and for any
+    user voluntarily changing their password later (requires_password_change
+    is simply already False in that case, so it's a no-op to clear).
+    """
+    if not verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+    if len(payload.new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
+
+    current_user.hashed_password = get_password_hash(payload.new_password)
+    current_user.requires_password_change = False
+    db.add(current_user)
+    db.commit()
+
+    return {"message": "Password updated successfully"}
 
 
 

@@ -2,7 +2,7 @@
 import os
 import base64
 from fastapi import FastAPI, Request, Depends
-from core.dependencies import get_current_user, require_roles
+from core.dependencies import get_current_user, require_roles, verify_self_or_hr
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -110,11 +110,12 @@ from routers.HR_Automation.Onboarding.routers import candidates as onboard_candi
 from routers.AI_Interview_Bot.routes import interviews
 from routers.CRM import contacts, company, deals, leads, pipelines, activities, analytics,projects, clients, tasks
 from routers.onboarding.admin_candidates import router as admin_candidates_router
+from routers.onboarding.convert_to_employee import router as convert_to_employee_router
 from routers.onboarding import bank_details, present_address, statutory, onboarding, approval, employee, family_details, documents, personal_info, address, background_verification, probation_management, induction, buddy_mentor, offer_letter, basic_details, contact_details
 from routers.billing import subscription as billing_subscription
 from routers.integrations import connections as integrations_connections
 from routers.HR_Operations.Asset_Management import assets, asset_allocation, asset_return, asset_maintenance,asset_insurance
-from routers.Company_Settings import currency, financial_year, localization, policy,company_profile,notification_preference,location,data_privacy
+from routers.Company_Settings import currency, financial_year, localization, policy,company_profile,notification_preference,location,data_privacy,announcements
 from routers.Payroll import Payroll_Processing
 from routers.Payroll import salary_structure, payroll_run, salary_slip, reimbursements, loans_advances, statutory_compliance, bank_transfer, final_settlement, payroll_reports as payroll_rpt, payroll_integration
 from routers.Employee_Management import employee_master, all_employees, document_vault, org_hierarchy, employee_lifecycle, employee_self_service
@@ -290,6 +291,7 @@ app.include_router(tasks.router, dependencies=_crm_auth)
 # Onboarding Routes
     
 app.include_router(admin_candidates_router)
+app.include_router(convert_to_employee_router)
 app.include_router(bank_details.router)
 app.include_router(present_address.router)
 app.include_router(statutory.router)
@@ -319,6 +321,7 @@ app.include_router(company_profile.router)
 app.include_router(notification_preference.router)
 app.include_router(location.router)
 app.include_router(data_privacy.router)
+app.include_router(announcements.router)
 
 #HR Operations - Assets Management
 app.include_router(assets.router)
@@ -347,12 +350,22 @@ app.include_router(payroll_integration.router,  prefix="/api/payroll", tags=["Pa
 # already enforce their own role checks internally, so they're left as-is
 # here to avoid a redundant duplicate check).
 _emp_mgmt_auth = [Depends(require_roles(["superadmin", "admin", "company", "hr_admin"]))]
+# employee_self_service is the one router in this group that the 'employee'
+# role is actually supposed to reach — every other router here
+# (employee_master, document_vault, employee_lifecycle) is an HR-only tool
+# and stays locked to _emp_mgmt_auth above. verify_self_or_hr additionally
+# stops an 'employee' from reading/acting on a DIFFERENT employee_id than
+# their own, while leaving HR roles able to access any employee_id as before.
+_self_service_auth = [
+    Depends(require_roles(["superadmin", "admin", "company", "hr_admin", "employee"])),
+    Depends(verify_self_or_hr),
+]
 app.include_router(employee_master.router,       prefix="/api/employees", tags=["Employee Management"], dependencies=_emp_mgmt_auth)
 app.include_router(all_employees.router,         prefix="/api/employees", tags=["Employee Management"])
 app.include_router(document_vault.router,        prefix="/api/employees", tags=["Employee Management"], dependencies=_emp_mgmt_auth)
 app.include_router(org_hierarchy.router,         prefix="/api/employees", tags=["Employee Management"])
 app.include_router(employee_lifecycle.router,    prefix="/api/employees", tags=["Employee Management"], dependencies=_emp_mgmt_auth)
-app.include_router(employee_self_service.router, prefix="/api/employees", tags=["Employee Management"], dependencies=_emp_mgmt_auth)
+app.include_router(employee_self_service.router, prefix="/api/employees", tags=["Employee Management"], dependencies=_self_service_auth)
 
 # HR Operations
 app.include_router(exit_management.router,       prefix="/api/hr-ops", tags=["HR Operations"])

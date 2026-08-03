@@ -37,6 +37,24 @@ def require_roles(allowed_roles: List[str]):
     return role_checker
 
 
+def verify_self_or_hr(employee_id: int, current_user: User = Depends(get_current_user)) -> User:
+    """
+    For routes shaped as /{employee_id}/... (routers/Employee_Management/
+    employee_self_service.py): HR-side roles may access any employee_id
+    (their normal workflow — reviewing someone else's leave/documents/
+    tickets/etc). The 'employee' role may only ever access the employee_id
+    matching their own User.employee_id — without this, any employee could
+    view or act on another employee's payslips/documents/leaves/loans/
+    reimbursements/tickets just by changing the id in the URL.
+    """
+    if current_user.role.lower() == "employee" and current_user.employee_id != employee_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You can only access your own employee record.",
+        )
+    return current_user
+
+
 def get_current_tenant_id(current_user: User = Depends(get_current_user)) -> Optional[int]:
    
     if current_user.role.lower() == "superadmin":
