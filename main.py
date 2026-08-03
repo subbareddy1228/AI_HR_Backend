@@ -324,25 +324,34 @@ app.include_router(data_privacy.router)
 app.include_router(announcements.router)
 
 #HR Operations - Assets Management
-app.include_router(assets.router)
-app.include_router(asset_allocation.router)
-app.include_router(asset_return.router)
-app.include_router(asset_maintenance.router)
-app.include_router(asset_insurance.router)
+# SECURITY FIX: Asset_Management routers previously had NO auth at all.
+_asset_mgmt_auth = [Depends(require_roles(["superadmin", "admin", "company", "hr_admin"]))]
+app.include_router(assets.router, dependencies=_asset_mgmt_auth)
+app.include_router(asset_allocation.router, dependencies=_asset_mgmt_auth)
+app.include_router(asset_return.router, dependencies=_asset_mgmt_auth)
+app.include_router(asset_maintenance.router, dependencies=_asset_mgmt_auth)
+app.include_router(asset_insurance.router, dependencies=_asset_mgmt_auth)
 
 
 # Payroll
-app.include_router(salary_structure.router,     prefix="/api/payroll", tags=["Payroll"])
-app.include_router(payroll_run.router,          prefix="/api/payroll", tags=["Payroll"])
-app.include_router(salary_slip.router,          prefix="/api/payroll", tags=["Payroll"])
-app.include_router(reimbursements.router,       prefix="/api/payroll", tags=["Payroll"])
-app.include_router(loans_advances.router,       prefix="/api/payroll", tags=["Payroll"])
-app.include_router(statutory_compliance.router, prefix="/api/payroll", tags=["Payroll"])
-app.include_router(bank_transfer.router,        prefix="/api/payroll", tags=["Payroll"])
-app.include_router(final_settlement.router,     prefix="/api/payroll", tags=["Payroll"])
-app.include_router(payroll_rpt.router,          prefix="/api/payroll", tags=["Payroll"])
-app.include_router(Payroll_Processing.router,   prefix="/api/payroll", tags=["Payroll"])
-app.include_router(payroll_integration.router,  prefix="/api/payroll", tags=["Payroll"])
+# SECURITY FIX: every Payroll router previously had NO auth check at all —
+# anyone, logged in or not, could generate payroll, view salary slips, run
+# bank transfers, and see loan/reimbursement data. This is the most
+# sensitive data in the whole app, so it's locked to the same HR-tier roles
+# as Company Settings/Employee Management. Employees still see their OWN
+# payslip separately via the properly-scoped employee_self_service.py.
+_payroll_auth = [Depends(require_roles(["superadmin", "admin", "company", "hr_admin"]))]
+app.include_router(salary_structure.router,     prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(payroll_run.router,          prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(salary_slip.router,          prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(reimbursements.router,       prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(loans_advances.router,       prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(statutory_compliance.router, prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(bank_transfer.router,        prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(final_settlement.router,     prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(payroll_rpt.router,          prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(Payroll_Processing.router,   prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
+app.include_router(payroll_integration.router,  prefix="/api/payroll", tags=["Payroll"], dependencies=_payroll_auth)
 # Employee Management
 # SECURITY FIX: employee_master, document_vault, employee_lifecycle, and
 # employee_self_service had NO auth check whatsoever — not even a login
@@ -368,13 +377,17 @@ app.include_router(employee_lifecycle.router,    prefix="/api/employees", tags=[
 app.include_router(employee_self_service.router, prefix="/api/employees", tags=["Employee Management"], dependencies=_self_service_auth)
 
 # HR Operations
-app.include_router(exit_management.router,       prefix="/api/hr-ops", tags=["HR Operations"])
-app.include_router(letter_generation.router,     prefix="/api/hr-ops", tags=["HR Operations"])
-app.include_router(notice_period.router,         prefix="/api/hr-ops", tags=["HR Operations"])
-app.include_router(hr_helpdesk.router,           prefix="/api/hr-ops", tags=["HR Operations"])
-app.include_router(employee_confirmation.router, prefix="/api/hr-ops", tags=["HR Operations"])
-app.include_router(transfers.router,             prefix="/api/hr-ops", tags=["HR Operations"])
-app.include_router(promotions.router,            prefix="/api/hr-ops", tags=["HR Operations"])
+# SECURITY FIX: all 7 HR_Operations routers previously had NO auth at all —
+# exit management, employee confirmations, transfers, promotions, and HR
+# helpdesk admin stats/reports were all reachable without logging in.
+_hr_ops_auth = [Depends(require_roles(["superadmin", "admin", "company", "hr_admin"]))]
+app.include_router(exit_management.router,       prefix="/api/hr-ops", tags=["HR Operations"], dependencies=_hr_ops_auth)
+app.include_router(letter_generation.router,     prefix="/api/hr-ops", tags=["HR Operations"], dependencies=_hr_ops_auth)
+app.include_router(notice_period.router,         prefix="/api/hr-ops", tags=["HR Operations"], dependencies=_hr_ops_auth)
+app.include_router(hr_helpdesk.router,           prefix="/api/hr-ops", tags=["HR Operations"], dependencies=_hr_ops_auth)
+app.include_router(employee_confirmation.router, prefix="/api/hr-ops", tags=["HR Operations"], dependencies=_hr_ops_auth)
+app.include_router(transfers.router,             prefix="/api/hr-ops", tags=["HR Operations"], dependencies=_hr_ops_auth)
+app.include_router(promotions.router,            prefix="/api/hr-ops", tags=["HR Operations"], dependencies=_hr_ops_auth)
 
 # Attendance extensions
 app.include_router(shift_management.router,       prefix="/api/attendance", tags=["Attendance"], dependencies=_hr_auth)
