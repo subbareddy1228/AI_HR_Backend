@@ -26,9 +26,17 @@ class EmployeeBankDetail(Base):
 
 
 class EmployeeEmergencyContact(Base):
-    """One row per employee. Same self-service origin as bank details."""
+    """One row per employee. Same self-service origin as bank details.
 
-    __tablename__ = "employee_emergency_contacts"
+    NOTE: model/Employee_Management/employee_profile.py already defines an
+    unrelated EmployeeEmergencyContact mapped to the same table name
+    ('employee_emergency_contacts'), which crashes SQLAlchemy at import
+    time (InvalidRequestError: Table already defined for this MetaData
+    instance). Using a distinct table name here until the two are
+    consolidated onto one schema.
+    """
+
+    __tablename__ = "employee_emergency_contacts_selfservice"
 
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False, unique=True, index=True)
